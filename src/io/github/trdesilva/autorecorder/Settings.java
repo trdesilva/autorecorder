@@ -87,14 +87,29 @@ public class Settings
         return container.obsPath;
     }
     
+    public void setObsPath(String obsPath)
+    {
+        container.obsPath = obsPath;
+    }
+    
     public String getRecordingPath()
     {
         return container.recordingPath;
     }
     
+    public void setRecordingPath(String recordingPath)
+    {
+        container.recordingPath = recordingPath;
+    }
+    
     public String getFfmpegPath()
     {
         return container.ffmpegPath;
+    }
+    
+    public void setFfmpegPath(String ffmpegPath)
+    {
+        container.ffmpegPath = ffmpegPath;
     }
     
     public String getFfprobePath()
@@ -107,6 +122,11 @@ public class Settings
         return container.clipPath;
     }
     
+    public void setClipPath(String clipPath)
+    {
+        container.clipPath = clipPath;
+    }
+    
     public Set<String> getGames()
     {
         return container.games;
@@ -115,6 +135,11 @@ public class Settings
     public Set<String> getExcludedGames()
     {
         return container.excludedGames;
+    }
+    
+    public String getSettingsFilePath()
+    {
+        return settingsFile.getAbsolutePath();
     }
     
     private void populateGamesFromApi()

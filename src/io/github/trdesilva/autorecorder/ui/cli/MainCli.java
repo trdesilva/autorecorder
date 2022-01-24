@@ -13,12 +13,17 @@ public class MainCli extends Cli
     public void run()
     {
         ClipTrimmerCli clipTrimmerCli = new ClipTrimmerCli(settings);
+        SettingsCli settingsCli = new SettingsCli(settings);
         while(true)
         {
-            String answer = chooseFromList("Pick something:", "clip");
+            String answer = chooseFromList("Pick something:", "clip", "settings");
             if(answer.equals("clip"))
             {
                 clipTrimmerCli.run();
+            }
+            else if(answer.equals("settings"))
+            {
+                settingsCli.run();
             }
             else if(answer.equals("exit"))
             {
