@@ -1,6 +1,6 @@
 package io.github.trdesilva.autorecorder;
 
-import java.util.Scanner;
+import io.github.trdesilva.autorecorder.ui.cli.MainCli;
 
 public class Main
 {
@@ -9,11 +9,14 @@ public class Main
         System.out.println("starting");
         Settings settings = new Settings();
         settings.populate();
+        
         Obs obs = new Obs(settings);
         GameListener listener = new GameListener(obs, settings);
         listener.start();
-        System.out.println("listening for games, press enter to stop");
-        new Scanner(System.in).nextLine();
+        
+        MainCli cli = new MainCli(settings);
+        cli.run();
+        
         listener.stop();
     }
 }

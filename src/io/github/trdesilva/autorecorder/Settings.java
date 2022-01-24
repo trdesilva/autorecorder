@@ -27,6 +27,7 @@ public class Settings
         public String recordingPath;
         
         public String ffmpegPath;
+        public String ffprobePath;
         public String clipPath;
         
         public Set<String> excludedGames = new HashSet<>();
@@ -89,6 +90,16 @@ public class Settings
     public String getRecordingPath()
     {
         return container.recordingPath;
+    }
+    
+    public String getFfmpegPath()
+    {
+        return container.ffmpegPath;
+    }
+    
+    public String getFfprobePath()
+    {
+        return container.ffprobePath;
     }
     
     public String getClipPath()

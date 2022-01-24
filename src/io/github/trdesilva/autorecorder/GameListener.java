@@ -1,20 +1,8 @@
 package io.github.trdesilva.autorecorder;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.HttpClientBuilder;
-
 import java.io.IOException;
-import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Locale;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -38,46 +26,48 @@ public class GameListener
     
     public void start()
     {
+        System.out.println("starting listener thread");
         thread = new Thread(() ->
                             {
                                 while(true)
                                 {
                                     if(!recording.get())
                                     {
-                                        ProcessHandle.allProcesses().forEach(ph ->
-                                                                             {
-                                                                                 // some game exes are identified by more of their path than just filename
-                                                                                 if(ph.info().command().isPresent())
-                                                                                 {
-                                                                                     Path command = Paths.get(ph.info().command().get());
-                                                                                     for(int i = 1; i <= command.getNameCount(); i++)
-                                                                                     {
-                                                                                         String program = command.subpath(command.getNameCount() - i, command.getNameCount())
-                                                                                                                 .toString()
-                                                                                                                 .toLowerCase();
-                                                                                         if(settings.getGames().contains(program))
-                                                                                         {
-                                                                                             try
-                                                                                             {
-                                                                                                 System.out.println("game started: " + program);
-                                                                                                 if(recording.get())
-                                                                                                 {
-                                                                                                     System.out.println("already recording " + currentGame.get());
-                                                                                                     return;
-                                                                                                 }
-                                                                                                 recording.set(true);
-                                                                                                 obs.start();
-                                                                                                 currentGame.set(program);
-                                                                                             }
-                                                                                             catch(IOException e)
-                                                                                             {
-                                                                                                 System.out.println("couldn't start obs");
-                                                                                             }
-                                                                                             break;
-                                                                                         }
-                                                                                     }
-                                                                                 }
-                                                                             });
+                                        ProcessHandle.allProcesses()
+                                                     .forEach(ph ->
+                                                              {
+                                                                  // some game exes are identified by more of their path than just filename
+                                                                  if(ph.info().command().isPresent())
+                                                                  {
+                                                                      Path command = Paths.get(ph.info().command().orElse(""));
+                                                                      for(int i = 1; i <= command.getNameCount(); i++)
+                                                                      {
+                                                                          String program = command.subpath(command.getNameCount() - i, command.getNameCount())
+                                                                                                  .toString()
+                                                                                                  .toLowerCase();
+                                                                          if(settings.getGames().contains(program))
+                                                                          {
+                                                                              try
+                                                                              {
+                                                                                  System.out.println("game started: " + program);
+                                                                                  if(recording.get())
+                                                                                  {
+                                                                                      System.out.println("already recording " + currentGame.get());
+                                                                                      return;
+                                                                                  }
+                                                                                  recording.set(true);
+                                                                                  obs.start();
+                                                                                  currentGame.set(program);
+                                                                              }
+                                                                              catch(IOException e)
+                                                                              {
+                                                                                  System.out.println("couldn't start obs");
+                                                                              }
+                                                                              break;
+                                                                          }
+                                                                      }
+                                                                  }
+                                                              });
                                     }
                                     else
                                     {
