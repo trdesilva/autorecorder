@@ -39,6 +39,7 @@ public class GameListener
                                                                   // some game exes are identified by more of their path than just filename
                                                                   if(ph.info().command().isPresent())
                                                                   {
+                                                                      // TODO memoization
                                                                       Path command = Paths.get(ph.info().command().orElse(""));
                                                                       for(int i = 1; i <= command.getNameCount(); i++)
                                                                       {

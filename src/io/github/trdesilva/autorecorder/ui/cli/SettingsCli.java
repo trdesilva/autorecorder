@@ -3,6 +3,7 @@ package io.github.trdesilva.autorecorder.ui.cli;
 import io.github.trdesilva.autorecorder.Settings;
 
 import java.io.File;
+import java.util.Set;
 
 public class SettingsCli extends Cli
 {
@@ -11,6 +12,8 @@ public class SettingsCli extends Cli
     public static final String RECORDING_DIRECTORY = "Recording directory";
     public static final String FFMPEG_FILEPATH = "FFMpeg filepath";
     public static final String CLIP_DIRECTORY = "Clip directory";
+    public static final String ADDITIONAL_GAMES = "Additional games";
+    public static final String EXCLUDED_GAMES = "Excluded games";
     
     public SettingsCli(Settings settings)
     {
@@ -27,45 +30,74 @@ public class SettingsCli extends Cli
                                             OBS_FILEPATH,
                                             RECORDING_DIRECTORY,
                                             FFMPEG_FILEPATH,
-                                            CLIP_DIRECTORY);
+                                            CLIP_DIRECTORY,
+                                            ADDITIONAL_GAMES,
+                                            EXCLUDED_GAMES);
             if(setting.equals("exit"))
             {
                 return;
             }
-            print("Enter a new value for %s", setting);
-            String newValue = readLine();
-            File newValueFile = new File(newValue);
-            if(!newValueFile.exists())
+            if(setting.equals(OBS_FILEPATH) || setting.equals(RECORDING_DIRECTORY) || setting.equals(FFMPEG_FILEPATH) || setting.equals(CLIP_DIRECTORY))
             {
-                print("%s does not exist", newValue);
-                continue;
-            }
-            if(setting.equals(OBS_FILEPATH))
-            {
-                settings.setObsPath(newValue);
-            }
-            else if(setting.equals(FFMPEG_FILEPATH))
-            {
-                settings.setFfmpegPath(newValue);
-            }
-            else
-            {
-                if(!newValueFile.isDirectory())
+                print("Enter a new value for %s", setting);
+                String newValue = readLine();
+                File newValueFile = new File(newValue);
+                if(!newValueFile.exists())
                 {
-                    print("%s is not a directory", newValue);
+                    print("%s does not exist", newValue);
                     continue;
                 }
-                if(setting.equals(RECORDING_DIRECTORY))
+                if(setting.equals(OBS_FILEPATH))
                 {
-                    settings.setRecordingPath(newValue);
+                    settings.setObsPath(newValue);
                 }
-                else if(setting.equals(CLIP_DIRECTORY))
+                else if(setting.equals(FFMPEG_FILEPATH))
                 {
-                    settings.setClipPath(newValue);
+                    settings.setFfmpegPath(newValue);
                 }
+                else
+                {
+                    if(!newValueFile.isDirectory())
+                    {
+                        print("%s is not a directory", newValue);
+                        continue;
+                    }
+                    if(setting.equals(RECORDING_DIRECTORY))
+                    {
+                        settings.setRecordingPath(newValue);
+                    }
+                    else if(setting.equals(CLIP_DIRECTORY))
+                    {
+                        settings.setClipPath(newValue);
+                    }
+                }
+            }
+            else if(setting.equals(ADDITIONAL_GAMES))
+            {
+                editGameSet(settings.getAdditionalGames());
+            }
+            else if(setting.equals(EXCLUDED_GAMES))
+            {
+                editGameSet(settings.getExcludedGames());
             }
             
             settings.save();
+        }
+    }
+    
+    private void editGameSet(Set<String> games)
+    {
+        print(games.toString());
+        String mode = chooseFromList("Add or remove?", "add", "remove");
+        if(mode.equals("add"))
+        {
+            print("Enter a name of or relative path to a game executable");
+            games.add(readLine());
+        }
+        else if(mode.equals("remove"))
+        {
+            String game = chooseFromList("Choose a game to remove", games.toArray(new String[0]));
+            games.remove(game);
         }
     }
 }

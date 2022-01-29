@@ -31,6 +31,7 @@ public class Settings
         public String clipPath;
         
         public Set<String> excludedGames = new HashSet<>();
+        public Set<String> additionalGames = new HashSet<>();
         public Set<String> games = new HashSet<>();
         public long lastFetchedGamesTimestamp;
     }
@@ -74,6 +75,8 @@ public class Settings
         
         try
         {
+            container.games.addAll(container.additionalGames);
+            container.games.removeAll(container.excludedGames);
             objectMapper.writerWithDefaultPrettyPrinter().writeValue(settingsFile, container);
         }
         catch(IOException e)
@@ -135,6 +138,11 @@ public class Settings
     public Set<String> getExcludedGames()
     {
         return container.excludedGames;
+    }
+    
+    public Set<String> getAdditionalGames()
+    {
+        return container.additionalGames;
     }
     
     public String getSettingsFilePath()

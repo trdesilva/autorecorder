@@ -16,6 +16,7 @@ public class MainCli extends Cli
         SettingsCli settingsCli = new SettingsCli(settings);
         while(true)
         {
+            print("Main menu");
             String answer = chooseFromList("Pick something:", "clip", "settings");
             if(answer.equals("clip"))
             {

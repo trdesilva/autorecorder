@@ -38,6 +38,7 @@ public class Obs
         if(recording.get())
         {
             System.out.println("stopping recording");
+            // OBS prompts if you don't force kill
             process.destroyForcibly();
             System.out.println("recording stopped");
             recording.set(false);

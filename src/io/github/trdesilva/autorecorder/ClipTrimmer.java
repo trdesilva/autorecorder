@@ -1,7 +1,13 @@
 package io.github.trdesilva.autorecorder;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.input.ReaderInputStream;
+
+import javax.management.openmbean.InvalidOpenTypeException;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.nio.file.Paths;
 import java.time.Duration;
 
@@ -40,7 +46,12 @@ public class ClipTrimmer
         
         String[] ffmpegArgs = {settings.getFfmpegPath(), "-i", source, "-ss", startArg, "-to", endArg, "-c", "copy", dest};
         Process ffmpegProc = Runtime.getRuntime().exec(ffmpegArgs, null, new File(Paths.get(settings.getFfmpegPath()).getParent().toString()));
-        
-        System.out.println("ffmpeg returned " + ffmpegProc.waitFor());
+        int ffmpegResult = ffmpegProc.waitFor();
+        if(ffmpegResult != 0)
+        {
+            String error = IOUtils.toString(ffmpegProc.getErrorStream(), Charset.defaultCharset());
+            System.out.println("FFMpeg failed:\n" + error);
+            throw new IOException(error);
+        }
     }
 }
