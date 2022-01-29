@@ -11,6 +11,7 @@ import org.joda.time.DateTime;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -19,6 +20,8 @@ import java.util.Set;
 public class Settings
 {
     
+    public static final Path SETTINGS_DIR = Paths.get(System.getenv("LOCALAPPDATA"))
+                                                 .resolve("autorecorder");
     private final File settingsFile;
     
     private static class SettingsContainer
@@ -43,10 +46,7 @@ public class Settings
     {
         objectMapper = new ObjectMapper();
         container = new SettingsContainer();
-        settingsFile = new File(Paths.get(System.getenv("LOCALAPPDATA"))
-                                     .resolve("autorecorder")
-                                     .resolve("settings.json")
-                                     .toString());
+        settingsFile = new File(SETTINGS_DIR.resolve("settings.json").toString());
     }
     
     public void populate()

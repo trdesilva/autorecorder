@@ -11,5 +11,8 @@
     <orderEntry type="library" name="fasterxml.jackson.core.databind" level="project" />
     <orderEntry type="library" name="joda.time" level="project" />
     <orderEntry type="library" name="commons.io" level="project" />
+    <orderEntry type="library" name="google.api.client" level="project" />
+    <orderEntry type="library" name="google.oauth.client.jetty" level="project" />
+    <orderEntry type="library" name="google.apis.api.services.youtube" level="project" />
   </component>
 </module>

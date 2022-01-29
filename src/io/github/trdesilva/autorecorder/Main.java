@@ -14,7 +14,8 @@ public class Main
         GameListener listener = new GameListener(obs, settings);
         listener.start();
         
-        MainCli cli = new MainCli(settings);
+        Uploader uploader = new YoutubeUploader(settings);
+        MainCli cli = new MainCli(settings, uploader);
         cli.run();
         
         listener.stop();
