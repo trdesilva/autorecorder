@@ -1,4 +1,4 @@
-package io.github.trdesilva.autorecorder;
+package io.github.trdesilva.autorecorder.upload.youtube;
 
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
@@ -14,6 +14,8 @@ import com.google.api.services.youtube.YouTube;
 import com.google.api.services.youtube.model.Video;
 import com.google.api.services.youtube.model.VideoSnippet;
 import com.google.api.services.youtube.model.VideoStatus;
+import io.github.trdesilva.autorecorder.Settings;
+import io.github.trdesilva.autorecorder.upload.Uploader;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -21,7 +23,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -44,6 +45,11 @@ public class YoutubeUploader extends Uploader
     @Override
     public String upload(String clipName, String videoTitle, String description) throws IOException
     {
+        return upload(clipName, videoTitle, description, PrivacyStatus.PRIVATE);
+    }
+    
+    public String upload(String clipName, String videoTitle, String description, PrivacyStatus privacyStatus) throws IOException
+    {
         try
         {
             YouTube youtubeService = getService();
@@ -53,14 +59,23 @@ public class YoutubeUploader extends Uploader
             
             // Add the snippet object property to the Video object.
             VideoSnippet snippet = new VideoSnippet();
-            snippet.setCategoryId("22");
+            // gaming category
+            snippet.setCategoryId("20");
+            
+            description = description.strip().replace("<", "lt").replace(">", "gt");
+            if(description.length() > 5000) description = description.substring(0, 5000);
             snippet.setDescription(description);
+            
+            videoTitle = videoTitle.strip().replace("<", "lt").replace(">", "gt");
+            if(videoTitle.length() > 100) videoTitle = videoTitle.substring(0, 100);
             snippet.setTitle(videoTitle);
+            
             video.setSnippet(snippet);
             
             // Add the status object property to the Video object.
             VideoStatus status = new VideoStatus();
-            status.setPrivacyStatus("private");
+            status.setPrivacyStatus(privacyStatus.name().toLowerCase());
+            status.setSelfDeclaredMadeForKids(false);
             video.setStatus(status);
             
             File mediaFile = getClip(clipName);

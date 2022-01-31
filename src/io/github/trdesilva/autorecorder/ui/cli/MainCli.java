@@ -1,13 +1,14 @@
 package io.github.trdesilva.autorecorder.ui.cli;
 
 import io.github.trdesilva.autorecorder.Settings;
-import io.github.trdesilva.autorecorder.Uploader;
+import io.github.trdesilva.autorecorder.upload.Uploader;
+import io.github.trdesilva.autorecorder.upload.youtube.YoutubeUploader;
 
 public class MainCli extends Cli
 {
-    private Uploader uploader;
+    private YoutubeUploader uploader;
     
-    public MainCli(Settings settings, Uploader uploader)
+    public MainCli(Settings settings, YoutubeUploader uploader)
     {
         super(settings);
         this.uploader = uploader;

@@ -1,0 +1,13 @@
+Copyright © 2022 Thomas DeSilva
+
+This software is provided under the GPLv3 license. See here for full terms:
+
+http://www.gnu.org/licenses/gpl-3.0.html
+
+This project depends on the vlcj framework; its source code can be found here:
+
+https://github.com/caprica/vlcj
+
+This project depends on libvlc; its source code can be found here:
+
+https://github.com/videolan/vlc

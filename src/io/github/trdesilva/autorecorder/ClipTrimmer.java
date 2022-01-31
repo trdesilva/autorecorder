@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
 public class ClipTrimmer
 {
@@ -42,16 +43,31 @@ public class ClipTrimmer
         if(!dest.startsWith(settings.getClipPath()))
         {
             dest = Paths.get(settings.getClipPath()).resolve(dest).toString();
+            if(new File(dest).exists())
+            {
+                throw new IOException("Destination already exists");
+            }
         }
         
+        // TODO make sure dest doesn't already exist
         String[] ffmpegArgs = {settings.getFfmpegPath(), "-i", source, "-ss", startArg, "-to", endArg, "-c", "copy", dest};
         Process ffmpegProc = Runtime.getRuntime().exec(ffmpegArgs, null, new File(Paths.get(settings.getFfmpegPath()).getParent().toString()));
-        int ffmpegResult = ffmpegProc.waitFor();
+        InputStream stdout = ffmpegProc.getInputStream();
+        InputStream stderr = ffmpegProc.getErrorStream();
+        String ffmpegOutput = "";
+        String ffmpegError = "";
+        int ffmpegResult;
+        // ffmpeg hangs if you don't read its stdout
+        while(!ffmpegProc.waitFor(1000, TimeUnit.MILLISECONDS))
+        {
+            ffmpegOutput += IOUtils.toString(stdout, Charset.defaultCharset());
+            ffmpegError += IOUtils.toString(stderr, Charset.defaultCharset());
+        }
+        ffmpegResult = ffmpegProc.waitFor();
         if(ffmpegResult != 0)
         {
-            String error = IOUtils.toString(ffmpegProc.getErrorStream(), Charset.defaultCharset());
-            System.out.println("FFMpeg failed:\n" + error);
-            throw new IOException(error);
+            System.out.println("FFMpeg failed:\n" + ffmpegError);
+            throw new IOException(ffmpegError);
         }
     }
 }

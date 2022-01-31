@@ -1,16 +1,17 @@
 package io.github.trdesilva.autorecorder.ui.cli;
 
 import io.github.trdesilva.autorecorder.Settings;
-import io.github.trdesilva.autorecorder.Uploader;
+import io.github.trdesilva.autorecorder.upload.Uploader;
+import io.github.trdesilva.autorecorder.upload.youtube.YoutubeUploader;
 
 import java.io.File;
 import java.io.IOException;
 
 public class UploaderCli extends Cli
 {
-    private Uploader uploader;
+    private YoutubeUploader uploader;
     
-    public UploaderCli(Settings settings, Uploader uploader)
+    public UploaderCli(Settings settings, YoutubeUploader uploader)
     {
         super(settings);
         
