@@ -69,6 +69,8 @@ public class MainWindow
         mainFrame.setLocationRelativeTo(null);
         mainFrame.setVisible(true);
         
+        // TODO add status bar?
+        
         mainFrame.addWindowListener(new WindowAdapter()
         {
             @Override
@@ -87,6 +89,11 @@ public class MainWindow
                 });
             }
         });
+    }
+    
+    public JPanel getMainPanel()
+    {
+        return mainPanel;
     }
     
     public void showClipView(File videoFile)

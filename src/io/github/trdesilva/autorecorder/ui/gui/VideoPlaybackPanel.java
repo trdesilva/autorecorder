@@ -1,6 +1,7 @@
 package io.github.trdesilva.autorecorder.ui.gui;
 
 import com.google.common.eventbus.Subscribe;
+import io.github.trdesilva.autorecorder.TimestampUtil;
 import net.miginfocom.swing.MigLayout;
 import uk.co.caprica.vlcj.factory.MediaPlayerFactory;
 import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent;
@@ -18,8 +19,11 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.BorderLayout;
 import java.awt.Canvas;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.io.Closeable;
@@ -30,6 +34,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static io.github.trdesilva.autorecorder.TimestampUtil.formatTime;
+import static io.github.trdesilva.autorecorder.TimestampUtil.parseTime;
+
 public class VideoPlaybackPanel extends JPanel implements AutoCloseable
 {
     private final SeekBar seekBar;
@@ -39,13 +46,14 @@ public class VideoPlaybackPanel extends JPanel implements AutoCloseable
     
     public VideoPlaybackPanel()
     {
-        setLayout(new BorderLayout());
+        setLayout(new MigLayout("", "[grow]", "[grow][60:6.25%:100]"));
         setPreferredSize(new Dimension(MainWindow.PREFERRED_WIDTH, 10 * MainWindow.PREFERRED_WIDTH / 16));
         
         mediaPlayerComponent = new EmbeddedMediaPlayerComponent();
         mediaPlayerComponent.setPreferredSize(new Dimension(MainWindow.PREFERRED_WIDTH, 9 * MainWindow.PREFERRED_WIDTH / 16));
         
         JPanel controlPanel = new JPanel();
+        controlPanel.setLayout(new MigLayout("fill", "[grow, center]", "[][]"));
         seekBar = new SeekBar();
         JButton playPauseButton = new JButton("Pause");
         playPauseButton.addActionListener(new AbstractAction()
@@ -65,16 +73,17 @@ public class VideoPlaybackPanel extends JPanel implements AutoCloseable
                 }
                 
                 isPlaying.set(!isPlaying.get());
+                seekBar.refresh();
             }
         });
         
         MainWindow.closeables.add(this);
         
-        controlPanel.add(seekBar);
-        controlPanel.add(playPauseButton);
+        controlPanel.add(seekBar, "cell 0 0, growx");
+        controlPanel.add(playPauseButton, "cell 0 1");
         
-        add(mediaPlayerComponent, BorderLayout.NORTH);
-        add(controlPanel, BorderLayout.SOUTH);
+        add(mediaPlayerComponent, "span, grow, wmin 400, hmin 225");
+        add(controlPanel, "span, grow");
     }
     
     public void play(File videoFile)
@@ -90,6 +99,16 @@ public class VideoPlaybackPanel extends JPanel implements AutoCloseable
         }
         seekBar.setDuration(duration);
         isPlaying.set(true);
+    }
+    
+    public void stop()
+    {
+        mediaPlayerComponent.mediaPlayer().controls().stop();
+    }
+    
+    public long getPlaybackTime()
+    {
+        return mediaPlayerComponent.mediaPlayer().status().time();
     }
     
     @Override
@@ -221,29 +240,6 @@ public class VideoPlaybackPanel extends JPanel implements AutoCloseable
         void setDuration(long duration)
         {
             durationLabel.setText(formatTime(duration));
-        }
-        
-        private String formatTime(long millis)
-        {
-            long hours = TimeUnit.MILLISECONDS.toHours(millis);
-            long minutes = TimeUnit.MILLISECONDS.toMinutes(millis % TimeUnit.HOURS.toMillis(1));
-            long seconds = TimeUnit.MILLISECONDS.toSeconds(millis % TimeUnit.MINUTES.toMillis(1));
-            return String.format("%d:%02d:%02d", hours, minutes, seconds);
-        }
-        
-        private long parseTime(String timestamp)
-        {
-            String[] numbers = timestamp.split(":");
-            
-            if(numbers.length == 3)
-            {
-                long millis = TimeUnit.SECONDS.toMillis(Long.parseLong(numbers[2]));
-                millis += TimeUnit.MINUTES.toMillis(Long.parseLong(numbers[1]));
-                millis += TimeUnit.HOURS.toMillis(Long.parseLong(numbers[0]));
-                
-                return millis;
-            }
-            return -1;
         }
     }
 }
