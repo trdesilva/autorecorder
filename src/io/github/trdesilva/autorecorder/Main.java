@@ -1,8 +1,9 @@
 package io.github.trdesilva.autorecorder;
 
+import io.github.trdesilva.autorecorder.record.GameListener;
+import io.github.trdesilva.autorecorder.record.Obs;
 import io.github.trdesilva.autorecorder.ui.cli.MainCli;
 import io.github.trdesilva.autorecorder.ui.gui.MainWindow;
-import io.github.trdesilva.autorecorder.upload.Uploader;
 import io.github.trdesilva.autorecorder.upload.youtube.YoutubeUploader;
 
 public class Main

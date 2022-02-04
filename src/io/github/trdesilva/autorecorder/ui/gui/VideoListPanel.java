@@ -14,6 +14,8 @@ public class VideoListPanel extends JScrollPane
     public VideoListPanel(File videoDir, VideoListSelectionConsumer selectionConsumer)
     {
         // TODO filename filter for only videos/error hadnling
+        // TODO custom renderer with thumbnails
+        // TODO update file list
         JList<File> videos = new JList<>(videoDir.listFiles());
         videos.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         videos.addListSelectionListener(new ListSelectionListener()

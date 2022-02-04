@@ -40,6 +40,7 @@ import static io.github.trdesilva.autorecorder.TimestampUtil.parseTime;
 public class VideoPlaybackPanel extends JPanel implements AutoCloseable
 {
     private final SeekBar seekBar;
+    private final JButton playPauseButton;
     private EmbeddedMediaPlayerComponent mediaPlayerComponent;
     
     private AtomicBoolean isPlaying = new AtomicBoolean(false);
@@ -55,7 +56,7 @@ public class VideoPlaybackPanel extends JPanel implements AutoCloseable
         JPanel controlPanel = new JPanel();
         controlPanel.setLayout(new MigLayout("fill", "[grow, center]", "[][]"));
         seekBar = new SeekBar();
-        JButton playPauseButton = new JButton("Pause");
+        playPauseButton = new JButton("Pause");
         playPauseButton.addActionListener(new AbstractAction()
         {
             @Override
@@ -99,6 +100,7 @@ public class VideoPlaybackPanel extends JPanel implements AutoCloseable
         }
         seekBar.setDuration(duration);
         isPlaying.set(true);
+        playPauseButton.setText("Pause");
     }
     
     public void stop()
@@ -141,6 +143,7 @@ public class VideoPlaybackPanel extends JPanel implements AutoCloseable
                 {
                     super.focusLost(e);
                     changeTime();
+                    refresh();
                 }
             });
             

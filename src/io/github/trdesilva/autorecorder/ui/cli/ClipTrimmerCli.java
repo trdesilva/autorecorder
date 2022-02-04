@@ -1,6 +1,6 @@
 package io.github.trdesilva.autorecorder.ui.cli;
 
-import io.github.trdesilva.autorecorder.ClipTrimmer;
+import io.github.trdesilva.autorecorder.clip.ClipTrimmer;
 import io.github.trdesilva.autorecorder.Settings;
 
 import java.io.File;

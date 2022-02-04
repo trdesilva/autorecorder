@@ -1,5 +1,6 @@
-package io.github.trdesilva.autorecorder;
+package io.github.trdesilva.autorecorder.clip;
 
+import io.github.trdesilva.autorecorder.Settings;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.ReaderInputStream;
 
@@ -43,12 +44,13 @@ public class ClipTrimmer
         if(!dest.startsWith(settings.getClipPath()))
         {
             dest = Paths.get(settings.getClipPath()).resolve(dest).toString();
-            if(new File(dest).exists())
-            {
-                throw new IOException("Destination already exists");
-            }
         }
-        
+    
+    
+        if(new File(dest).exists())
+        {
+            throw new IOException("Destination already exists");
+        }
         // TODO make sure dest doesn't already exist
         String[] ffmpegArgs = {settings.getFfmpegPath(), "-i", source, "-ss", startArg, "-to", endArg, "-c", "copy", dest};
         Process ffmpegProc = Runtime.getRuntime().exec(ffmpegArgs, null, new File(Paths.get(settings.getFfmpegPath()).getParent().toString()));
@@ -60,8 +62,14 @@ public class ClipTrimmer
         // ffmpeg hangs if you don't read its stdout
         while(!ffmpegProc.waitFor(1000, TimeUnit.MILLISECONDS))
         {
-            ffmpegOutput += IOUtils.toString(stdout, Charset.defaultCharset());
-            ffmpegError += IOUtils.toString(stderr, Charset.defaultCharset());
+            if(stdout.available() > 0)
+            {
+                ffmpegOutput += IOUtils.toString(stdout, Charset.defaultCharset());
+            }
+            if(stderr.available() > 0)
+            {
+                ffmpegError += IOUtils.toString(stderr, Charset.defaultCharset());
+            }
         }
         ffmpegResult = ffmpegProc.waitFor();
         if(ffmpegResult != 0)

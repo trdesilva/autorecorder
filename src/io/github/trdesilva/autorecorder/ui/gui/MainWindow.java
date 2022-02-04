@@ -1,6 +1,10 @@
 package io.github.trdesilva.autorecorder.ui.gui;
 
 import io.github.trdesilva.autorecorder.Settings;
+import io.github.trdesilva.autorecorder.clip.ClipQueue;
+import io.github.trdesilva.autorecorder.clip.ClipTrimmer;
+import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
+import net.miginfocom.swing.MigLayout;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -10,9 +14,6 @@ import java.awt.CardLayout;
 import java.awt.Dimension;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.io.Closeable;
 import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
@@ -23,19 +24,21 @@ public class MainWindow
     public static final int PREFERRED_HEIGHT = 600;
     
     public static Set<AutoCloseable> closeables = new HashSet<>();
-    
     private static MainWindow instance;
-    private final JPanel mainPanel;
-    private final CardLayout mainLayout;
     
     public static MainWindow getInstance()
     {
         return instance;
     }
     
+    private final JPanel mainPanel;
+    private final CardLayout mainLayout;
     private final JFrame mainFrame;
     
     private final ClippingPanel clippingPanel;
+    private final StatusPanel statusPanel;
+    
+    private ClipQueue clipQueue;
     
     public MainWindow(Settings settings) throws Exception
     {
@@ -44,8 +47,12 @@ public class MainWindow
         // components
         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         mainFrame = new JFrame("Autorecorder");
+        // TODO figure out minimizing to tray
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     
+        JPanel metaPanel = new JPanel();
+        metaPanel.setLayout(new MigLayout("fill, insets 0 0 0 0", "[grow]", "[grow][30!]"));
+        
         mainPanel = new JPanel();
     
         mainLayout = new CardLayout();
@@ -58,18 +65,26 @@ public class MainWindow
         tabbedPane.setSelectedIndex(0);
         tabbedPane.setPreferredSize(new Dimension(PREFERRED_WIDTH, PREFERRED_HEIGHT));
         
-        clippingPanel = new ClippingPanel();
+        clipQueue = new ClipQueue(new ClipTrimmer(settings));
+        
+        clippingPanel = new ClippingPanel(clipQueue);
         
         mainPanel.add(tabbedPane, "mainView");
         mainPanel.add(clippingPanel, "clippingView");
         mainLayout.show(mainPanel, "mainView");
         
-        mainFrame.getContentPane().add(mainPanel);
+        statusPanel = new StatusPanel();
+        StatusQueue.getInstance().setConsumer(statusPanel);
+        
+        metaPanel.add(mainPanel, "cell 0 0, grow");
+        metaPanel.add(statusPanel, "cell 0 1, growx");
+        
+        mainFrame.getContentPane().add(metaPanel);
         mainFrame.pack();
         mainFrame.setLocationRelativeTo(null);
         mainFrame.setVisible(true);
         
-        // TODO add status bar?
+        clipQueue.startProcessing();
         
         mainFrame.addWindowListener(new WindowAdapter()
         {
@@ -77,6 +92,7 @@ public class MainWindow
             public void windowClosing(WindowEvent e)
             {
                 super.windowClosing(e);
+                clipQueue.stopProcessing();
                 closeables.forEach(ac -> {
                     try
                     {

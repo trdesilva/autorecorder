@@ -1,4 +1,6 @@
-package io.github.trdesilva.autorecorder;
+package io.github.trdesilva.autorecorder.record;
+
+import io.github.trdesilva.autorecorder.Settings;
 
 import java.io.IOException;
 import java.nio.file.Path;
