@@ -49,11 +49,11 @@ public class ClipQueue
                     try
                     {
                         trimmer.makeClip(job.getSource(), job.getDest(), job.getStartArg(), job.getEndArg());
-                        StatusQueue.getInstance().postMessage(new StatusMessage(StatusType.SUCCESS, "Clip created: " + job.getDest()));
+                        StatusQueue.postMessage(new StatusMessage(StatusType.SUCCESS, "Clip created: " + job.getDest()));
                     }
                     catch(IOException|InterruptedException e)
                     {
-                        StatusQueue.getInstance().postMessage(new StatusMessage(StatusType.FAILURE, "Failed to create clip: " + job.getDest()));
+                        StatusQueue.postMessage(new StatusMessage(StatusType.FAILURE, "Failed to create clip: " + job.getDest()));
                     }
                 }
             });

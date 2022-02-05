@@ -1,5 +1,7 @@
 package io.github.trdesilva.autorecorder.ui.gui;
 
+import net.miginfocom.swing.MigLayout;
+
 import javax.swing.JList;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
@@ -11,12 +13,16 @@ import java.io.File;
 
 public class VideoListPanel extends JScrollPane
 {
+    private final File videoDir;
+    private final JList<File> videos;
+    
     public VideoListPanel(File videoDir, VideoListSelectionConsumer selectionConsumer)
     {
         // TODO filename filter for only videos/error hadnling
         // TODO custom renderer with thumbnails
         // TODO update file list
-        JList<File> videos = new JList<>(videoDir.listFiles());
+        this.videoDir = videoDir;
+        videos = new JList<>(videoDir.listFiles());
         videos.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         videos.addListSelectionListener(new ListSelectionListener()
         {
@@ -29,7 +35,10 @@ public class VideoListPanel extends JScrollPane
         });
         getViewport().add(videos);
         setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        
-        setPreferredSize(new Dimension(3*MainWindow.PREFERRED_WIDTH/4, MainWindow.PREFERRED_HEIGHT));
+    }
+    
+    public void updateList()
+    {
+        videos.setListData(videoDir.listFiles());
     }
 }

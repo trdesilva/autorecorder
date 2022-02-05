@@ -36,13 +36,17 @@ public class RecordingInfoPanel extends JPanel implements VideoListSelectionCons
         resolution = new JLabel();
         
         clipButton = new JButton("Clip...");
+        clipButton.setEnabled(false);
         clipButton.addActionListener(new AbstractAction()
         {
             @Override
             public void actionPerformed(ActionEvent e)
             {
                 System.out.println("firing clipper start " + recording);
-                MainWindow.getInstance().showClipView(recording);
+                if(recording != null)
+                {
+                    MainWindow.getInstance().showClipView(recording);
+                }
             }
         });
         
@@ -60,9 +64,13 @@ public class RecordingInfoPanel extends JPanel implements VideoListSelectionCons
     {
         this.recording = video;
         
-        title.setText(video.getName());
-        creationDate.setText("Created: ");
-        duration.setText("Duration: ");
-        resolution.setText("Resolution: ");
+        if(video != null)
+        {
+            title.setText(video.getName());
+            creationDate.setText("Created: ");
+            duration.setText("Duration: ");
+            resolution.setText("Resolution: ");
+            clipButton.setEnabled(true);
+        }
     }
 }

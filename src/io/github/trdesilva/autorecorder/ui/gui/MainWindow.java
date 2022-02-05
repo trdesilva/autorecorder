@@ -35,6 +35,9 @@ public class MainWindow
     private final CardLayout mainLayout;
     private final JFrame mainFrame;
     
+    private final RecordingListPanel recordingListPanel;
+    private final ClipListPanel clipListPanel;
+    
     private final ClippingPanel clippingPanel;
     private final StatusPanel statusPanel;
     
@@ -57,10 +60,13 @@ public class MainWindow
     
         mainLayout = new CardLayout();
         mainPanel.setLayout(mainLayout);
+    
+        recordingListPanel = new RecordingListPanel(settings);
+        clipListPanel = new ClipListPanel(settings);
         
         JTabbedPane tabbedPane = new JTabbedPane();
-        tabbedPane.add("Recordings", new RecordingListPanel(settings));
-        tabbedPane.add("Clips", new ClipListPanel(settings));
+        tabbedPane.add("Recordings", recordingListPanel);
+        tabbedPane.add("Clips", clipListPanel);
         tabbedPane.add("Settings", new SettingsPanel());
         tabbedPane.setSelectedIndex(0);
         tabbedPane.setPreferredSize(new Dimension(PREFERRED_WIDTH, PREFERRED_HEIGHT));
@@ -74,7 +80,7 @@ public class MainWindow
         mainLayout.show(mainPanel, "mainView");
         
         statusPanel = new StatusPanel();
-        StatusQueue.getInstance().setConsumer(statusPanel);
+        StatusQueue.setConsumer(statusPanel);
         
         metaPanel.add(mainPanel, "cell 0 0, grow");
         metaPanel.add(statusPanel, "cell 0 1, growx");
@@ -85,6 +91,18 @@ public class MainWindow
         mainFrame.setVisible(true);
         
         clipQueue.startProcessing();
+    
+        tabbedPane.addChangeListener(e -> {
+            int tabIndex = tabbedPane.getSelectedIndex();
+            if(tabIndex == tabbedPane.indexOfTab("Recordings"))
+            {
+                recordingListPanel.update();
+            }
+            else if(tabIndex == tabbedPane.indexOfTab("Clips"))
+            {
+                clipListPanel.update();
+            }
+        });
         
         mainFrame.addWindowListener(new WindowAdapter()
         {

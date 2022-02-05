@@ -7,7 +7,7 @@ public class StatusQueue
 {
     private static StatusQueue instance = new StatusQueue();
     
-    public static StatusQueue getInstance()
+    private static StatusQueue getInstance()
     {
         return instance;
     }
@@ -41,15 +41,22 @@ public class StatusQueue
         });
     }
     
-    public void setConsumer(StatusConsumer consumer)
+    public static void setConsumer(StatusConsumer consumer)
     {
-        this.consumer = consumer;
-        consumerThread.start();
+        if(instance.consumer == null)
+        {
+            instance.consumer = consumer;
+            instance.consumerThread.start();
+        }
+        else
+        {
+            throw new IllegalStateException("Can only set StatusQueue's consumer once");
+        }
     }
     
-    public void postMessage(StatusMessage message)
+    public static void postMessage(StatusMessage message)
     {
-        messageQueue.offer(message);
-        semaphore.release(1);
+        instance.messageQueue.offer(message);
+        instance.semaphore.release(1);
     }
 }

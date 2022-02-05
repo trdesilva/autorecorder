@@ -14,6 +14,8 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import java.io.File;
 
+import static io.github.trdesilva.autorecorder.TimestampUtil.parseTime;
+
 public class ClippingPanel extends JPanel
 {
     private VideoPlaybackPanel playbackPanel;
@@ -79,7 +81,7 @@ public class ClippingPanel extends JPanel
         });
         
         previewButton.addActionListener(e -> {
-        
+            playbackPanel.playSubsection(parseTime(startTimeField.getText()), parseTime(endTimeField.getText()));
         });
         
         saveButton.addActionListener(e -> {
@@ -87,7 +89,7 @@ public class ClippingPanel extends JPanel
             String extension = videoFile.getName().substring(videoFile.getName().indexOf('.'));
             clipQueue.enqueue(new ClipJob(videoFile.getAbsolutePath(), titleField.getText() + extension,
                                           startTimeField.getText(), endTimeField.getText()));
-            StatusQueue.getInstance().postMessage(new StatusMessage(StatusType.INFO, "Saving clip: " + titleField.getText()));
+            StatusQueue.postMessage(new StatusMessage(StatusType.INFO, "Saving clip: " + titleField.getText()));
         });
     }
     

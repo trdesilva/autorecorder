@@ -21,12 +21,13 @@ public class ClipInfoPanel extends JPanel implements VideoListSelectionConsumer
     
     public ClipInfoPanel()
     {
-        title = new WrappingLabel("Title");
+        title = new WrappingLabel("");
         title.setFont(new Font(null, Font.BOLD, 14));
-        duration = new JLabel("Duration: ");
-        resolution = new JLabel("Resolution: ");
+        duration = new JLabel("");
+        resolution = new JLabel("");
         
         uploadButton = new JButton("Upload...");
+        uploadButton.setEnabled(false);
     
         setLayout(new GridLayout(4, 1));
         
@@ -42,8 +43,12 @@ public class ClipInfoPanel extends JPanel implements VideoListSelectionConsumer
     {
         this.clip = video;
         
-        title.setText(video.getName());
-        duration.setText("Duration: ");
-        resolution.setText("Resolution: ");
+        if(video != null)
+        {
+            title.setText(video.getName());
+            duration.setText("Duration: ");
+            resolution.setText("Resolution: ");
+            uploadButton.setEnabled(true);
+        }
     }
 }

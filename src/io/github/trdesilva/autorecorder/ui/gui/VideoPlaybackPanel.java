@@ -1,12 +1,7 @@
 package io.github.trdesilva.autorecorder.ui.gui;
 
-import com.google.common.eventbus.Subscribe;
-import io.github.trdesilva.autorecorder.TimestampUtil;
 import net.miginfocom.swing.MigLayout;
-import uk.co.caprica.vlcj.factory.MediaPlayerFactory;
 import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent;
-import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
-import uk.co.caprica.vlcj.player.embedded.videosurface.VideoSurface;
 
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
@@ -17,22 +12,13 @@ import javax.swing.JTextField;
 import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.BorderLayout;
-import java.awt.Canvas;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static io.github.trdesilva.autorecorder.TimestampUtil.formatTime;
 import static io.github.trdesilva.autorecorder.TimestampUtil.parseTime;
@@ -44,6 +30,7 @@ public class VideoPlaybackPanel extends JPanel implements AutoCloseable
     private EmbeddedMediaPlayerComponent mediaPlayerComponent;
     
     private AtomicBoolean isPlaying = new AtomicBoolean(false);
+    private Thread subsectionControlThread;
     
     public VideoPlaybackPanel()
     {
@@ -62,18 +49,7 @@ public class VideoPlaybackPanel extends JPanel implements AutoCloseable
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                if(isPlaying.get())
-                {
-                    playPauseButton.setText("Play");
-                    mediaPlayerComponent.mediaPlayer().controls().pause();
-                }
-                else
-                {
-                    playPauseButton.setText("Pause");
-                    mediaPlayerComponent.mediaPlayer().controls().play();
-                }
-                
-                isPlaying.set(!isPlaying.get());
+                setIsPlaying(!isPlaying.get());
                 seekBar.refresh();
             }
         });
@@ -87,20 +63,37 @@ public class VideoPlaybackPanel extends JPanel implements AutoCloseable
         add(controlPanel, "span, grow");
     }
     
+    public synchronized void setIsPlaying(boolean isPlaying)
+    {
+        if(!isPlaying)
+        {
+            playPauseButton.setText("Play");
+            mediaPlayerComponent.mediaPlayer().controls().pause();
+        }
+        else
+        {
+            playPauseButton.setText("Pause");
+            mediaPlayerComponent.mediaPlayer().controls().play();
+        }
+    
+        this.isPlaying.set(isPlaying);
+    }
+    
     public void play(File videoFile)
     {
         System.out.println("playing " + videoFile);
-        mediaPlayerComponent.mediaPlayer().media().play(videoFile.getAbsolutePath());
+        mediaPlayerComponent.mediaPlayer().media().prepare(videoFile.getAbsolutePath());
+        setIsPlaying(true);
         
         // mediaPlayer needs a moment to load metadata, so spin on it
-        long duration = mediaPlayerComponent.mediaPlayer().media().info().duration();
-        while(duration == -1)
-        {
-            duration = mediaPlayerComponent.mediaPlayer().media().info().duration();
-        }
-        seekBar.setDuration(duration);
-        isPlaying.set(true);
-        playPauseButton.setText("Pause");
+        new Thread(() -> {
+            long duration = mediaPlayerComponent.mediaPlayer().media().info().duration();
+            while(duration == -1)
+            {
+                duration = mediaPlayerComponent.mediaPlayer().media().info().duration();
+            }
+            seekBar.setDuration(duration);
+        }).start();
     }
     
     public void stop()
@@ -111,6 +104,34 @@ public class VideoPlaybackPanel extends JPanel implements AutoCloseable
     public long getPlaybackTime()
     {
         return mediaPlayerComponent.mediaPlayer().status().time();
+    }
+    
+    public void playSubsection(long start, long end)
+    {
+        seekBar.changeTime(start);
+        
+        if(subsectionControlThread != null && subsectionControlThread.isAlive())
+        {
+            subsectionControlThread.interrupt();
+        }
+        subsectionControlThread = new Thread(() -> {
+            try
+            {
+                Thread.sleep(end - mediaPlayerComponent.mediaPlayer().status().time() - 1000);
+                while(mediaPlayerComponent.mediaPlayer().status().time() < end)
+                {
+                    Thread.sleep(50);
+                }
+                setIsPlaying(false);
+            }
+            catch(InterruptedException e)
+            {
+                return;
+            }
+        });
+        
+        subsectionControlThread.start();
+        setIsPlaying(true);
     }
     
     @Override
@@ -136,13 +157,14 @@ public class VideoPlaybackPanel extends JPanel implements AutoCloseable
         public SeekBar()
         {
             timeField = new JTextField("9:99:99");
+            timeField.setColumns(5);
             timeField.addFocusListener(new FocusAdapter()
             {
                 @Override
                 public void focusLost(FocusEvent e)
                 {
                     super.focusLost(e);
-                    changeTime();
+                    changeTime(parseTime(timeField.getText()));
                     refresh();
                 }
             });
@@ -161,14 +183,7 @@ public class VideoPlaybackPanel extends JPanel implements AutoCloseable
                     if(!positionChanging.get())
                     {
                         JSlider source = (JSlider) e.getSource();
-                        if(source.getValueIsAdjusting())
-                        {
-                            sliderChanging.set(true);
-                        }
-                        else
-                        {
-                            sliderChanging.set(false);
-                        }
+                        sliderChanging.set(source.getValueIsAdjusting());
                         mediaPlayerComponent.mediaPlayer().controls().setPosition(source.getValue() / 1000.0f);
                     }
                 }
@@ -230,12 +245,11 @@ public class VideoPlaybackPanel extends JPanel implements AutoCloseable
             }
         }
         
-        void changeTime()
+        void changeTime(long time)
         {
-            String timestamp = timeField.getText();
-            long time = parseTime(timestamp);
             if(time != -1)
             {
+                this.time = time;
                 mediaPlayerComponent.mediaPlayer().controls().setTime(time);
             }
         }
