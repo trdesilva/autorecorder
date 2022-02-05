@@ -2,6 +2,7 @@ package io.github.trdesilva.autorecorder.ui.cli;
 
 import io.github.trdesilva.autorecorder.Settings;
 import io.github.trdesilva.autorecorder.upload.Uploader;
+import io.github.trdesilva.autorecorder.upload.youtube.PrivacyStatus;
 import io.github.trdesilva.autorecorder.upload.youtube.YoutubeUploader;
 
 import java.io.File;
@@ -45,9 +46,11 @@ public class UploaderCli extends Cli
                     print("Enter a video description");
                     String description = readLine();
                     
+                    String privacy = chooseFromList("Choose a privacy setting", PrivacyStatus.PRIVATE.name(), PrivacyStatus.UNLISTED.name(), PrivacyStatus.PUBLIC.name());
+                    
                     try
                     {
-                        String url = uploader.upload(clip, videoTitle, description);
+                        String url = uploader.upload(clip, videoTitle, description, PrivacyStatus.valueOf(privacy));
                         print("Video uploaded to " + url);
                     }
                     catch(IOException e)

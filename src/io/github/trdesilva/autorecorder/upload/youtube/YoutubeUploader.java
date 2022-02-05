@@ -15,6 +15,8 @@ import com.google.api.services.youtube.model.Video;
 import com.google.api.services.youtube.model.VideoSnippet;
 import com.google.api.services.youtube.model.VideoStatus;
 import io.github.trdesilva.autorecorder.Settings;
+import io.github.trdesilva.autorecorder.upload.UploadJob;
+import io.github.trdesilva.autorecorder.upload.UploadJobValidator;
 import io.github.trdesilva.autorecorder.upload.Uploader;
 
 import java.io.BufferedInputStream;
@@ -29,6 +31,8 @@ import java.util.Collection;
 
 public class YoutubeUploader extends Uploader
 {
+    public static String PRIVACY_PROPERTY = "privacyStatus";
+    
     private static final String CLIENT_SECRETS = "client_secret.json";
     private static final Collection<String> SCOPES =
             Arrays.asList("https://www.googleapis.com/auth/youtube.upload");
@@ -43,9 +47,15 @@ public class YoutubeUploader extends Uploader
     }
     
     @Override
-    public String upload(String clipName, String videoTitle, String description) throws IOException
+    public String upload(UploadJob uploadJob) throws IOException
     {
-        return upload(clipName, videoTitle, description, PrivacyStatus.PRIVATE);
+        return upload(uploadJob.getClipName(), uploadJob.getVideoTitle(), uploadJob.getDescription(), PrivacyStatus.valueOf(uploadJob.getProperty(PRIVACY_PROPERTY)));
+    }
+    
+    @Override
+    public UploadJobValidator getValidator()
+    {
+        return new YoutubeJobValidator();
     }
     
     public String upload(String clipName, String videoTitle, String description, PrivacyStatus privacyStatus) throws IOException

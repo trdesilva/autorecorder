@@ -57,6 +57,7 @@ public class ClipQueue
                     }
                 }
             });
+            clippingThread.setName("Clipping thread");
             clippingThread.start();
         }
     }

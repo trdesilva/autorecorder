@@ -16,10 +16,17 @@ public abstract class Uploader
     }
     
     // should return the URL of the uploaded video
-    public abstract String upload(String clipName, String videoTitle, String description) throws IOException;
+    public abstract String upload(UploadJob job) throws IOException;
+    
+    public abstract UploadJobValidator getValidator();
     
     protected File getClip(String clipName)
     {
-        return Paths.get(settings.getClipPath(), clipName).toFile();
+        if(!clipName.startsWith(settings.getClipPath()))
+        {
+            return Paths.get(settings.getClipPath()).resolve(clipName).toFile();
+        }
+        
+        return new File(clipName);
     }
 }

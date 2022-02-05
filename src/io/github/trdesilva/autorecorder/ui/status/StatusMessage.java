@@ -6,12 +6,19 @@ public class StatusMessage
 {
     private StatusType type;
     private String message;
+    private String link;
     private DateTime timestamp;
     
     public StatusMessage(StatusType type, String message)
     {
+        this(type, message, null);
+    }
+    
+    public StatusMessage(StatusType type, String message, String link)
+    {
         this.type = type;
         this.message = message;
+        this.link = link;
         
         timestamp = DateTime.now();
     }
@@ -24,6 +31,11 @@ public class StatusMessage
     public String getMessage()
     {
         return message;
+    }
+    
+    public String getLink()
+    {
+        return link;
     }
     
     public DateTime getTimestamp()

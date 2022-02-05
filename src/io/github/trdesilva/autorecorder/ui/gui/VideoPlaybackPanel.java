@@ -1,6 +1,10 @@
 package io.github.trdesilva.autorecorder.ui.gui;
 
 import net.miginfocom.swing.MigLayout;
+import uk.co.caprica.vlcj.media.MediaEventAdapter;
+import uk.co.caprica.vlcj.player.base.MediaPlayer;
+import uk.co.caprica.vlcj.player.base.MediaPlayerEventAdapter;
+import uk.co.caprica.vlcj.player.base.MediaPlayerEventListener;
 import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent;
 
 import javax.swing.AbstractAction;
@@ -9,6 +13,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -39,6 +44,20 @@ public class VideoPlaybackPanel extends JPanel implements AutoCloseable
         
         mediaPlayerComponent = new EmbeddedMediaPlayerComponent();
         mediaPlayerComponent.setPreferredSize(new Dimension(MainWindow.PREFERRED_WIDTH, 9 * MainWindow.PREFERRED_WIDTH / 16));
+        mediaPlayerComponent.mediaPlayer().events().addMediaPlayerEventListener(new MediaPlayerEventAdapter()
+        {
+            @Override
+            public void stopped(MediaPlayer mediaPlayer)
+            {
+                SwingUtilities.invokeLater(() -> {
+                    mediaPlayer.submit(() -> {
+                        seekBar.changeTime(0);
+                        setIsPlaying(false);
+                        seekBar.refresh();
+                    });
+                });
+            }
+        });
         
         JPanel controlPanel = new JPanel();
         controlPanel.setLayout(new MigLayout("fill", "[grow, center]", "[][]"));

@@ -1,5 +1,7 @@
 package io.github.trdesilva.autorecorder.ui.gui;
 
+import io.github.trdesilva.autorecorder.Main;
+
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -28,6 +30,12 @@ public class ClipInfoPanel extends JPanel implements VideoListSelectionConsumer
         
         uploadButton = new JButton("Upload...");
         uploadButton.setEnabled(false);
+        uploadButton.addActionListener(e -> {
+            if(clip != null)
+            {
+                MainWindow.getInstance().showUploadView(clip);
+            }
+        });
     
         setLayout(new GridLayout(4, 1));
         

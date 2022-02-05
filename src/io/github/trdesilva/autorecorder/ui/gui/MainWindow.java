@@ -4,6 +4,8 @@ import io.github.trdesilva.autorecorder.Settings;
 import io.github.trdesilva.autorecorder.clip.ClipQueue;
 import io.github.trdesilva.autorecorder.clip.ClipTrimmer;
 import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
+import io.github.trdesilva.autorecorder.upload.UploadQueue;
+import io.github.trdesilva.autorecorder.upload.youtube.YoutubeUploader;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.JFrame;
@@ -39,9 +41,11 @@ public class MainWindow
     private final ClipListPanel clipListPanel;
     
     private final ClippingPanel clippingPanel;
+    private final UploadPanel uploadPanel;
     private final StatusPanel statusPanel;
     
     private ClipQueue clipQueue;
+    private UploadQueue uploadQueue;
     
     public MainWindow(Settings settings) throws Exception
     {
@@ -72,11 +76,14 @@ public class MainWindow
         tabbedPane.setPreferredSize(new Dimension(PREFERRED_WIDTH, PREFERRED_HEIGHT));
         
         clipQueue = new ClipQueue(new ClipTrimmer(settings));
+        uploadQueue = new UploadQueue(new YoutubeUploader(settings));
         
         clippingPanel = new ClippingPanel(clipQueue);
+        uploadPanel = new UploadPanel(uploadQueue);
         
         mainPanel.add(tabbedPane, "mainView");
         mainPanel.add(clippingPanel, "clippingView");
+        mainPanel.add(uploadPanel, "uploadView");
         mainLayout.show(mainPanel, "mainView");
         
         statusPanel = new StatusPanel();
@@ -91,6 +98,7 @@ public class MainWindow
         mainFrame.setVisible(true);
         
         clipQueue.startProcessing();
+        uploadQueue.startProcessing();
     
         tabbedPane.addChangeListener(e -> {
             int tabIndex = tabbedPane.getSelectedIndex();
@@ -111,6 +119,7 @@ public class MainWindow
             {
                 super.windowClosing(e);
                 clipQueue.stopProcessing();
+                uploadQueue.stopProcessing();
                 closeables.forEach(ac -> {
                     try
                     {
@@ -133,8 +142,15 @@ public class MainWindow
     public void showClipView(File videoFile)
     {
         System.out.println("showing clippingView");
-        mainLayout.show(mainPanel, "clippingView");
         clippingPanel.setRecording(videoFile);
+        mainLayout.show(mainPanel, "clippingView");
+    }
+    
+    public void showUploadView(File videoFile)
+    {
+        System.out.println("showing uploadView");
+        uploadPanel.setRecording(videoFile);
+        mainLayout.show(mainPanel, "uploadView");
     }
     
     public void showMainView()
