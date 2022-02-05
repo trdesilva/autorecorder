@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2022 Thomas DeSilva.
+ * Distributed under GPLv3.
+ */
+
 package io.github.trdesilva.autorecorder.ui.gui;
 
 import net.miginfocom.swing.MigLayout;
@@ -160,6 +165,10 @@ public class VideoPlaybackPanel extends JPanel implements AutoCloseable
         mediaPlayerComponent.release();
     }
     
+    /*
+    * Adapted from uk.co.caprica.vlcjplayer.view.main.PositionPane.
+    * See https://github.com/caprica/vlcj-player/blob/master/src/main/java/uk/co/caprica/vlcjplayer/view/main/PositionPane.java
+     */
     private class SeekBar extends JPanel
     {
         
