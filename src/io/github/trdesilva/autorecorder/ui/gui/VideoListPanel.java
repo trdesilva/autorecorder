@@ -5,6 +5,9 @@
 
 package io.github.trdesilva.autorecorder.ui.gui;
 
+import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
+import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
+import io.github.trdesilva.autorecorder.ui.status.StatusType;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.JList;
@@ -18,7 +21,7 @@ import java.io.File;
 
 public class VideoListPanel extends JScrollPane
 {
-    private final File videoDir;
+    private File videoDir;
     private final JList<File> videos;
     
     public VideoListPanel(File videoDir, VideoListSelectionConsumer selectionConsumer)
@@ -27,7 +30,14 @@ public class VideoListPanel extends JScrollPane
         // TODO custom renderer with thumbnails
         // TODO update file list
         this.videoDir = videoDir;
-        videos = new JList<>(videoDir.listFiles());
+        if(videoDir != null && videoDir.exists() && videoDir.isDirectory())
+        {
+            videos = new JList<>(videoDir.listFiles());
+        }
+        else
+        {
+            videos = new JList<>(new File[0]);
+        }
         videos.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         videos.addListSelectionListener(new ListSelectionListener()
         {
@@ -44,6 +54,19 @@ public class VideoListPanel extends JScrollPane
     
     public void updateList()
     {
-        videos.setListData(videoDir.listFiles());
+        if(videoDir != null && videoDir.exists() && videoDir.isDirectory())
+        {
+            videos.setListData(videoDir.listFiles());
+        }
+        else
+        {
+            StatusQueue.postMessage(new StatusMessage(StatusType.WARNING, "Couldn't find videos; please update recording/clip path in settings"));
+        }
+    }
+    
+    public void setVideoDir(File videoDir)
+    {
+        this.videoDir = videoDir;
+        updateList();
     }
 }

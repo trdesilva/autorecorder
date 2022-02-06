@@ -7,6 +7,9 @@ package io.github.trdesilva.autorecorder;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
+import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
+import io.github.trdesilva.autorecorder.ui.status.StatusType;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -45,6 +48,7 @@ public class Settings
     
     private ObjectMapper objectMapper;
     private SettingsContainer container;
+    private boolean firstLaunch = false;
     
     public Settings()
     {
@@ -55,21 +59,32 @@ public class Settings
     
     public void populate()
     {
-        try
+        if(!settingsFile.exists())
         {
-            container = objectMapper.readValue(settingsFile, SettingsContainer.class);
-        }
-        catch(IOException e)
-        {
-            e.printStackTrace();
-            container.obsPath = "F:\\Program Files\\obs-studio\\bin\\64bit\\obs64.exe";
+            firstLaunch = true;
             container.excludedGames.add("leagueclientux.exe");
+            StatusQueue.postMessage(new StatusMessage(StatusType.INFO, "Creating settings file on first launch"));
+        }
+        else
+        {
+            StatusQueue.postMessage(new StatusMessage(StatusType.DEBUG, "Loading settings"));
+            try
+            {
+                container = objectMapper.readValue(settingsFile, SettingsContainer.class);
+                StatusQueue.postMessage(new StatusMessage(StatusType.DEBUG, "Settings loaded"));
+            }
+            catch(IOException e)
+            {
+                StatusQueue.postMessage(new StatusMessage(StatusType.WARNING, "Failed to load settings"));
+                container.excludedGames.add("leagueclientux.exe");
+            }
         }
         
         if(DateTime.now().isAfter(new DateTime(container.lastFetchedGamesTimestamp).plusDays(1)))
         {
             populateGamesFromApi();
             save();
+            StatusQueue.postMessage(new StatusMessage(StatusType.SUCCESS, "Settings saved"));
         }
     }
     
@@ -87,6 +102,11 @@ public class Settings
         {
             e.printStackTrace();
         }
+    }
+    
+    public boolean isFirstLaunch()
+    {
+        return firstLaunch;
     }
     
     public String getObsPath()
@@ -208,7 +228,7 @@ public class Settings
         }
         catch(IOException e)
         {
-            e.printStackTrace();
+            StatusQueue.postMessage(new StatusMessage(StatusType.WARNING, "Failed to retrieve game list"));
         }
     }
 }

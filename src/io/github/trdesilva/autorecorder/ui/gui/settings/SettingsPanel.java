@@ -7,6 +7,7 @@ package io.github.trdesilva.autorecorder.ui.gui.settings;
 
 import io.github.trdesilva.autorecorder.Settings;
 import io.github.trdesilva.autorecorder.SettingsValidator;
+import io.github.trdesilva.autorecorder.ui.gui.MainWindow;
 import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
 import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
 import io.github.trdesilva.autorecorder.ui.status.StatusType;
@@ -37,6 +38,7 @@ public class SettingsPanel extends JPanel
                                                                "These executables will be added to the auto-detection list");
         GameListPanel excludedGamesPanel = new GameListPanel(settings.getExcludedGames(), "Excluded Games",
                                                              "These executables will be removed from the auto-detection list (they will not trigger recording)");
+        JButton licenseButton = new JButton("View License/Terms of Use");
         JButton saveButton = new JButton("Save");
         
         add(obsPathLabel, "cell 0 0");
@@ -47,7 +49,12 @@ public class SettingsPanel extends JPanel
         add(clipPathField, "cell 1 1, growx");
         add(additionalGamesPanel, "cell 0 2, grow");
         add(excludedGamesPanel, "cell 1 2, grow");
+        add(licenseButton, "cell 0 3, left");
         add(saveButton, "cell 1 3, right");
+        
+        licenseButton.addActionListener(e -> {
+            MainWindow.getInstance().showLicenseView();
+        });
         
         saveButton.addActionListener(e -> {
             Settings tempSettings = new Settings();

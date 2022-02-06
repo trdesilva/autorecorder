@@ -53,6 +53,7 @@ public class MainWindow
     private final ClippingPanel clippingPanel;
     private final UploadPanel uploadPanel;
     private final StatusPanel statusPanel;
+    private final LicensePanel licensePanel;
     
     private ClipQueue clipQueue;
     private UploadQueue uploadQueue;
@@ -90,11 +91,21 @@ public class MainWindow
         
         clippingPanel = new ClippingPanel(clipQueue);
         uploadPanel = new UploadPanel(uploadQueue);
+        licensePanel = new LicensePanel();
         
         mainPanel.add(tabbedPane, "mainView");
         mainPanel.add(clippingPanel, "clippingView");
         mainPanel.add(uploadPanel, "uploadView");
-        mainLayout.show(mainPanel, "mainView");
+        mainPanel.add(licensePanel, "licenseView");
+        if(!settings.isFirstLaunch())
+        {
+            mainLayout.show(mainPanel, "mainView");
+        }
+        else
+        {
+            mainLayout.show(mainPanel, "licenseView");
+            tabbedPane.setSelectedIndex(tabbedPane.indexOfTab("Settings"));
+        }
         
         statusPanel = new StatusPanel();
         StatusQueue.setConsumer(statusPanel);
@@ -161,6 +172,11 @@ public class MainWindow
         System.out.println("showing uploadView");
         uploadPanel.setRecording(videoFile);
         mainLayout.show(mainPanel, "uploadView");
+    }
+    
+    public void showLicenseView()
+    {
+        mainLayout.show(mainPanel, "licenseView");
     }
     
     public void showMainView()

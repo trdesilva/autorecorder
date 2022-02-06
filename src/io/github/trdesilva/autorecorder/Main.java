@@ -13,10 +13,8 @@ import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
 import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
 import io.github.trdesilva.autorecorder.ui.status.StatusType;
 import io.github.trdesilva.autorecorder.upload.youtube.YoutubeUploader;
-import org.apache.commons.io.IOUtils;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 
@@ -27,7 +25,7 @@ public class Main
         System.out.println("starting");
         Settings settings = new Settings();
         settings.populate();
-        if(!Settings.SETTINGS_DIR.resolve("ffmpeg.exe").toFile().exists())
+        if(!new File(settings.getFfmpegPath()).exists())
         {
             StatusQueue.postMessage(new StatusMessage(StatusType.DEBUG, "copying ffmpeg.exe from resources"));
             try
@@ -40,7 +38,7 @@ public class Main
                 StatusQueue.postMessage(new StatusMessage(StatusType.DEBUG, "failed to copy ffmpeg.exe"));
             }
         }
-        if(!Settings.SETTINGS_DIR.resolve("ffprobe.exe").toFile().exists())
+        if(!new File(settings.getFfprobePath()).exists())
         {
             StatusQueue.postMessage(new StatusMessage(StatusType.DEBUG, "copying ffprobe.exe from resources"));
             try

@@ -34,7 +34,7 @@ public class SettingsValidator
     
         if(settings.getRecordingPath().isBlank())
         {
-            StatusQueue.postMessage(new StatusMessage(StatusType.WARNING, "Recording path is unset in settings"));
+            StatusQueue.postMessage(new StatusMessage(StatusType.WARNING, "Recording path is unset"));
             return false;
         }
         File recordingFile = new File(settings.getRecordingPath());
@@ -46,7 +46,7 @@ public class SettingsValidator
     
         if(settings.getClipPath().isBlank())
         {
-            StatusQueue.postMessage(new StatusMessage(StatusType.WARNING, "Clip path is unset in settings"));
+            StatusQueue.postMessage(new StatusMessage(StatusType.WARNING, "Clip path is unset"));
             return false;
         }
         File clipFile = new File(settings.getClipPath());

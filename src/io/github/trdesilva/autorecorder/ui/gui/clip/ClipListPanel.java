@@ -27,7 +27,13 @@ public class ClipListPanel extends JPanel
         ClipInfoPanel clipInfoPanel = new ClipInfoPanel();
     
         // TODO error handling
-        videoListPanel = new VideoListPanel(new File(settings.getClipPath()), clipInfoPanel);
+        File clipDir = null;
+        if(settings.getRecordingPath() != null)
+        {
+            clipDir = new File(settings.getRecordingPath());
+        }
+
+        videoListPanel = new VideoListPanel(clipDir, clipInfoPanel);
         
         add(videoListPanel, "grow");
         add(clipInfoPanel);
@@ -35,6 +41,13 @@ public class ClipListPanel extends JPanel
     
     public void update()
     {
-        videoListPanel.updateList();
+        if(settings.getClipPath() != null)
+        {
+            videoListPanel.setVideoDir(new File(settings.getClipPath()));
+        }
+        else
+        {
+            videoListPanel.setVideoDir(null);
+        }
     }
 }
