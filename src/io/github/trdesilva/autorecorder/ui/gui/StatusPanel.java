@@ -38,6 +38,7 @@ public class StatusPanel extends JPanel implements StatusConsumer
     @Override
     public synchronized void post(StatusMessage message)
     {
+        System.out.println(message);
         messageLabel.setText(message.getMessage());
         messageLabel.setToolTipText(message.getTimestamp().toString());
         switch(message.getType())

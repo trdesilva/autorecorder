@@ -11,3 +11,7 @@ https://github.com/caprica/vlcj
 This project depends on libvlc; its source code can be found here:
 
 https://github.com/videolan/vlc
+
+This project depends on FFmpeg; its source code can be found here:
+
+https://git.ffmpeg.org/gitweb/ffmpeg.git

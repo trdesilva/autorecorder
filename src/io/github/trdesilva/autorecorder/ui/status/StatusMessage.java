@@ -47,4 +47,10 @@ public class StatusMessage
     {
         return timestamp;
     }
+    
+    @Override
+    public String toString()
+    {
+        return String.join(" ", timestamp.toString(), type.name(), message, link);
+    }
 }

@@ -24,7 +24,6 @@ import java.util.Set;
 
 public class Settings
 {
-    
     public static final Path SETTINGS_DIR = Paths.get(System.getenv("LOCALAPPDATA"))
                                                  .resolve("autorecorder");
     private final File settingsFile;
@@ -34,8 +33,8 @@ public class Settings
         public String obsPath;
         public String recordingPath;
         
-        public String ffmpegPath;
-        public String ffprobePath;
+        public String ffmpegPath = Settings.SETTINGS_DIR.resolve("ffmpeg.exe").toString();
+        public String ffprobePath = Settings.SETTINGS_DIR.resolve("ffprobe.exe").toString();
         public String clipPath;
         
         public Set<String> excludedGames = new HashSet<>();
@@ -115,11 +114,6 @@ public class Settings
         return container.ffmpegPath;
     }
     
-    public void setFfmpegPath(String ffmpegPath)
-    {
-        container.ffmpegPath = ffmpegPath;
-    }
-    
     public String getFfprobePath()
     {
         return container.ffprobePath;
@@ -137,7 +131,10 @@ public class Settings
     
     public Set<String> getGames()
     {
-        return container.games;
+        synchronized(container.games)
+        {
+            return container.games;
+        }
     }
     
     public Set<String> getExcludedGames()
@@ -145,9 +142,28 @@ public class Settings
         return container.excludedGames;
     }
     
+    public void setExcludedGames(Set<String> games)
+    {
+        container.excludedGames = games;
+        synchronized(container.games)
+        {
+            container.games.removeAll(container.excludedGames);
+        }
+    }
+    
     public Set<String> getAdditionalGames()
     {
         return container.additionalGames;
+    }
+    
+    public void setAdditionalGames(Set<String> games)
+    {
+        container.additionalGames = games;
+        synchronized(container.games)
+        {
+            container.games.addAll(container.additionalGames);
+            container.games.removeAll(container.excludedGames); //excluded has priority over additional
+        }
     }
     
     public String getSettingsFilePath()
@@ -167,25 +183,28 @@ public class Settings
             
             JsonNode root = new ObjectMapper().readTree(response.getEntity().getContent());
             System.out.println("got games from discord API: " + root.size());
-            for(Iterator<JsonNode> gameIter = root.elements(); gameIter.hasNext(); )
+            synchronized(container.games)
             {
-                JsonNode game = gameIter.next();
-                if(game.has("executables"))
+                for(Iterator<JsonNode> gameIter = root.elements(); gameIter.hasNext(); )
                 {
-                    for(Iterator<JsonNode> exeIter = game.get("executables").elements(); exeIter.hasNext(); )
+                    JsonNode game = gameIter.next();
+                    if(game.has("executables"))
                     {
-                        JsonNode exe = exeIter.next();
-                        String exeName = exe.get("name").textValue().toLowerCase().replace("/", FileSystems.getDefault().getSeparator());
-                        if(!container.excludedGames.contains(exeName))
+                        for(Iterator<JsonNode> exeIter = game.get("executables").elements(); exeIter.hasNext(); )
                         {
-                            container.games.add(exeName);
+                            JsonNode exe = exeIter.next();
+                            String exeName = exe.get("name").textValue().toLowerCase().replace("/", FileSystems.getDefault().getSeparator());
+                            if(!container.excludedGames.contains(exeName))
+                            {
+                                container.games.add(exeName);
+                            }
                         }
                     }
+        
                 }
-                
+                System.out.println("got executables: " + container.games.size());
+                container.lastFetchedGamesTimestamp = DateTime.now().getMillis();
             }
-            System.out.println("got executables: " + container.games.size());
-            container.lastFetchedGamesTimestamp = DateTime.now().getMillis();
         }
         catch(IOException e)
         {

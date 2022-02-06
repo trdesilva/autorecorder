@@ -76,7 +76,7 @@ public class MainWindow
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.add("Recordings", recordingListPanel);
         tabbedPane.add("Clips", clipListPanel);
-        tabbedPane.add("Settings", new SettingsPanel());
+        tabbedPane.add("Settings", new SettingsPanel(settings));
         tabbedPane.setSelectedIndex(0);
         tabbedPane.setPreferredSize(new Dimension(PREFERRED_WIDTH, PREFERRED_HEIGHT));
         

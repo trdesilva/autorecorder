@@ -34,7 +34,6 @@ public class SettingsCli extends Cli
             String setting = chooseFromList("Choose a setting to change",
                                             OBS_FILEPATH,
                                             RECORDING_DIRECTORY,
-                                            FFMPEG_FILEPATH,
                                             CLIP_DIRECTORY,
                                             ADDITIONAL_GAMES,
                                             EXCLUDED_GAMES);
@@ -55,10 +54,6 @@ public class SettingsCli extends Cli
                 if(setting.equals(OBS_FILEPATH))
                 {
                     settings.setObsPath(newValue);
-                }
-                else if(setting.equals(FFMPEG_FILEPATH))
-                {
-                    settings.setFfmpegPath(newValue);
                 }
                 else
                 {
