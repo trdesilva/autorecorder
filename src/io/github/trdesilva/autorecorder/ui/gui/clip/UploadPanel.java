@@ -3,8 +3,10 @@
  * Distributed under GPLv3.
  */
 
-package io.github.trdesilva.autorecorder.ui.gui;
+package io.github.trdesilva.autorecorder.ui.gui.clip;
 
+import io.github.trdesilva.autorecorder.ui.gui.MainWindow;
+import io.github.trdesilva.autorecorder.ui.gui.VideoPlaybackPanel;
 import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
 import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
 import io.github.trdesilva.autorecorder.ui.status.StatusType;

@@ -3,15 +3,13 @@
  * Distributed under GPLv3.
  */
 
-package io.github.trdesilva.autorecorder.ui.gui;
+package io.github.trdesilva.autorecorder.ui.gui.record;
 
 import io.github.trdesilva.autorecorder.Settings;
+import io.github.trdesilva.autorecorder.ui.gui.VideoListPanel;
 import net.miginfocom.swing.MigLayout;
 
-import javax.swing.BoxLayout;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
-import java.awt.Dimension;
 import java.io.File;
 
 public class RecordingListPanel extends JPanel

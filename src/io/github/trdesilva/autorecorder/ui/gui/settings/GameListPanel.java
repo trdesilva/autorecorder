@@ -3,7 +3,7 @@
  * Distributed under GPLv3.
  */
 
-package io.github.trdesilva.autorecorder.ui.gui;
+package io.github.trdesilva.autorecorder.ui.gui.settings;
 
 import com.google.common.collect.Sets;
 import net.miginfocom.swing.MigLayout;

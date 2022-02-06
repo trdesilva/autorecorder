@@ -3,11 +3,12 @@
  * Distributed under GPLv3.
  */
 
-package io.github.trdesilva.autorecorder.ui.gui;
+package io.github.trdesilva.autorecorder.ui.gui.clip;
 
-import io.github.trdesilva.autorecorder.Main;
+import io.github.trdesilva.autorecorder.ui.gui.MainWindow;
+import io.github.trdesilva.autorecorder.ui.gui.VideoListSelectionConsumer;
+import io.github.trdesilva.autorecorder.ui.gui.wrapper.WrappingLabel;
 
-import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;

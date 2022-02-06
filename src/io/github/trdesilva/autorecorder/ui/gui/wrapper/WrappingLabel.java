@@ -3,7 +3,7 @@
  * Distributed under GPLv3.
  */
 
-package io.github.trdesilva.autorecorder.ui.gui;
+package io.github.trdesilva.autorecorder.ui.gui.wrapper;
 
 import javax.swing.JTextArea;
 import javax.swing.UIManager;

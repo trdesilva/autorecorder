@@ -3,7 +3,7 @@
  * Distributed under GPLv3.
  */
 
-package io.github.trdesilva.autorecorder.ui.gui;
+package io.github.trdesilva.autorecorder.ui.gui.settings;
 
 import io.github.trdesilva.autorecorder.Settings;
 import io.github.trdesilva.autorecorder.SettingsValidator;
