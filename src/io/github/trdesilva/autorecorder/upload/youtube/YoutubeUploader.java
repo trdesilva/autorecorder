@@ -14,7 +14,7 @@ import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.InputStreamContent;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.youtube.YouTube;
 import com.google.api.services.youtube.model.Video;
 import com.google.api.services.youtube.model.VideoSnippet;
@@ -43,7 +43,7 @@ public class YoutubeUploader extends Uploader
             Arrays.asList("https://www.googleapis.com/auth/youtube.upload");
     
     private static final String APPLICATION_NAME = "Autorecorder";
-    private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
+    private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
     private static final String VIDEO_URL_FORMAT = "https://www.youtube.com/watch?v=%s";
     
     public YoutubeUploader(Settings settings)
@@ -101,7 +101,7 @@ public class YoutubeUploader extends Uploader
             
             // Define and execute the API request
             YouTube.Videos.Insert request = youtubeService.videos()
-                                                          .insert("snippet,status", video, mediaContent);
+                                                          .insert(Arrays.asList("snippet", "status"), video, mediaContent);
             Video response = request.execute();
             System.out.println(response);
             

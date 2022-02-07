@@ -45,6 +45,8 @@ public class Settings
         public Set<String> additionalGames = new HashSet<>();
         public Set<String> games = new HashSet<>();
         public long lastFetchedGamesTimestamp;
+        
+        public boolean licenseAccepted = false;
     }
     
     private ObjectMapper objectMapper;
