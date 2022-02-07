@@ -11,5 +11,7 @@ public enum StatusType
     FAILURE,
     WARNING,
     INFO,
+    RECORDING_START,
+    RECORDING_END,
     DEBUG
 }

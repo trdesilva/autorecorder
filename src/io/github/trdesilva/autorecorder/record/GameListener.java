@@ -6,6 +6,9 @@
 package io.github.trdesilva.autorecorder.record;
 
 import io.github.trdesilva.autorecorder.Settings;
+import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
+import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
+import io.github.trdesilva.autorecorder.ui.status.StatusType;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -13,7 +16,7 @@ import java.nio.file.Paths;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class GameListener
+public class GameListener implements AutoCloseable
 {
     Obs obs;
     Settings settings;
@@ -33,7 +36,7 @@ public class GameListener
     
     public void start()
     {
-        System.out.println("starting listener thread");
+        StatusQueue.postMessage(new StatusMessage(StatusType.DEBUG, "Starting listener thread"));
         thread = new Thread(() ->
                             {
                                 while(true)
@@ -57,19 +60,19 @@ public class GameListener
                                                                           {
                                                                               try
                                                                               {
-                                                                                  System.out.println("game started: " + program);
                                                                                   if(recording.get())
                                                                                   {
-                                                                                      System.out.println("already recording " + currentGame.get());
+                                                                                      StatusQueue.postMessage(new StatusMessage(StatusType.DEBUG, "already recording " + currentGame.get()));
                                                                                       return;
                                                                                   }
+                                                                                  StatusQueue.postMessage(new StatusMessage(StatusType.RECORDING_START, "Recording " + program));
                                                                                   recording.set(true);
                                                                                   obs.start();
                                                                                   currentGame.set(program);
                                                                               }
                                                                               catch(IOException e)
                                                                               {
-                                                                                  System.out.println("couldn't start obs");
+                                                                                  StatusQueue.postMessage(new StatusMessage(StatusType.FAILURE, "Couldn't start OBS"));
                                                                               }
                                                                               break;
                                                                           }
@@ -86,7 +89,7 @@ public class GameListener
                                                                               .endsWith(currentGame.get())
                                                                   ))
                                         {
-                                            System.out.println("game ended: " + currentGame.get());
+                                            StatusQueue.postMessage(new StatusMessage(StatusType.RECORDING_END, "Stopped recording " + currentGame.get()));
                                             obs.stop();
                                             recording.set(false);
                                             currentGame.set(null);
@@ -99,7 +102,7 @@ public class GameListener
                                     }
                                     catch(InterruptedException e)
                                     {
-                                        System.out.println("listening ended");
+                                        StatusQueue.postMessage(new StatusMessage(StatusType.DEBUG, "Game listening ended"));
                                         return;
                                     }
                                 }
@@ -118,4 +121,9 @@ public class GameListener
     }
     
     
+    @Override
+    public void close() throws Exception
+    {
+        stop();
+    }
 }

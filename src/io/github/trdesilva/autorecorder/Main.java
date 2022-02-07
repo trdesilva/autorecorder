@@ -69,6 +69,8 @@ public class Main
         else
         {
             MainWindow mainWindow = new MainWindow(settings);
+            MainWindow.closeables.add(listener);
+            listener.start();
         }
     }
 }
