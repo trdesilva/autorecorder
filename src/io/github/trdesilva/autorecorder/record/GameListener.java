@@ -54,9 +54,8 @@ public class GameListener implements AutoCloseable
                                                                       for(int i = 1; i <= command.getNameCount(); i++)
                                                                       {
                                                                           String program = command.subpath(command.getNameCount() - i, command.getNameCount())
-                                                                                                  .toString()
-                                                                                                  .toLowerCase();
-                                                                          if(settings.getGames().contains(program))
+                                                                                                  .toString();
+                                                                          if(settings.getGames().contains(settings.formatExeName(program)))
                                                                           {
                                                                               try
                                                                               {
@@ -82,7 +81,7 @@ public class GameListener implements AutoCloseable
                                     }
                                     else
                                     {
-                                        if(!settings.getGames().contains(currentGame)
+                                        if(!settings.getGames().contains(settings.formatExeName(currentGame.get()))
                                         || ProcessHandle.allProcesses()
                                                         .noneMatch(ph -> Paths.get(ph.info()
                                                                                      .command()

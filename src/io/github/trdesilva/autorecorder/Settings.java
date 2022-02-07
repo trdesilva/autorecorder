@@ -25,6 +25,7 @@ import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class Settings
 {
@@ -167,7 +168,7 @@ public class Settings
     
     public void setExcludedGames(Set<String> games)
     {
-        container.excludedGames = games;
+        container.excludedGames = games.stream().map(this::formatExeName).collect(Collectors.toSet());
         synchronized(container.games)
         {
             container.games.removeAll(container.excludedGames);
@@ -181,7 +182,8 @@ public class Settings
     
     public void setAdditionalGames(Set<String> games)
     {
-        Set<String> removed = Sets.difference(getAdditionalGames(), games);
+        Set<String> removed = Sets.difference(getAdditionalGames(), games).stream().map(this::formatExeName).collect(Collectors.toSet());
+        container.additionalGames = games.stream().map(this::formatExeName).collect(Collectors.toSet());
         synchronized(container.games)
         {
             container.games.removeAll(removed);
@@ -193,6 +195,11 @@ public class Settings
     public String getSettingsFilePath()
     {
         return settingsFile.getAbsolutePath();
+    }
+    
+    public String formatExeName(String original)
+    {
+        return original.toLowerCase().replace("/", FileSystems.getDefault().getSeparator());
     }
     
     private void populateGamesFromApi()
@@ -217,7 +224,7 @@ public class Settings
                         for(Iterator<JsonNode> exeIter = game.get("executables").elements(); exeIter.hasNext(); )
                         {
                             JsonNode exe = exeIter.next();
-                            String exeName = exe.get("name").textValue().toLowerCase().replace("/", FileSystems.getDefault().getSeparator());
+                            String exeName = formatExeName(exe.get("name").textValue());
                             if(!container.excludedGames.contains(exeName))
                             {
                                 container.games.add(exeName);
