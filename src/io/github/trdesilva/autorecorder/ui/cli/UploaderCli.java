@@ -28,6 +28,7 @@ public class UploaderCli extends Cli
     public void run()
     {
         File clipDir = new File(settings.getClipPath());
+        print("By clicking 'Upload,' you certify that the content you are uploading complies with the YouTube Terms of Service (including the YouTube Community Guidelines) at https://www.youtube.com/t/terms. Please be sure not to violate others' copyright or privacy rights.");
         while(true)
         {
             if(clipDir.exists() && clipDir.isDirectory())
