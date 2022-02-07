@@ -82,7 +82,8 @@ public class GameListener implements AutoCloseable
                                     }
                                     else
                                     {
-                                        if(ProcessHandle.allProcesses()
+                                        if(!settings.getGames().contains(currentGame)
+                                        || ProcessHandle.allProcesses()
                                                         .noneMatch(ph -> Paths.get(ph.info()
                                                                                      .command()
                                                                                      .orElse(""))

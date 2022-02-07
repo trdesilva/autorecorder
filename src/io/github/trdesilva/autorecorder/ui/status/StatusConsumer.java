@@ -7,5 +7,5 @@ package io.github.trdesilva.autorecorder.ui.status;
 
 public interface StatusConsumer
 {
-    void post(StatusMessage message);
+    void post(StatusMessage message) throws InterruptedException;
 }

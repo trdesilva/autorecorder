@@ -22,9 +22,9 @@ public class RecordingListPanel extends JPanel
     {
         this.settings = settings;
     
-        setLayout(new MigLayout("fill, insets 2", "[75%:75%:90%]2[10%:25%:300]"));
+        setLayout(new MigLayout("fill, insets 2", "[75%:75%:90%]2[10%::300]"));
         
-        RecordingInfoPanel infoPanel = new RecordingInfoPanel();
+        RecordingInfoPanel infoPanel = new RecordingInfoPanel(settings);
         // TODO error handling
         File recordingDir = null;
         if(settings.getRecordingPath() != null)
@@ -35,7 +35,7 @@ public class RecordingListPanel extends JPanel
         videoListPanel = new VideoListPanel(recordingDir, infoPanel);
         
         add(videoListPanel, "grow");
-        add(infoPanel);
+        add(infoPanel, "grow");
     }
     
     public void update()

@@ -24,6 +24,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.UIManager;
 import java.awt.CardLayout;
 import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -112,6 +113,8 @@ public class MainWindow
         
         metaPanel.add(mainPanel, "cell 0 0, grow");
         metaPanel.add(statusPanel, "cell 0 1, growx");
+    
+        mainFrame.setIconImage(Toolkit.getDefaultToolkit().createImage(ClassLoader.getSystemResource("autorecordericon.png")));
         
         mainFrame.getContentPane().add(metaPanel);
         mainFrame.pack();

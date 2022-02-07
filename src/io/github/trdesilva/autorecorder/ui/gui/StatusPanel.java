@@ -7,15 +7,19 @@ package io.github.trdesilva.autorecorder.ui.gui;
 
 import io.github.trdesilva.autorecorder.ui.status.StatusConsumer;
 import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
+import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
 import io.github.trdesilva.autorecorder.ui.status.StatusType;
 import net.miginfocom.swing.MigLayout;
+import org.apache.commons.io.IOUtils;
 
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.UIManager;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Desktop;
+import java.awt.Image;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -26,17 +30,39 @@ import java.net.URISyntaxException;
 public class StatusPanel extends JPanel implements StatusConsumer
 {
     private JLabel messageLabel;
+    private ImageIcon recordingOnIcon;
+    private ImageIcon recordingOffIcon;
+    private JLabel recordingIndicator;
     private MouseListener mouseListener;
     
     public StatusPanel()
     {
+        setLayout(new MigLayout("fill", "[grow][16!]"));
+        
         messageLabel = new JLabel("Welcome to Autorecorder");
-        setLayout(new MigLayout("fill", "[grow]"));
-        add(messageLabel, "growx");
+        try
+        {
+            recordingOnIcon = new ImageIcon(IOUtils.resourceToByteArray("recordingonicon.png", getClass().getClassLoader()));
+            recordingOnIcon.setImage(recordingOnIcon.getImage().getScaledInstance(16, 16, Image.SCALE_SMOOTH));
+            recordingOffIcon = new ImageIcon(IOUtils.resourceToByteArray("recordingofficon.png", getClass().getClassLoader()));
+            recordingOffIcon.setImage(recordingOffIcon.getImage().getScaledInstance(16, 16, Image.SCALE_SMOOTH));
+            recordingIndicator = new JLabel(recordingOffIcon);
+        }
+        catch(IOException e)
+        {
+            StatusQueue.postMessage(new StatusMessage(StatusType.DEBUG, "Failed to load icons"));
+            recordingOnIcon = null;
+            recordingOffIcon = null;
+            recordingIndicator = new JLabel("Stopped");
+        }
+        setRecordingIndicatorState(false);
+        
+        add(messageLabel, "cell 0 0, growx");
+        add(recordingIndicator, "cell 1 0");
     }
     
     @Override
-    public synchronized void post(StatusMessage message)
+    public synchronized void post(StatusMessage message) throws InterruptedException
     {
         System.out.println(message);
         messageLabel.setText(message.getMessage());
@@ -54,6 +80,12 @@ public class StatusPanel extends JPanel implements StatusConsumer
                 break;
             case INFO:
                 setBackground(Color.CYAN);
+                break;
+            case RECORDING_START:
+                setRecordingIndicatorState(true);
+                break;
+            case RECORDING_END:
+                setRecordingIndicatorState(false);
                 break;
             case DEBUG:
             default:
@@ -73,7 +105,7 @@ public class StatusPanel extends JPanel implements StatusConsumer
                     }
                     catch(URISyntaxException | IOException ex)
                     {
-                        post(new StatusMessage(StatusType.DEBUG, "Link navigation failed: " + link));
+                        StatusQueue.postMessage(new StatusMessage(StatusType.DEBUG, "Link navigation failed: " + link));
                     }
                 }
             };
@@ -85,6 +117,37 @@ public class StatusPanel extends JPanel implements StatusConsumer
         {
             messageLabel.removeMouseListener(mouseListener);
             messageLabel.setCursor(Cursor.getDefaultCursor());
+        }
+        
+        // TODO if there are ever any other status consumers, this won't work
+        Thread.sleep(1000);
+    }
+    
+    private void setRecordingIndicatorState(boolean isRecording)
+    {
+        if(isRecording)
+        {
+            if(recordingOnIcon != null)
+            {
+                recordingIndicator.setIcon(recordingOnIcon);
+            }
+            else
+            {
+                recordingIndicator.setText("R");
+            }
+            recordingIndicator.setToolTipText("Recording");
+        }
+        else
+        {
+            if(recordingOffIcon != null)
+            {
+                recordingIndicator.setIcon(recordingOffIcon);
+            }
+            else
+            {
+                recordingIndicator.setText("S");
+            }
+            recordingIndicator.setToolTipText("Not recording");
         }
     }
 }

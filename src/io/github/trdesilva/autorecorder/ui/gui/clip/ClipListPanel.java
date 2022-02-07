@@ -24,7 +24,7 @@ public class ClipListPanel extends JPanel
         
         setLayout(new MigLayout("fill, insets 2", "[75%:75%:90%]2[10%:25%:300]"));
         
-        ClipInfoPanel clipInfoPanel = new ClipInfoPanel();
+        ClipInfoPanel clipInfoPanel = new ClipInfoPanel(settings);
     
         // TODO error handling
         File clipDir = null;
@@ -36,7 +36,7 @@ public class ClipListPanel extends JPanel
         videoListPanel = new VideoListPanel(clipDir, clipInfoPanel);
         
         add(videoListPanel, "grow");
-        add(clipInfoPanel);
+        add(clipInfoPanel, "grow");
     }
     
     public void update()

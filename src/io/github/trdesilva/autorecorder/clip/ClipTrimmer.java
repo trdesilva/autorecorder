@@ -56,7 +56,7 @@ public class ClipTrimmer
         {
             throw new IOException("Destination already exists");
         }
-        // TODO make sure dest doesn't already exist
+        
         String[] ffmpegArgs = {settings.getFfmpegPath(), "-i", source, "-ss", startArg, "-to", endArg, "-c", "copy", dest};
         Process ffmpegProc = Runtime.getRuntime().exec(ffmpegArgs, null, new File(Paths.get(settings.getFfmpegPath()).getParent().toString()));
         InputStream stdout = ffmpegProc.getInputStream();

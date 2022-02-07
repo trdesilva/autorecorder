@@ -7,6 +7,7 @@ package io.github.trdesilva.autorecorder;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Sets;
 import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
 import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
 import io.github.trdesilva.autorecorder.ui.status.StatusType;
@@ -178,9 +179,10 @@ public class Settings
     
     public void setAdditionalGames(Set<String> games)
     {
-        container.additionalGames = games;
+        Set<String> removed = Sets.difference(getAdditionalGames(), games);
         synchronized(container.games)
         {
+            container.games.removeAll(removed);
             container.games.addAll(container.additionalGames);
             container.games.removeAll(container.excludedGames); //excluded has priority over additional
         }

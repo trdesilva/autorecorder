@@ -41,11 +41,10 @@ public class StatusQueue
                 }
                 
                 StatusMessage message = messageQueue.poll();
-                consumer.post(message);
+                
                 try
                 {
-                    // TODO janky hack to make sure every message is shown for at least a second, should do this in consumer
-                    Thread.sleep(1000);
+                    consumer.post(message);
                 }
                 catch(InterruptedException e)
                 {

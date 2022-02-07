@@ -55,6 +55,7 @@ public class UploadPanel extends JPanel
         descriptionScrollPane.getViewport().add(descriptionField);
         JComboBox<PrivacyStatus> privacySelector = new JComboBox<>(PrivacyStatus.values());
         JButton uploadButton = new JButton("Upload to YouTube");
+        uploadButton.setToolTipText("By clicking 'Upload,' you certify that the content you are uploading complies with the YouTube Terms of Service (including the YouTube Community Guidelines) at https://www.youtube.com/t/terms. Please be sure not to violate others' copyright or privacy rights.");
     
         controlPanel.add(titleLabel, "cell 0 0");
         controlPanel.add(titleField, "cell 0 0, grow");

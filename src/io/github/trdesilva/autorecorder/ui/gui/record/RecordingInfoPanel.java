@@ -5,20 +5,23 @@
 
 package io.github.trdesilva.autorecorder.ui.gui.record;
 
+import io.github.trdesilva.autorecorder.Settings;
+import io.github.trdesilva.autorecorder.clip.VideoMetadataReader;
 import io.github.trdesilva.autorecorder.ui.gui.MainWindow;
 import io.github.trdesilva.autorecorder.ui.gui.VideoListSelectionConsumer;
 import io.github.trdesilva.autorecorder.ui.gui.wrapper.WrappingLabel;
+import net.miginfocom.swing.MigLayout;
 
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
-import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.io.File;
+
+import static io.github.trdesilva.autorecorder.TimestampUtil.formatTime;
 
 public class RecordingInfoPanel extends JPanel implements VideoListSelectionConsumer
 {
@@ -32,9 +35,12 @@ public class RecordingInfoPanel extends JPanel implements VideoListSelectionCons
     private JButton clipButton;
     
     private File recording;
+    private VideoMetadataReader metadataReader;
     
-    public RecordingInfoPanel()
+    public RecordingInfoPanel(Settings settings)
     {
+        setLayout(new MigLayout("fill", "[100:null:null]", "[][][][]push[]"));
+        
         title = new WrappingLabel("");
         title.setFont(new Font(null, Font.BOLD, 14));
         creationDate = new WrappingLabel("");
@@ -57,14 +63,13 @@ public class RecordingInfoPanel extends JPanel implements VideoListSelectionCons
             }
         });
         
-        setLayout(new GridLayout(4, 1));
+        metadataReader = new VideoMetadataReader(settings);
         
-        add(title);
-        add(duration);
-        add(resolution);
-        add(clipButton);
-    
-        setPreferredSize(new Dimension(MainWindow.PREFERRED_WIDTH/4, MainWindow.PREFERRED_HEIGHT));
+        add(title, "cell 0 0, growx, top");
+        add(creationDate, "cell 0 1, , growx");
+        add(duration, "cell 0 2, growx");
+        add(resolution, "cell 0 3, growx");
+        add(clipButton, "cell 0 4, growx, bottom");
     }
     
     public void setVideo(File video)
@@ -74,9 +79,9 @@ public class RecordingInfoPanel extends JPanel implements VideoListSelectionCons
         if(video != null)
         {
             title.setText(video.getName());
-            creationDate.setText("Created: ");
-            duration.setText("Duration: ");
-            resolution.setText("Resolution: ");
+            creationDate.setText("Created: " + metadataReader.getCreationDate(video));
+            duration.setText("Duration: " + formatTime(metadataReader.getDuration(video)));
+            resolution.setText("Resolution: " + metadataReader.getResolution(video));
             clipButton.setEnabled(true);
         }
     }

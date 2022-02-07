@@ -45,7 +45,7 @@ public class LicensePanel extends JPanel
         scrollPane.getViewport().add(textArea);
         
         add(scrollPane, "cell 0 0, grow");
-        add(okButton, "cell 0 1, right");
+        add(okButton, "cell 0 1, right, tag ok");
         
         okButton.addActionListener(e -> {
             MainWindow.getInstance().showMainView();

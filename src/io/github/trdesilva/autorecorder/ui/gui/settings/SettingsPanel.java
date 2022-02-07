@@ -50,7 +50,7 @@ public class SettingsPanel extends JPanel
         add(additionalGamesPanel, "cell 0 2, grow");
         add(excludedGamesPanel, "cell 1 2, grow");
         add(licenseButton, "cell 0 3, left");
-        add(saveButton, "cell 1 3, right");
+        add(saveButton, "cell 1 3, right, tag apply");
         
         licenseButton.addActionListener(e -> {
             MainWindow.getInstance().showLicenseView();
