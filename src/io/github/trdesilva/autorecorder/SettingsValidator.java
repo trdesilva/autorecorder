@@ -5,6 +5,7 @@
 
 package io.github.trdesilva.autorecorder;
 
+import com.google.inject.Inject;
 import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
 import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
 import io.github.trdesilva.autorecorder.ui.status.StatusType;
@@ -13,46 +14,56 @@ import java.io.File;
 
 public class SettingsValidator
 {
-    public static boolean validate(Settings settings)
+    private final StatusQueue status;
+    
+    @Inject
+    public SettingsValidator(StatusQueue status)
     {
-        if(settings.getObsPath().isBlank())
+        this.status = status;
+    }
+    
+    public boolean validate(Settings.SettingsContainer settings)
+    {
+        if(settings.obsPath.isBlank())
         {
-            StatusQueue.postMessage(new StatusMessage(StatusType.WARNING, "OBS path is unset in settings. You can download OBS Studio here:", "https://obsproject.com/download"));
+            status.postMessage(new StatusMessage(StatusType.WARNING,
+                                                 "OBS path is unset in settings. You can download OBS Studio here:",
+                                                 "https://obsproject.com/download"));
             return false;
         }
-        File obsFile = new File(settings.getObsPath());
+        File obsFile = new File(settings.obsPath);
         if(!obsFile.exists())
         {
-            StatusQueue.postMessage(new StatusMessage(StatusType.WARNING, "OBS path doesn't point to a file"));
+            status.postMessage(new StatusMessage(StatusType.WARNING, "OBS path doesn't point to a file"));
             return false;
         }
-        if(!settings.getObsPath().endsWith(".exe") || !obsFile.canExecute())
+        if(!settings.obsPath.endsWith(".exe") || !obsFile.canExecute())
         {
-            StatusQueue.postMessage(new StatusMessage(StatusType.WARNING, "OBS path doesn't point to an executable"));
+            status.postMessage(new StatusMessage(StatusType.WARNING, "OBS path doesn't point to an executable"));
             return false;
         }
-    
-        if(settings.getRecordingPath().isBlank())
+        
+        if(settings.recordingPath.isBlank())
         {
-            StatusQueue.postMessage(new StatusMessage(StatusType.WARNING, "Recording path is unset"));
+            status.postMessage(new StatusMessage(StatusType.WARNING, "Recording path is unset"));
             return false;
         }
-        File recordingFile = new File(settings.getRecordingPath());
+        File recordingFile = new File(settings.recordingPath);
         if(!recordingFile.exists() || !recordingFile.isDirectory())
         {
-            StatusQueue.postMessage(new StatusMessage(StatusType.WARNING, "Recording path doesn't point to a directory"));
+            status.postMessage(new StatusMessage(StatusType.WARNING, "Recording path doesn't point to a directory"));
             return false;
         }
-    
-        if(settings.getClipPath().isBlank())
+        
+        if(settings.clipPath.isBlank())
         {
-            StatusQueue.postMessage(new StatusMessage(StatusType.WARNING, "Clip path is unset"));
+            status.postMessage(new StatusMessage(StatusType.WARNING, "Clip path is unset"));
             return false;
         }
-        File clipFile = new File(settings.getClipPath());
+        File clipFile = new File(settings.clipPath);
         if(!clipFile.exists() || !clipFile.isDirectory())
         {
-            StatusQueue.postMessage(new StatusMessage(StatusType.WARNING, "Clip path doesn't point to a directory"));
+            status.postMessage(new StatusMessage(StatusType.WARNING, "Clip path doesn't point to a directory"));
             return false;
         }
         

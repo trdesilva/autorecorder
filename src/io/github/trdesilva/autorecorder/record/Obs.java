@@ -5,6 +5,7 @@
 
 package io.github.trdesilva.autorecorder.record;
 
+import com.google.inject.Inject;
 import io.github.trdesilva.autorecorder.Settings;
 
 import java.io.File;
@@ -20,6 +21,7 @@ public class Obs
     
     Process process;
     
+    @Inject
     public Obs(Settings settings)
     {
         this.settings = settings;

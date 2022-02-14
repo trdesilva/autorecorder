@@ -5,9 +5,11 @@
 
 package io.github.trdesilva.autorecorder.ui.gui.settings;
 
+import com.google.inject.Inject;
 import io.github.trdesilva.autorecorder.Settings;
 import io.github.trdesilva.autorecorder.SettingsValidator;
-import io.github.trdesilva.autorecorder.ui.gui.MainWindow;
+import io.github.trdesilva.autorecorder.ui.gui.Navigator;
+import io.github.trdesilva.autorecorder.ui.gui.wrapper.DefaultPanel;
 import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
 import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
 import io.github.trdesilva.autorecorder.ui.status.StatusType;
@@ -15,19 +17,15 @@ import net.miginfocom.swing.MigLayout;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-public class SettingsPanel extends JPanel
+public class SettingsPanel extends DefaultPanel
 {
-    private Settings settings;
-    
-    public SettingsPanel(Settings settings)
+    @Inject
+    public SettingsPanel(Settings settings, StatusQueue status, SettingsValidator validator, Navigator navigator)
     {
-        this.settings = settings;
-        
         setLayout(new MigLayout("fill", "[50%][50%]", "[][][grow]push[]"));
-    
+        
         JLabel obsPathLabel = new JLabel("OBS Path");
         JTextField obsPathField = new JTextField(settings.getObsPath());
         JLabel recordingPathLabel = new JLabel("Recording Path");
@@ -53,27 +51,27 @@ public class SettingsPanel extends JPanel
         add(saveButton, "cell 1 3, right, tag apply");
         
         licenseButton.addActionListener(e -> {
-            MainWindow.getInstance().showLicenseView();
+            navigator.showLicenseView();
         });
         
         saveButton.addActionListener(e -> {
-            Settings tempSettings = new Settings();
-            tempSettings.setObsPath(obsPathField.getText());
-            tempSettings.setRecordingPath(recordingPathField.getText());
-            tempSettings.setClipPath(clipPathField.getText());
-            tempSettings.setAdditionalGames(additionalGamesPanel.getGames());
-            tempSettings.setExcludedGames(excludedGamesPanel.getGames());
+            Settings.SettingsContainer tempSettings = new Settings.SettingsContainer();
+            tempSettings.obsPath = obsPathField.getText();
+            tempSettings.recordingPath = recordingPathField.getText();
+            tempSettings.clipPath = clipPathField.getText();
+            tempSettings.additionalGames = additionalGamesPanel.getGames();
+            tempSettings.excludedGames = excludedGamesPanel.getGames();
             
-            if(SettingsValidator.validate(tempSettings))
+            if(validator.validate(tempSettings))
             {
                 settings.setObsPath(obsPathField.getText());
                 settings.setRecordingPath(recordingPathField.getText());
                 settings.setClipPath(clipPathField.getText());
                 settings.setAdditionalGames(additionalGamesPanel.getGames());
                 settings.setExcludedGames(excludedGamesPanel.getGames());
-    
+                
                 settings.save();
-                StatusQueue.postMessage(new StatusMessage(StatusType.SUCCESS, "Settings saved"));
+                status.postMessage(new StatusMessage(StatusType.SUCCESS, "Settings saved"));
             }
         });
     }

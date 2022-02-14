@@ -5,25 +5,28 @@
 
 package io.github.trdesilva.autorecorder.upload;
 
+import com.google.inject.Inject;
 import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
 import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
 import io.github.trdesilva.autorecorder.ui.status.StatusType;
 
-import java.io.IOException;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
 
-public class UploadQueue
+public class UploadQueue implements AutoCloseable
 {
-    private Uploader uploader;
+    private final Uploader uploader;
+    private final StatusQueue status;
     
-    private ConcurrentLinkedQueue<UploadJob> jobs;
-    private Semaphore semaphore;
+    private final ConcurrentLinkedQueue<UploadJob> jobs;
+    private final Semaphore semaphore;
     private Thread uploadingThread;
     
-    public UploadQueue(Uploader uploader)
+    @Inject
+    public UploadQueue(Uploader uploader, StatusQueue status)
     {
         this.uploader = uploader;
+        this.status = status;
         
         jobs = new ConcurrentLinkedQueue<>();
         semaphore = new Semaphore(0);
@@ -55,14 +58,17 @@ public class UploadQueue
                     {
                         if(uploader.getValidator().validate(job))
                         {
-                            StatusQueue.postMessage(new StatusMessage(StatusType.INFO, "Starting upload of " + job.getVideoTitle()));
+                            status.postMessage(
+                                    new StatusMessage(StatusType.INFO, "Starting upload of " + job.getVideoTitle()));
                             String url = uploader.upload(job);
-                            StatusQueue.postMessage(new StatusMessage(StatusType.SUCCESS, job.getVideoTitle() + " uploaded", url));
+                            status.postMessage(
+                                    new StatusMessage(StatusType.SUCCESS, job.getVideoTitle() + " uploaded", url));
                         }
                     }
                     catch(Exception e)
                     {
-                        StatusQueue.postMessage(new StatusMessage(StatusType.FAILURE, "Failed to upload clip: " + job.getClipName()));
+                        status.postMessage(
+                                new StatusMessage(StatusType.FAILURE, "Failed to upload clip: " + job.getClipName()));
                     }
                 }
             });
@@ -77,5 +83,11 @@ public class UploadQueue
         {
             uploadingThread.interrupt();
         }
+    }
+    
+    @Override
+    public void close() throws Exception
+    {
+        stopProcessing();
     }
 }

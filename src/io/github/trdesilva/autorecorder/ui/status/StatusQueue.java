@@ -5,24 +5,22 @@
 
 package io.github.trdesilva.autorecorder.ui.status;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
 
+@Singleton
 public class StatusQueue
 {
-    private static StatusQueue instance = new StatusQueue();
-    
-    private static StatusQueue getInstance()
-    {
-        return instance;
-    }
-    
-    private ConcurrentLinkedQueue<StatusMessage> messageQueue;
-    private Semaphore semaphore;
+    private final ConcurrentLinkedQueue<StatusMessage> messageQueue;
+    private final Semaphore semaphore;
     private StatusConsumer consumer;
-    private Thread consumerThread;
+    private final Thread consumerThread;
     
-    private StatusQueue()
+    @Inject
+    public StatusQueue()
     {
         messageQueue = new ConcurrentLinkedQueue<>();
         messageQueue.offer(new StatusMessage(StatusType.SUCCESS, "Welcome to Autorecorder"));
@@ -54,22 +52,22 @@ public class StatusQueue
         });
     }
     
-    public static void setConsumer(StatusConsumer consumer)
+    public void setConsumer(StatusConsumer consumer)
     {
-        if(instance.consumer == null)
+        if(this.consumer == null && consumer != null)
         {
-            instance.consumer = consumer;
-            instance.consumerThread.start();
+            this.consumer = consumer;
+            consumerThread.start();
         }
-        else
+        else if(this.consumer != null)
         {
             throw new IllegalStateException("Can only set StatusQueue's consumer once");
         }
     }
     
-    public static void postMessage(StatusMessage message)
+    public void postMessage(StatusMessage message)
     {
-        instance.messageQueue.offer(message);
-        instance.semaphore.release(1);
+        messageQueue.offer(message);
+        semaphore.release(1);
     }
 }

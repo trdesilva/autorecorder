@@ -7,6 +7,8 @@ package io.github.trdesilva.autorecorder.clip;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import io.github.trdesilva.autorecorder.Settings;
 import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
 import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
@@ -22,17 +24,21 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+@Singleton
 public class VideoMetadataReader
 {
     private final Settings settings;
+    private final StatusQueue status;
     
     private final ObjectMapper objectMapper = new ObjectMapper();
     
-    private Map<File, JsonNode> metadataMapping;
+    private final Map<File, JsonNode> metadataMapping;
     
-    public VideoMetadataReader(Settings settings)
+    @Inject
+    public VideoMetadataReader(Settings settings, StatusQueue status)
     {
         this.settings = settings;
+        this.status = status;
         
         metadataMapping = new HashMap<>();
     }
@@ -52,7 +58,7 @@ public class VideoMetadataReader
         if(video != null && metadataMapping.containsKey(video))
         {
             double durationSeconds = metadataMapping.get(video).get("format").get("duration").asDouble();
-            return (long)(durationSeconds*1000);
+            return (long) (durationSeconds * 1000);
         }
         return -1;
     }
@@ -85,7 +91,8 @@ public class VideoMetadataReader
             }
             catch(IOException e)
             {
-                StatusQueue.postMessage(new StatusMessage(StatusType.WARNING, "Couldn't read metadata for " + video.getName()));
+                status.postMessage(
+                        new StatusMessage(StatusType.WARNING, "Couldn't read metadata for " + video.getName()));
             }
         }
     }
@@ -93,7 +100,9 @@ public class VideoMetadataReader
     private JsonNode getMetadataJson(File video) throws IOException
     {
         String[] ffprobeArgs = {settings.getFfprobePath(), "-v", "quiet", "-print_format", "json", "-show_format", "-show_streams", "-select_streams", "v:0", video.getAbsolutePath()};
-        Process ffprobeProc = Runtime.getRuntime().exec(ffprobeArgs, null, new File(Paths.get(settings.getFfmpegPath()).getParent().toString()));
+        Process ffprobeProc = Runtime.getRuntime()
+                                     .exec(ffprobeArgs, null,
+                                           new File(Paths.get(settings.getFfmpegPath()).getParent().toString()));
         InputStream stdout = ffprobeProc.getInputStream();
         try
         {

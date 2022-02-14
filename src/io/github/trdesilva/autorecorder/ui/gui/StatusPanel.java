@@ -5,6 +5,8 @@
 
 package io.github.trdesilva.autorecorder.ui.gui;
 
+import com.google.inject.Inject;
+import io.github.trdesilva.autorecorder.ui.gui.wrapper.DefaultPanel;
 import io.github.trdesilva.autorecorder.ui.status.StatusConsumer;
 import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
 import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
@@ -12,10 +14,8 @@ import io.github.trdesilva.autorecorder.ui.status.StatusType;
 import net.miginfocom.swing.MigLayout;
 import org.apache.commons.io.IOUtils;
 
-import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Desktop;
@@ -27,30 +27,37 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-public class StatusPanel extends JPanel implements StatusConsumer
+public class StatusPanel extends DefaultPanel implements StatusConsumer
 {
-    private JLabel messageLabel;
+    private final StatusQueue status;
+    
+    private final JLabel messageLabel;
     private ImageIcon recordingOnIcon;
     private ImageIcon recordingOffIcon;
     private JLabel recordingIndicator;
     private MouseListener mouseListener;
     
-    public StatusPanel()
+    @Inject
+    public StatusPanel(StatusQueue status)
     {
+        this.status = status;
+        
         setLayout(new MigLayout("fill", "[grow][16!]"));
         
         messageLabel = new JLabel("Welcome to Autorecorder");
         try
         {
-            recordingOnIcon = new ImageIcon(IOUtils.resourceToByteArray("recordingonicon.png", getClass().getClassLoader()));
+            recordingOnIcon = new ImageIcon(
+                    IOUtils.resourceToByteArray("recordingonicon.png", getClass().getClassLoader()));
             recordingOnIcon.setImage(recordingOnIcon.getImage().getScaledInstance(16, 16, Image.SCALE_SMOOTH));
-            recordingOffIcon = new ImageIcon(IOUtils.resourceToByteArray("recordingofficon.png", getClass().getClassLoader()));
+            recordingOffIcon = new ImageIcon(
+                    IOUtils.resourceToByteArray("recordingofficon.png", getClass().getClassLoader()));
             recordingOffIcon.setImage(recordingOffIcon.getImage().getScaledInstance(16, 16, Image.SCALE_SMOOTH));
             recordingIndicator = new JLabel(recordingOffIcon);
         }
         catch(IOException e)
         {
-            StatusQueue.postMessage(new StatusMessage(StatusType.DEBUG, "Failed to load icons"));
+            status.postMessage(new StatusMessage(StatusType.DEBUG, "Failed to load icons"));
             recordingOnIcon = null;
             recordingOffIcon = null;
             recordingIndicator = new JLabel("Stopped");
@@ -105,12 +112,13 @@ public class StatusPanel extends JPanel implements StatusConsumer
                     }
                     catch(URISyntaxException | IOException ex)
                     {
-                        StatusQueue.postMessage(new StatusMessage(StatusType.DEBUG, "Link navigation failed: " + link));
+                        status.postMessage(new StatusMessage(StatusType.DEBUG, "Link navigation failed: " + link));
                     }
                 }
             };
             messageLabel.addMouseListener(mouseListener);
-            messageLabel.setText(String.format("<html>%s (<a href='%s'>%s</a>)</html>", message.getMessage(), link, link));
+            messageLabel.setText(
+                    String.format("<html>%s (<a href='%s'>%s</a>)</html>", message.getMessage(), link, link));
             messageLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         }
         else

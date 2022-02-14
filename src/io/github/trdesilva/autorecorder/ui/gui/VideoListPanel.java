@@ -5,10 +5,11 @@
 
 package io.github.trdesilva.autorecorder.ui.gui;
 
+import com.google.inject.assistedinject.Assisted;
+import com.google.inject.assistedinject.AssistedInject;
 import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
 import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
 import io.github.trdesilva.autorecorder.ui.status.StatusType;
-import net.miginfocom.swing.MigLayout;
 
 import javax.swing.JList;
 import javax.swing.JScrollPane;
@@ -16,16 +17,20 @@ import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.Dimension;
 import java.io.File;
 
 public class VideoListPanel extends JScrollPane
 {
+    private final StatusQueue status;
     private File videoDir;
     private final JList<File> videos;
     
-    public VideoListPanel(File videoDir, VideoListSelectionConsumer selectionConsumer)
+    @AssistedInject
+    public VideoListPanel(StatusQueue status, @Assisted File videoDir,
+                          @Assisted VideoListSelectionConsumer selectionConsumer)
     {
+        this.status = status;
+        
         // TODO filename filter for only videos/error hadnling
         // TODO custom renderer with thumbnails
         // TODO update file list
@@ -44,7 +49,10 @@ public class VideoListPanel extends JScrollPane
             @Override
             public void valueChanged(ListSelectionEvent e)
             {
-                if(e.getValueIsAdjusting()) return;
+                if(e.getValueIsAdjusting())
+                {
+                    return;
+                }
                 selectionConsumer.setVideo(videos.getSelectedValue());
             }
         });
@@ -60,7 +68,8 @@ public class VideoListPanel extends JScrollPane
         }
         else
         {
-            StatusQueue.postMessage(new StatusMessage(StatusType.WARNING, "Couldn't find videos; please update recording/clip path in settings"));
+            status.postMessage(new StatusMessage(StatusType.WARNING,
+                                                 "Couldn't find videos; please update recording/clip path in settings"));
         }
     }
     

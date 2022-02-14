@@ -5,20 +5,22 @@
 
 package io.github.trdesilva.autorecorder.ui.gui;
 
+import com.google.inject.Inject;
+import io.github.trdesilva.autorecorder.ui.gui.wrapper.DefaultPanel;
 import net.miginfocom.swing.MigLayout;
 import org.apache.commons.io.IOUtils;
 
 import javax.swing.JButton;
-import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.UIManager;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
-public class LicensePanel extends JPanel
+public class LicensePanel extends DefaultPanel
 {
-    public LicensePanel()
+    @Inject
+    public LicensePanel(Navigator navigator)
     {
         setLayout(new MigLayout("fill", "[]", "[grow][]"));
         
@@ -29,11 +31,12 @@ public class LicensePanel extends JPanel
         textArea.setWrapStyleWord(true);
         textArea.setFont(UIManager.getFont("Label.font"));
         JButton okButton = new JButton("OK");
-    
+        
         String terms;
         try
         {
-            terms = IOUtils.toString(ClassLoader.getSystemClassLoader().getResourceAsStream("terms.txt"), Charset.defaultCharset());
+            terms = IOUtils.toString(ClassLoader.getSystemClassLoader().getResourceAsStream("terms.txt"),
+                                     Charset.defaultCharset());
         }
         catch(IOException e)
         {
@@ -48,7 +51,7 @@ public class LicensePanel extends JPanel
         add(okButton, "cell 0 1, right, tag ok");
         
         okButton.addActionListener(e -> {
-            MainWindow.getInstance().showMainView();
+            navigator.showMainView();
         });
     }
 }

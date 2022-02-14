@@ -5,6 +5,7 @@
 
 package io.github.trdesilva.autorecorder.ui.cli;
 
+import com.google.inject.Inject;
 import io.github.trdesilva.autorecorder.Settings;
 
 import java.io.File;
@@ -20,6 +21,7 @@ public class SettingsCli extends Cli
     public static final String ADDITIONAL_GAMES = "Additional games";
     public static final String EXCLUDED_GAMES = "Excluded games";
     
+    @Inject
     public SettingsCli(Settings settings)
     {
         super(settings);
@@ -41,7 +43,8 @@ public class SettingsCli extends Cli
             {
                 return;
             }
-            if(setting.equals(OBS_FILEPATH) || setting.equals(RECORDING_DIRECTORY) || setting.equals(FFMPEG_FILEPATH) || setting.equals(CLIP_DIRECTORY))
+            if(setting.equals(OBS_FILEPATH) || setting.equals(RECORDING_DIRECTORY) || setting.equals(
+                    FFMPEG_FILEPATH) || setting.equals(CLIP_DIRECTORY))
             {
                 print("Enter a new value for %s", setting);
                 String newValue = readLine();

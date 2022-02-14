@@ -5,11 +5,11 @@
 
 package io.github.trdesilva.autorecorder.ui.gui;
 
+import com.google.inject.Inject;
+import io.github.trdesilva.autorecorder.ui.gui.wrapper.DefaultPanel;
 import net.miginfocom.swing.MigLayout;
-import uk.co.caprica.vlcj.media.MediaEventAdapter;
 import uk.co.caprica.vlcj.player.base.MediaPlayer;
 import uk.co.caprica.vlcj.player.base.MediaPlayerEventAdapter;
-import uk.co.caprica.vlcj.player.base.MediaPlayerEventListener;
 import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent;
 
 import javax.swing.AbstractAction;
@@ -33,22 +33,24 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static io.github.trdesilva.autorecorder.TimestampUtil.formatTime;
 import static io.github.trdesilva.autorecorder.TimestampUtil.parseTime;
 
-public class VideoPlaybackPanel extends JPanel implements AutoCloseable
+public class VideoPlaybackPanel extends DefaultPanel implements AutoCloseable
 {
     private final SeekBar seekBar;
     private final JButton playPauseButton;
-    private EmbeddedMediaPlayerComponent mediaPlayerComponent;
+    private final EmbeddedMediaPlayerComponent mediaPlayerComponent;
     
-    private AtomicBoolean isPlaying = new AtomicBoolean(false);
+    private final AtomicBoolean isPlaying = new AtomicBoolean(false);
     private Thread subsectionControlThread;
     
-    public VideoPlaybackPanel()
+    @Inject
+    public VideoPlaybackPanel(WindowCloseHandler windowCloseHandler)
     {
         setLayout(new MigLayout("", "[grow]", "[grow][60:6.25%:100]"));
         setPreferredSize(new Dimension(MainWindow.PREFERRED_WIDTH, 10 * MainWindow.PREFERRED_WIDTH / 16));
         
         mediaPlayerComponent = new EmbeddedMediaPlayerComponent();
-        mediaPlayerComponent.setPreferredSize(new Dimension(MainWindow.PREFERRED_WIDTH, 9 * MainWindow.PREFERRED_WIDTH / 16));
+        mediaPlayerComponent.setPreferredSize(
+                new Dimension(MainWindow.PREFERRED_WIDTH, 9 * MainWindow.PREFERRED_WIDTH / 16));
         mediaPlayerComponent.mediaPlayer().events().addMediaPlayerEventListener(new MediaPlayerEventAdapter()
         {
             @Override
@@ -78,7 +80,7 @@ public class VideoPlaybackPanel extends JPanel implements AutoCloseable
             }
         });
         
-        MainWindow.closeables.add(this);
+        windowCloseHandler.addCloseable(this);
         
         controlPanel.add(seekBar, "cell 0 0, growx");
         controlPanel.add(playPauseButton, "cell 0 1");
@@ -99,7 +101,7 @@ public class VideoPlaybackPanel extends JPanel implements AutoCloseable
             playPauseButton.setText("Pause");
             mediaPlayerComponent.mediaPlayer().controls().play();
         }
-    
+        
         this.isPlaying.set(isPlaying);
     }
     
@@ -166,10 +168,10 @@ public class VideoPlaybackPanel extends JPanel implements AutoCloseable
     }
     
     /*
-    * Adapted from uk.co.caprica.vlcjplayer.view.main.PositionPane.
-    * See https://github.com/caprica/vlcj-player/blob/master/src/main/java/uk/co/caprica/vlcjplayer/view/main/PositionPane.java
+     * Adapted from uk.co.caprica.vlcjplayer.view.main.PositionPane.
+     * See https://github.com/caprica/vlcj-player/blob/master/src/main/java/uk/co/caprica/vlcjplayer/view/main/PositionPane.java
      */
-    private class SeekBar extends JPanel
+    private class SeekBar extends DefaultPanel
     {
         
         private final JTextField timeField;

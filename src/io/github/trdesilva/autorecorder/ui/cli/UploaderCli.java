@@ -5,8 +5,8 @@
 
 package io.github.trdesilva.autorecorder.ui.cli;
 
+import com.google.inject.Inject;
 import io.github.trdesilva.autorecorder.Settings;
-import io.github.trdesilva.autorecorder.upload.Uploader;
 import io.github.trdesilva.autorecorder.upload.youtube.PrivacyStatus;
 import io.github.trdesilva.autorecorder.upload.youtube.YoutubeUploader;
 
@@ -15,8 +15,9 @@ import java.io.IOException;
 
 public class UploaderCli extends Cli
 {
-    private YoutubeUploader uploader;
+    private final YoutubeUploader uploader;
     
+    @Inject
     public UploaderCli(Settings settings, YoutubeUploader uploader)
     {
         super(settings);
@@ -52,7 +53,8 @@ public class UploaderCli extends Cli
                     print("Enter a video description");
                     String description = readLine();
                     
-                    String privacy = chooseFromList("Choose a privacy setting", PrivacyStatus.PRIVATE.name(), PrivacyStatus.UNLISTED.name(), PrivacyStatus.PUBLIC.name());
+                    String privacy = chooseFromList("Choose a privacy setting", PrivacyStatus.PRIVATE.name(),
+                                                    PrivacyStatus.UNLISTED.name(), PrivacyStatus.PUBLIC.name());
                     
                     try
                     {

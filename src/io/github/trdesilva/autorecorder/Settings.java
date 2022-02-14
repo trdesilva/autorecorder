@@ -8,6 +8,8 @@ package io.github.trdesilva.autorecorder;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
 import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
 import io.github.trdesilva.autorecorder.ui.status.StatusType;
@@ -27,13 +29,14 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Singleton
 public class Settings
 {
     public static final Path SETTINGS_DIR = Paths.get(System.getenv("LOCALAPPDATA"))
                                                  .resolve("autorecorder");
     private final File settingsFile;
     
-    private static class SettingsContainer
+    public static class SettingsContainer
     {
         public String obsPath;
         public String recordingPath;
@@ -50,12 +53,17 @@ public class Settings
         public boolean licenseAccepted = false;
     }
     
-    private ObjectMapper objectMapper;
+    private final StatusQueue status;
+    
+    private final ObjectMapper objectMapper;
     private SettingsContainer container;
     private boolean firstLaunch = false;
     
-    public Settings()
+    @Inject
+    public Settings(StatusQueue status)
     {
+        this.status = status;
+        
         objectMapper = new ObjectMapper();
         container = new SettingsContainer();
         settingsFile = new File(SETTINGS_DIR.resolve("settings.json").toString());
@@ -67,19 +75,19 @@ public class Settings
         {
             firstLaunch = true;
             container.excludedGames.add("leagueclientux.exe");
-            StatusQueue.postMessage(new StatusMessage(StatusType.INFO, "Creating settings file on first launch"));
+            status.postMessage(new StatusMessage(StatusType.INFO, "Creating settings file on first launch"));
         }
         else
         {
-            StatusQueue.postMessage(new StatusMessage(StatusType.DEBUG, "Loading settings"));
+            status.postMessage(new StatusMessage(StatusType.DEBUG, "Loading settings"));
             try
             {
                 container = objectMapper.readValue(settingsFile, SettingsContainer.class);
-                StatusQueue.postMessage(new StatusMessage(StatusType.DEBUG, "Settings loaded"));
+                status.postMessage(new StatusMessage(StatusType.DEBUG, "Settings loaded"));
             }
             catch(IOException e)
             {
-                StatusQueue.postMessage(new StatusMessage(StatusType.WARNING, "Failed to load settings"));
+                status.postMessage(new StatusMessage(StatusType.WARNING, "Failed to load settings"));
                 container.excludedGames.add("leagueclientux.exe");
             }
         }
@@ -88,7 +96,7 @@ public class Settings
         {
             populateGamesFromApi();
             save();
-            StatusQueue.postMessage(new StatusMessage(StatusType.SUCCESS, "Settings saved"));
+            status.postMessage(new StatusMessage(StatusType.SUCCESS, "Settings saved"));
         }
     }
     
@@ -182,7 +190,10 @@ public class Settings
     
     public void setAdditionalGames(Set<String> games)
     {
-        Set<String> removed = Sets.difference(getAdditionalGames(), games).stream().map(this::formatExeName).collect(Collectors.toSet());
+        Set<String> removed = Sets.difference(getAdditionalGames(), games)
+                                  .stream()
+                                  .map(this::formatExeName)
+                                  .collect(Collectors.toSet());
         container.additionalGames = games.stream().map(this::formatExeName).collect(Collectors.toSet());
         synchronized(container.games)
         {
@@ -231,7 +242,7 @@ public class Settings
                             }
                         }
                     }
-        
+                    
                 }
                 System.out.println("got executables: " + container.games.size());
                 container.lastFetchedGamesTimestamp = DateTime.now().getMillis();
@@ -239,7 +250,7 @@ public class Settings
         }
         catch(IOException e)
         {
-            StatusQueue.postMessage(new StatusMessage(StatusType.WARNING, "Failed to retrieve game list"));
+            status.postMessage(new StatusMessage(StatusType.WARNING, "Failed to retrieve game list"));
         }
     }
 }

@@ -5,36 +5,38 @@
 
 package io.github.trdesilva.autorecorder.ui.gui.clip;
 
-import io.github.trdesilva.autorecorder.Settings;
+import com.google.inject.Inject;
 import io.github.trdesilva.autorecorder.clip.VideoMetadataReader;
-import io.github.trdesilva.autorecorder.ui.gui.MainWindow;
+import io.github.trdesilva.autorecorder.ui.gui.Navigator;
 import io.github.trdesilva.autorecorder.ui.gui.VideoListSelectionConsumer;
+import io.github.trdesilva.autorecorder.ui.gui.wrapper.DefaultPanel;
 import io.github.trdesilva.autorecorder.ui.gui.wrapper.WrappingLabel;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
-import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.GridLayout;
 import java.io.File;
 
 import static io.github.trdesilva.autorecorder.TimestampUtil.formatTime;
 
-public class ClipInfoPanel extends JPanel implements VideoListSelectionConsumer
+public class ClipInfoPanel extends DefaultPanel implements VideoListSelectionConsumer
 {
-    private WrappingLabel title;
-    private JLabel duration;
-    private JLabel resolution;
+    private final VideoMetadataReader metadataReader;
     
-    private JButton uploadButton;
+    private final WrappingLabel title;
+    private final JLabel duration;
+    private final JLabel resolution;
+    
+    private final JButton uploadButton;
     
     private File clip;
-    private VideoMetadataReader metadataReader;
     
-    public ClipInfoPanel(Settings settings)
+    @Inject
+    public ClipInfoPanel(VideoMetadataReader metadataReader, Navigator navigator)
     {
+        this.metadataReader = metadataReader;
+        
         setLayout(new MigLayout("fill", "[100:null:null]", "[][][]push[]"));
         
         title = new WrappingLabel("");
@@ -47,11 +49,9 @@ public class ClipInfoPanel extends JPanel implements VideoListSelectionConsumer
         uploadButton.addActionListener(e -> {
             if(clip != null)
             {
-                MainWindow.getInstance().showUploadView(clip);
+                navigator.showUploadView(clip);
             }
         });
-        
-        metadataReader = new VideoMetadataReader(settings);
         
         add(title, "cell 0 0, growx");
         add(duration, "cell 0 1, growx");

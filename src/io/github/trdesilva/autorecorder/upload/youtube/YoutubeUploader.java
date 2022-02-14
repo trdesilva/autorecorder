@@ -19,6 +19,7 @@ import com.google.api.services.youtube.YouTube;
 import com.google.api.services.youtube.model.Video;
 import com.google.api.services.youtube.model.VideoSnippet;
 import com.google.api.services.youtube.model.VideoStatus;
+import com.google.inject.Inject;
 import io.github.trdesilva.autorecorder.Settings;
 import io.github.trdesilva.autorecorder.upload.UploadJob;
 import io.github.trdesilva.autorecorder.upload.UploadJobValidator;
@@ -46,24 +47,30 @@ public class YoutubeUploader extends Uploader
     private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
     private static final String VIDEO_URL_FORMAT = "https://www.youtube.com/watch?v=%s";
     
-    public YoutubeUploader(Settings settings)
+    private final YoutubeJobValidator validator;
+    
+    @Inject
+    public YoutubeUploader(Settings settings, YoutubeJobValidator validator)
     {
         super(settings);
+        this.validator = validator;
     }
     
     @Override
     public String upload(UploadJob uploadJob) throws IOException
     {
-        return upload(uploadJob.getClipName(), uploadJob.getVideoTitle(), uploadJob.getDescription(), PrivacyStatus.valueOf(uploadJob.getProperty(PRIVACY_PROPERTY)));
+        return upload(uploadJob.getClipName(), uploadJob.getVideoTitle(), uploadJob.getDescription(),
+                      PrivacyStatus.valueOf(uploadJob.getProperty(PRIVACY_PROPERTY)));
     }
     
     @Override
     public UploadJobValidator getValidator()
     {
-        return new YoutubeJobValidator();
+        return validator;
     }
     
-    public String upload(String clipName, String videoTitle, String description, PrivacyStatus privacyStatus) throws IOException
+    public String upload(String clipName, String videoTitle, String description, PrivacyStatus privacyStatus) throws
+                                                                                                              IOException
     {
         try
         {
@@ -77,12 +84,8 @@ public class YoutubeUploader extends Uploader
             // gaming category
             snippet.setCategoryId("20");
             
-            description = description.strip().replace("<", "lt").replace(">", "gt");
-            if(description.length() > 5000) description = description.substring(0, 5000);
             snippet.setDescription(description);
             
-            videoTitle = videoTitle.strip().replace("<", "lt").replace(">", "gt");
-            if(videoTitle.length() > 100) videoTitle = videoTitle.substring(0, 100);
             snippet.setTitle(videoTitle);
             
             video.setSnippet(snippet);
@@ -101,7 +104,8 @@ public class YoutubeUploader extends Uploader
             
             // Define and execute the API request
             YouTube.Videos.Insert request = youtubeService.videos()
-                                                          .insert(Arrays.asList("snippet", "status"), video, mediaContent);
+                                                          .insert(Arrays.asList("snippet", "status"), video,
+                                                                  mediaContent);
             Video response = request.execute();
             System.out.println(response);
             

@@ -5,20 +5,22 @@
 
 package io.github.trdesilva.autorecorder.ui.cli;
 
-import io.github.trdesilva.autorecorder.clip.ClipTrimmer;
+import com.google.inject.Inject;
 import io.github.trdesilva.autorecorder.Settings;
+import io.github.trdesilva.autorecorder.clip.ClipTrimmer;
 
 import java.io.File;
 
 public class ClipTrimmerCli extends Cli
 {
-    private ClipTrimmer clipTrimmer;
+    private final ClipTrimmer clipTrimmer;
     
-    public ClipTrimmerCli(Settings settings)
+    @Inject
+    public ClipTrimmerCli(Settings settings, ClipTrimmer clipTrimmer)
     {
         super(settings);
         
-        clipTrimmer = new ClipTrimmer(settings);
+        this.clipTrimmer = clipTrimmer;
     }
     
     @Override

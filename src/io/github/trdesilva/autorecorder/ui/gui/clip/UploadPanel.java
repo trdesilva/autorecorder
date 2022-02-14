@@ -5,8 +5,10 @@
 
 package io.github.trdesilva.autorecorder.ui.gui.clip;
 
-import io.github.trdesilva.autorecorder.ui.gui.MainWindow;
+import com.google.inject.Inject;
+import io.github.trdesilva.autorecorder.ui.gui.Navigator;
 import io.github.trdesilva.autorecorder.ui.gui.VideoPlaybackPanel;
+import io.github.trdesilva.autorecorder.ui.gui.wrapper.DefaultPanel;
 import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
 import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
 import io.github.trdesilva.autorecorder.ui.status.StatusType;
@@ -23,27 +25,28 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import javax.swing.JTextPane;
 import javax.swing.UIManager;
 import java.io.File;
 
-public class UploadPanel extends JPanel
+public class UploadPanel extends DefaultPanel
 {
-    private VideoPlaybackPanel playbackPanel;
+    private final VideoPlaybackPanel playbackPanel;
     private final JTextField titleField;
     private File videoFile;
     
-    public UploadPanel(UploadQueue uploadQueue)
+    @Inject
+    public UploadPanel(VideoPlaybackPanel playbackPanel, UploadQueue uploadQueue, StatusQueue status,
+                       Navigator navigator)
     {
         setLayout(new MigLayout("fill", "[grow]", "[30!][grow][]"));
-    
+        
         JButton backButton = new JButton("Back");
-    
-        playbackPanel = new VideoPlaybackPanel();
-    
+        
+        this.playbackPanel = playbackPanel;
+        
         JPanel controlPanel = new JPanel();
         controlPanel.setLayout(new MigLayout("fill", "[left, 160::30%][80:30%:90%:push][shrink][right, shrink]", "[]"));
-    
+        
         JLabel titleLabel = new JLabel("Title");
         titleField = new JTextField();
         titleField.setColumns(25);
@@ -55,33 +58,37 @@ public class UploadPanel extends JPanel
         descriptionScrollPane.getViewport().add(descriptionField);
         JComboBox<PrivacyStatus> privacySelector = new JComboBox<>(PrivacyStatus.values());
         JButton uploadButton = new JButton("Upload to YouTube");
-        uploadButton.setToolTipText("By clicking 'Upload,' you certify that the content you are uploading complies with the YouTube Terms of Service (including the YouTube Community Guidelines) at https://www.youtube.com/t/terms. Please be sure not to violate others' copyright or privacy rights.");
-    
+        uploadButton.setToolTipText(
+                "By clicking 'Upload,' you certify that the content you are uploading complies with the YouTube Terms of Service (including the YouTube Community Guidelines) at https://www.youtube.com/t/terms. Please be sure not to violate others' copyright or privacy rights.");
+        
         controlPanel.add(titleLabel, "cell 0 0");
         controlPanel.add(titleField, "cell 0 0, grow");
         controlPanel.add(descriptionLabel, "cell 1 0");
         controlPanel.add(descriptionScrollPane, "cell 1 0, grow");
         controlPanel.add(privacySelector, "cell 2 0");
         controlPanel.add(uploadButton, "cell 3 0");
-    
+        
         add(backButton, "cell 0 0");
         add(playbackPanel, "cell 0 1, grow, wmin 400, hmin 300");
         add(controlPanel, "cell 0 2, growx");
-    
+        
         backButton.addActionListener(e -> {
             playbackPanel.stop();
-        
+            
             titleField.setText("");
             descriptionField.setText("");
-        
-            MainWindow.getInstance().showMainView();
+            
+            navigator.showMainView();
         });
         
         uploadButton.addActionListener(e -> {
-            UploadJob job = new UploadJob(videoFile.getAbsolutePath(), titleField.getText(), descriptionField.getText());
-            job.addProperty(YoutubeUploader.PRIVACY_PROPERTY, ((PrivacyStatus)(privacySelector.getSelectedItem())).name());
+            UploadJob job = new UploadJob(videoFile.getAbsolutePath(), titleField.getText(),
+                                          descriptionField.getText());
+            job.addProperty(YoutubeUploader.PRIVACY_PROPERTY,
+                            ((PrivacyStatus) (privacySelector.getSelectedItem())).name());
             uploadQueue.enqueue(job);
-            StatusQueue.postMessage(new StatusMessage(StatusType.INFO, "Adding " + job.getVideoTitle() + " to upload queue"));
+            status.postMessage(
+                    new StatusMessage(StatusType.INFO, "Adding " + job.getVideoTitle() + " to upload queue"));
         });
     }
     

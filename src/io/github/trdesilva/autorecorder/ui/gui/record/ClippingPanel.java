@@ -5,11 +5,13 @@
 
 package io.github.trdesilva.autorecorder.ui.gui.record;
 
+import com.google.inject.Inject;
 import io.github.trdesilva.autorecorder.TimestampUtil;
 import io.github.trdesilva.autorecorder.clip.ClipJob;
 import io.github.trdesilva.autorecorder.clip.ClipQueue;
-import io.github.trdesilva.autorecorder.ui.gui.MainWindow;
+import io.github.trdesilva.autorecorder.ui.gui.Navigator;
 import io.github.trdesilva.autorecorder.ui.gui.VideoPlaybackPanel;
+import io.github.trdesilva.autorecorder.ui.gui.wrapper.DefaultPanel;
 import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
 import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
 import io.github.trdesilva.autorecorder.ui.status.StatusType;
@@ -23,18 +25,19 @@ import java.io.File;
 
 import static io.github.trdesilva.autorecorder.TimestampUtil.parseTime;
 
-public class ClippingPanel extends JPanel
+public class ClippingPanel extends DefaultPanel
 {
-    private VideoPlaybackPanel playbackPanel;
+    private final VideoPlaybackPanel playbackPanel;
     private File videoFile;
     
-    public ClippingPanel(ClipQueue clipQueue)
+    @Inject
+    public ClippingPanel(VideoPlaybackPanel playbackPanel, ClipQueue clipQueue, StatusQueue status, Navigator navigator)
     {
         setLayout(new MigLayout("fill", "[grow]", "[30!][grow][]"));
         
         JButton backButton = new JButton("Back");
         
-        playbackPanel = new VideoPlaybackPanel();
+        this.playbackPanel = playbackPanel;
         
         JPanel controlPanel = new JPanel();
         controlPanel.setLayout(new MigLayout("fill", "[][grow][][][80!][][][80!][][]", "[]"));
@@ -42,13 +45,13 @@ public class ClippingPanel extends JPanel
         JLabel titleLabel = new JLabel("Title");
         JLabel startTimeLabel = new JLabel("Start");
         JLabel endTimeLabel = new JLabel("End");
-    
+        
         JTextField titleField = new JTextField();
         JTextField startTimeField = new JTextField();
         startTimeField.setColumns(10);
         JTextField endTimeField = new JTextField();
         endTimeField.setColumns(10);
-    
+        
         JButton startCurrentTimeButton = new JButton("Now");
         JButton endCurrentTimeButton = new JButton("Now");
         JButton previewButton = new JButton("Preview");
@@ -68,21 +71,21 @@ public class ClippingPanel extends JPanel
         add(backButton, "cell 0 0");
         add(playbackPanel, "cell 0 1, grow, wmin 400, hmin 300");
         add(controlPanel, "cell 0 2, growx");
-    
+        
         backButton.addActionListener(e -> {
             playbackPanel.stop();
-        
+            
             titleField.setText("");
             startTimeField.setText("");
             endTimeField.setText("");
             
-            MainWindow.getInstance().showMainView();
+            navigator.showMainView();
         });
-    
+        
         startCurrentTimeButton.addActionListener(e -> {
             startTimeField.setText(TimestampUtil.formatTime(playbackPanel.getPlaybackTime()));
         });
-    
+        
         endCurrentTimeButton.addActionListener(e -> {
             endTimeField.setText(TimestampUtil.formatTime(playbackPanel.getPlaybackTime()));
         });
@@ -96,7 +99,7 @@ public class ClippingPanel extends JPanel
             String extension = videoFile.getName().substring(videoFile.getName().indexOf('.'));
             clipQueue.enqueue(new ClipJob(videoFile.getAbsolutePath(), titleField.getText() + extension,
                                           startTimeField.getText(), endTimeField.getText()));
-            StatusQueue.postMessage(new StatusMessage(StatusType.INFO, "Saving clip: " + titleField.getText()));
+            status.postMessage(new StatusMessage(StatusType.INFO, "Saving clip: " + titleField.getText()));
         });
     }
     

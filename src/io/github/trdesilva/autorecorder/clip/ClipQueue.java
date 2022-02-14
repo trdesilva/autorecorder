@@ -5,6 +5,7 @@
 
 package io.github.trdesilva.autorecorder.clip;
 
+import com.google.inject.Inject;
 import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
 import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
 import io.github.trdesilva.autorecorder.ui.status.StatusType;
@@ -13,17 +14,20 @@ import java.io.IOException;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
 
-public class ClipQueue
+public class ClipQueue implements AutoCloseable
 {
-    private ClipTrimmer trimmer;
+    private final ClipTrimmer trimmer;
+    private final StatusQueue status;
     
-    private ConcurrentLinkedQueue<ClipJob> jobs;
-    private Semaphore semaphore;
+    private final ConcurrentLinkedQueue<ClipJob> jobs;
+    private final Semaphore semaphore;
     private Thread clippingThread;
     
-    public ClipQueue(ClipTrimmer trimmer)
+    @Inject
+    public ClipQueue(ClipTrimmer trimmer, StatusQueue status)
     {
         this.trimmer = trimmer;
+        this.status = status;
         
         jobs = new ConcurrentLinkedQueue<>();
         semaphore = new Semaphore(0);
@@ -54,11 +58,12 @@ public class ClipQueue
                     try
                     {
                         trimmer.makeClip(job.getSource(), job.getDest(), job.getStartArg(), job.getEndArg());
-                        StatusQueue.postMessage(new StatusMessage(StatusType.SUCCESS, "Clip created: " + job.getDest()));
+                        status.postMessage(new StatusMessage(StatusType.SUCCESS, "Clip created: " + job.getDest()));
                     }
-                    catch(IOException|InterruptedException e)
+                    catch(IOException | InterruptedException e)
                     {
-                        StatusQueue.postMessage(new StatusMessage(StatusType.FAILURE, "Failed to create clip: " + job.getDest()));
+                        status.postMessage(
+                                new StatusMessage(StatusType.FAILURE, "Failed to create clip: " + job.getDest()));
                     }
                 }
             });
@@ -73,5 +78,11 @@ public class ClipQueue
         {
             clippingThread.interrupt();
         }
+    }
+    
+    @Override
+    public void close() throws Exception
+    {
+        stopProcessing();
     }
 }

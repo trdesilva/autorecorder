@@ -5,17 +5,17 @@
 
 package io.github.trdesilva.autorecorder.ui.gui.record;
 
-import io.github.trdesilva.autorecorder.Settings;
+import com.google.inject.Inject;
 import io.github.trdesilva.autorecorder.clip.VideoMetadataReader;
-import io.github.trdesilva.autorecorder.ui.gui.MainWindow;
+import io.github.trdesilva.autorecorder.ui.gui.Navigator;
 import io.github.trdesilva.autorecorder.ui.gui.VideoListSelectionConsumer;
+import io.github.trdesilva.autorecorder.ui.gui.wrapper.DefaultPanel;
 import io.github.trdesilva.autorecorder.ui.gui.wrapper.WrappingLabel;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
@@ -23,22 +23,24 @@ import java.io.File;
 
 import static io.github.trdesilva.autorecorder.TimestampUtil.formatTime;
 
-public class RecordingInfoPanel extends JPanel implements VideoListSelectionConsumer
+public class RecordingInfoPanel extends DefaultPanel implements VideoListSelectionConsumer
 {
-    public static final String RECORDING_TO_CLIP_PROP = "recordingToClip";
+    private final VideoMetadataReader metadataReader;
     
-    private WrappingLabel title;
-    private WrappingLabel creationDate;
-    private JLabel duration;
-    private JLabel resolution;
+    private final WrappingLabel title;
+    private final WrappingLabel creationDate;
+    private final JLabel duration;
+    private final JLabel resolution;
     
-    private JButton clipButton;
+    private final JButton clipButton;
     
     private File recording;
-    private VideoMetadataReader metadataReader;
     
-    public RecordingInfoPanel(Settings settings)
+    @Inject
+    public RecordingInfoPanel(VideoMetadataReader metadataReader, Navigator navigator)
     {
+        this.metadataReader = metadataReader;
+        
         setLayout(new MigLayout("fill", "[100:null:null]", "[][][][]push[]"));
         
         title = new WrappingLabel("");
@@ -58,12 +60,10 @@ public class RecordingInfoPanel extends JPanel implements VideoListSelectionCons
                 System.out.println("firing clipper start " + recording);
                 if(recording != null)
                 {
-                    MainWindow.getInstance().showClipView(recording);
+                    navigator.showClipView(recording);
                 }
             }
         });
-        
-        metadataReader = new VideoMetadataReader(settings);
         
         add(title, "cell 0 0, growx, top");
         add(creationDate, "cell 0 1, , growx");

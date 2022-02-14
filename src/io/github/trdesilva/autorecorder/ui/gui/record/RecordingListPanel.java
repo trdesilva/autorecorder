@@ -5,37 +5,40 @@
 
 package io.github.trdesilva.autorecorder.ui.gui.record;
 
+import com.google.inject.Inject;
 import io.github.trdesilva.autorecorder.Settings;
 import io.github.trdesilva.autorecorder.ui.gui.VideoListPanel;
+import io.github.trdesilva.autorecorder.ui.gui.inject.VideoListPanelFactory;
+import io.github.trdesilva.autorecorder.ui.gui.wrapper.DefaultPanel;
 import net.miginfocom.swing.MigLayout;
 
-import javax.swing.JPanel;
 import java.io.File;
 
-public class RecordingListPanel extends JPanel
+public class RecordingListPanel extends DefaultPanel
 {
-    private Settings settings;
+    private final Settings settings;
     
-    private VideoListPanel videoListPanel;
+    private final VideoListPanel videoListPanel;
     
-    public RecordingListPanel(Settings settings)
+    @Inject
+    public RecordingListPanel(Settings settings, RecordingInfoPanel recordingInfoPanel,
+                              VideoListPanelFactory videoListPanelFactory)
     {
         this.settings = settings;
-    
+        
         setLayout(new MigLayout("fill, insets 2", "[75%:75%:90%]2[10%::300]"));
         
-        RecordingInfoPanel infoPanel = new RecordingInfoPanel(settings);
         // TODO error handling
         File recordingDir = null;
         if(settings.getRecordingPath() != null)
         {
             recordingDir = new File(settings.getRecordingPath());
         }
-
-        videoListPanel = new VideoListPanel(recordingDir, infoPanel);
+        
+        videoListPanel = videoListPanelFactory.create(recordingDir, recordingInfoPanel);
         
         add(videoListPanel, "grow");
-        add(infoPanel, "grow");
+        add(recordingInfoPanel, "grow");
     }
     
     public void update()

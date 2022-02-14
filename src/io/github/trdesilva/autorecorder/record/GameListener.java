@@ -5,6 +5,8 @@
 
 package io.github.trdesilva.autorecorder.record;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import io.github.trdesilva.autorecorder.Settings;
 import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
 import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
@@ -16,19 +18,24 @@ import java.nio.file.Paths;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+@Singleton
 public class GameListener implements AutoCloseable
 {
-    Obs obs;
-    Settings settings;
-    AtomicBoolean recording;
-    AtomicReference<String> currentGame;
+    private final Obs obs;
+    private final Settings settings;
+    private final StatusQueue status;
     
-    Thread thread;
+    private final AtomicBoolean recording;
+    private final AtomicReference<String> currentGame;
     
-    public GameListener(Obs obs, Settings settings)
+    private Thread thread;
+    
+    @Inject
+    public GameListener(Obs obs, Settings settings, StatusQueue status)
     {
         this.obs = obs;
         this.settings = settings;
+        this.status = status;
         
         recording = new AtomicBoolean(false);
         currentGame = new AtomicReference<>();
@@ -36,7 +43,7 @@ public class GameListener implements AutoCloseable
     
     public void start()
     {
-        StatusQueue.postMessage(new StatusMessage(StatusType.DEBUG, "Starting listener thread"));
+        status.postMessage(new StatusMessage(StatusType.DEBUG, "Starting listener thread"));
         thread = new Thread(() ->
                             {
                                 while(true)
@@ -50,28 +57,40 @@ public class GameListener implements AutoCloseable
                                                                   if(ph.info().command().isPresent())
                                                                   {
                                                                       // TODO memoization
-                                                                      Path command = Paths.get(ph.info().command().orElse(""));
+                                                                      Path command = Paths.get(
+                                                                              ph.info().command().orElse(""));
                                                                       for(int i = 1; i <= command.getNameCount(); i++)
                                                                       {
-                                                                          String program = command.subpath(command.getNameCount() - i, command.getNameCount())
+                                                                          String program = command.subpath(
+                                                                                                          command.getNameCount() - i,
+                                                                                                          command.getNameCount())
                                                                                                   .toString();
-                                                                          if(settings.getGames().contains(settings.formatExeName(program)))
+                                                                          if(settings.getGames()
+                                                                                     .contains(settings.formatExeName(
+                                                                                             program)))
                                                                           {
                                                                               try
                                                                               {
                                                                                   if(recording.get())
                                                                                   {
-                                                                                      StatusQueue.postMessage(new StatusMessage(StatusType.DEBUG, "already recording " + currentGame.get()));
+                                                                                      status.postMessage(
+                                                                                              new StatusMessage(
+                                                                                                      StatusType.DEBUG,
+                                                                                                      "already recording " + currentGame.get()));
                                                                                       return;
                                                                                   }
-                                                                                  StatusQueue.postMessage(new StatusMessage(StatusType.RECORDING_START, "Recording " + program));
+                                                                                  status.postMessage(new StatusMessage(
+                                                                                          StatusType.RECORDING_START,
+                                                                                          "Recording " + program));
                                                                                   recording.set(true);
                                                                                   obs.start();
                                                                                   currentGame.set(program);
                                                                               }
                                                                               catch(IOException e)
                                                                               {
-                                                                                  StatusQueue.postMessage(new StatusMessage(StatusType.FAILURE, "Couldn't start OBS"));
+                                                                                  status.postMessage(new StatusMessage(
+                                                                                          StatusType.FAILURE,
+                                                                                          "Couldn't start OBS"));
                                                                               }
                                                                               break;
                                                                           }
@@ -82,14 +101,15 @@ public class GameListener implements AutoCloseable
                                     else
                                     {
                                         if(!settings.getGames().contains(settings.formatExeName(currentGame.get()))
-                                        || ProcessHandle.allProcesses()
-                                                        .noneMatch(ph -> Paths.get(ph.info()
-                                                                                     .command()
-                                                                                     .orElse(""))
-                                                                              .endsWith(currentGame.get())
-                                                                  ))
+                                                || ProcessHandle.allProcesses()
+                                                                .noneMatch(ph -> Paths.get(ph.info()
+                                                                                             .command()
+                                                                                             .orElse(""))
+                                                                                      .endsWith(currentGame.get())
+                                                                          ))
                                         {
-                                            StatusQueue.postMessage(new StatusMessage(StatusType.RECORDING_END, "Stopped recording " + currentGame.get()));
+                                            status.postMessage(new StatusMessage(StatusType.RECORDING_END,
+                                                                                 "Stopped recording " + currentGame.get()));
                                             obs.stop();
                                             recording.set(false);
                                             currentGame.set(null);
@@ -102,7 +122,7 @@ public class GameListener implements AutoCloseable
                                     }
                                     catch(InterruptedException e)
                                     {
-                                        StatusQueue.postMessage(new StatusMessage(StatusType.DEBUG, "Game listening ended"));
+                                        status.postMessage(new StatusMessage(StatusType.DEBUG, "Game listening ended"));
                                         return;
                                     }
                                 }

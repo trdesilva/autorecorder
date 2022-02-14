@@ -5,9 +5,11 @@
 
 package io.github.trdesilva.autorecorder.ui.gui;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import io.github.trdesilva.autorecorder.Settings;
 import io.github.trdesilva.autorecorder.clip.ClipQueue;
-import io.github.trdesilva.autorecorder.clip.ClipTrimmer;
+import io.github.trdesilva.autorecorder.record.GameListener;
 import io.github.trdesilva.autorecorder.ui.gui.clip.ClipListPanel;
 import io.github.trdesilva.autorecorder.ui.gui.clip.UploadPanel;
 import io.github.trdesilva.autorecorder.ui.gui.record.ClippingPanel;
@@ -15,7 +17,6 @@ import io.github.trdesilva.autorecorder.ui.gui.record.RecordingListPanel;
 import io.github.trdesilva.autorecorder.ui.gui.settings.SettingsPanel;
 import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
 import io.github.trdesilva.autorecorder.upload.UploadQueue;
-import io.github.trdesilva.autorecorder.upload.youtube.YoutubeUploader;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.JFrame;
@@ -25,74 +26,57 @@ import javax.swing.UIManager;
 import java.awt.CardLayout;
 import java.awt.Dimension;
 import java.awt.Toolkit;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.File;
-import java.util.HashSet;
-import java.util.Set;
 
-public class MainWindow
+@Singleton
+public class MainWindow implements Navigator
 {
     public static final int PREFERRED_WIDTH = 800;
     public static final int PREFERRED_HEIGHT = 600;
-    
-    public static Set<AutoCloseable> closeables = new HashSet<>();
-    private static MainWindow instance;
-    
-    public static MainWindow getInstance()
-    {
-        return instance;
-    }
     
     private final JPanel mainPanel;
     private final CardLayout mainLayout;
     private final JFrame mainFrame;
     
-    private final RecordingListPanel recordingListPanel;
-    private final ClipListPanel clipListPanel;
-    
     private final ClippingPanel clippingPanel;
     private final UploadPanel uploadPanel;
     private final StatusPanel statusPanel;
-    private final LicensePanel licensePanel;
     
-    private ClipQueue clipQueue;
-    private UploadQueue uploadQueue;
+    private final StatusQueue statusQueue;
+    private final ClipQueue clipQueue;
+    private final UploadQueue uploadQueue;
     
-    public MainWindow(Settings settings) throws Exception
+    private final GameListener gameListener;
+    private final WindowCloseHandler windowCloseHandler;
+    
+    @Inject
+    public MainWindow(Settings settings, RecordingListPanel recordingListPanel, ClipListPanel clipListPanel,
+                      SettingsPanel settingsPanel, ClippingPanel clippingPanel, UploadPanel uploadPanel,
+                      LicensePanel licensePanel, StatusPanel statusPanel, StatusQueue statusQueue, ClipQueue clipQueue,
+                      UploadQueue uploadQueue, GameListener gameListener, WindowCloseHandler windowCloseHandler)
     {
-        instance = this;
-        
         // components
-        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         mainFrame = new JFrame("Autorecorder");
         // TODO figure out minimizing to tray
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    
+        
         JPanel metaPanel = new JPanel();
         metaPanel.setLayout(new MigLayout("fill, insets 0 0 0 0", "[grow]", "[grow][30!]"));
         
         mainPanel = new JPanel();
-    
+        
         mainLayout = new CardLayout();
         mainPanel.setLayout(mainLayout);
-    
-        recordingListPanel = new RecordingListPanel(settings);
-        clipListPanel = new ClipListPanel(settings);
         
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.add("Recordings", recordingListPanel);
         tabbedPane.add("Clips", clipListPanel);
-        tabbedPane.add("Settings", new SettingsPanel(settings));
+        tabbedPane.add("Settings", settingsPanel);
         tabbedPane.setSelectedIndex(0);
         tabbedPane.setPreferredSize(new Dimension(PREFERRED_WIDTH, PREFERRED_HEIGHT));
         
-        clipQueue = new ClipQueue(new ClipTrimmer(settings));
-        uploadQueue = new UploadQueue(new YoutubeUploader(settings));
-        
-        clippingPanel = new ClippingPanel(clipQueue);
-        uploadPanel = new UploadPanel(uploadQueue);
-        licensePanel = new LicensePanel();
+        this.clippingPanel = clippingPanel;
+        this.uploadPanel = uploadPanel;
         
         mainPanel.add(tabbedPane, "mainView");
         mainPanel.add(clippingPanel, "clippingView");
@@ -108,22 +92,24 @@ public class MainWindow
             tabbedPane.setSelectedIndex(tabbedPane.indexOfTab("Settings"));
         }
         
-        statusPanel = new StatusPanel();
-        StatusQueue.setConsumer(statusPanel);
+        this.statusPanel = statusPanel;
+        this.statusQueue = statusQueue;
+        
+        this.clipQueue = clipQueue;
+        this.uploadQueue = uploadQueue;
+        
+        this.gameListener = gameListener;
+        
+        this.windowCloseHandler = windowCloseHandler;
         
         metaPanel.add(mainPanel, "cell 0 0, grow");
         metaPanel.add(statusPanel, "cell 0 1, growx");
-    
-        mainFrame.setIconImage(Toolkit.getDefaultToolkit().createImage(ClassLoader.getSystemResource("autorecordericon.png")));
+        
+        mainFrame.setIconImage(
+                Toolkit.getDefaultToolkit().createImage(ClassLoader.getSystemResource("autorecordericon.png")));
         
         mainFrame.getContentPane().add(metaPanel);
-        mainFrame.pack();
-        mainFrame.setLocationRelativeTo(null);
-        mainFrame.setVisible(true);
         
-        clipQueue.startProcessing();
-        uploadQueue.startProcessing();
-    
         tabbedPane.addChangeListener(e -> {
             int tabIndex = tabbedPane.getSelectedIndex();
             if(tabIndex == tabbedPane.indexOfTab("Recordings"))
@@ -135,34 +121,31 @@ public class MainWindow
                 clipListPanel.update();
             }
         });
-        
-        mainFrame.addWindowListener(new WindowAdapter()
-        {
-            @Override
-            public void windowClosing(WindowEvent e)
-            {
-                super.windowClosing(e);
-                clipQueue.stopProcessing();
-                uploadQueue.stopProcessing();
-                closeables.forEach(ac -> {
-                    try
-                    {
-                        ac.close();
-                    }
-                    catch(Exception ex)
-                    {
-                        ex.printStackTrace();
-                    }
-                });
-            }
-        });
     }
     
-    public JPanel getMainPanel()
+    public void start() throws Exception
     {
-        return mainPanel;
+        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        
+        statusQueue.setConsumer(statusPanel);
+        
+        clipQueue.startProcessing();
+        uploadQueue.startProcessing();
+        
+        gameListener.start();
+        
+        windowCloseHandler.addCloseable(clipQueue);
+        windowCloseHandler.addCloseable(uploadQueue);
+        windowCloseHandler.addCloseable(gameListener);
+        
+        mainFrame.addWindowListener(windowCloseHandler);
+        
+        mainFrame.pack();
+        mainFrame.setLocationRelativeTo(null);
+        mainFrame.setVisible(true);
     }
     
+    @Override
     public void showClipView(File videoFile)
     {
         System.out.println("showing clippingView");
@@ -170,6 +153,7 @@ public class MainWindow
         mainLayout.show(mainPanel, "clippingView");
     }
     
+    @Override
     public void showUploadView(File videoFile)
     {
         System.out.println("showing uploadView");
@@ -177,11 +161,13 @@ public class MainWindow
         mainLayout.show(mainPanel, "uploadView");
     }
     
+    @Override
     public void showLicenseView()
     {
         mainLayout.show(mainPanel, "licenseView");
     }
     
+    @Override
     public void showMainView()
     {
         mainLayout.show(mainPanel, "mainView");

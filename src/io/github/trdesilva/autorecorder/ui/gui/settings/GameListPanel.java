@@ -6,6 +6,7 @@
 package io.github.trdesilva.autorecorder.ui.gui.settings;
 
 import com.google.common.collect.Sets;
+import io.github.trdesilva.autorecorder.ui.gui.wrapper.DefaultPanel;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.BorderFactory;
@@ -13,41 +14,31 @@ import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JList;
-import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
-import javax.swing.ListModel;
-import javax.swing.ListSelectionModel;
-import javax.swing.SingleSelectionModel;
-import javax.swing.border.Border;
 import java.awt.Color;
-import java.awt.Graphics;
 import java.util.Set;
 
-public class GameListPanel extends JPanel
+public class GameListPanel extends DefaultPanel
 {
-    private JLabel listLabel;
-    private JTextField gameEntryField;
-    private JButton addButton;
-    private JScrollPane scrollPane;
-    private DefaultListModel<String> gameListModel;
-    private JList<String> gameList;
-    private JButton removeButton;
+    private final JTextField gameEntryField;
+    private final DefaultListModel<String> gameListModel;
+    private final JList<String> gameList;
     
     public GameListPanel(Set<String> games, String label, String tooltip)
     {
         setLayout(new MigLayout("fill", "[grow][]", "[][][grow]"));
         setBorder(BorderFactory.createLineBorder(Color.GRAY));
-        
-        listLabel = new JLabel(label);
+    
+        JLabel listLabel = new JLabel(label);
         listLabel.setToolTipText(tooltip);
         gameEntryField = new JTextField();
-        addButton = new JButton("Add");
-        scrollPane = new JScrollPane();
+        JButton addButton = new JButton("Add");
+        JScrollPane scrollPane = new JScrollPane();
         gameListModel = new DefaultListModel<>();
         gameListModel.addAll(games);
         gameList = new JList<>(gameListModel);
-        removeButton = new JButton("Remove");
+        JButton removeButton = new JButton("Remove");
         
         scrollPane.getViewport().add(gameList);
         

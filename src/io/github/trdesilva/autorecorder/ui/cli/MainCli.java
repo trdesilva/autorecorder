@@ -5,26 +5,27 @@
 
 package io.github.trdesilva.autorecorder.ui.cli;
 
+import com.google.inject.Inject;
 import io.github.trdesilva.autorecorder.Settings;
-import io.github.trdesilva.autorecorder.upload.Uploader;
-import io.github.trdesilva.autorecorder.upload.youtube.YoutubeUploader;
 
 public class MainCli extends Cli
 {
-    private YoutubeUploader uploader;
+    private final ClipTrimmerCli clipTrimmerCli;
+    private final SettingsCli settingsCli;
+    private final UploaderCli uploaderCli;
     
-    public MainCli(Settings settings, YoutubeUploader uploader)
+    @Inject
+    public MainCli(Settings settings, ClipTrimmerCli clipTrimmerCli, SettingsCli settingsCli, UploaderCli uploaderCli)
     {
         super(settings);
-        this.uploader = uploader;
+        this.clipTrimmerCli = clipTrimmerCli;
+        this.settingsCli = settingsCli;
+        this.uploaderCli = uploaderCli;
     }
     
     @Override
     public void run()
     {
-        ClipTrimmerCli clipTrimmerCli = new ClipTrimmerCli(settings);
-        SettingsCli settingsCli = new SettingsCli(settings);
-        UploaderCli uploaderCli = new UploaderCli(settings, uploader);
         while(true)
         {
             print("Main menu");
