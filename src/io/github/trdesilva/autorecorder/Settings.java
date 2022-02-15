@@ -50,14 +50,13 @@ public class Settings
         public Set<String> games = new HashSet<>();
         public long lastFetchedGamesTimestamp;
         
-        public boolean licenseAccepted = false;
+        public boolean termsAccepted = false;
     }
     
     private final StatusQueue status;
     
     private final ObjectMapper objectMapper;
     private SettingsContainer container;
-    private boolean firstLaunch = false;
     
     @Inject
     public Settings(StatusQueue status)
@@ -73,7 +72,6 @@ public class Settings
     {
         if(!settingsFile.exists())
         {
-            firstLaunch = true;
             container.excludedGames.add("leagueclientux.exe");
             status.postMessage(new StatusMessage(StatusType.INFO, "Creating settings file on first launch"));
         }
@@ -116,9 +114,14 @@ public class Settings
         }
     }
     
-    public boolean isFirstLaunch()
+    public boolean isTermsAccepted()
     {
-        return firstLaunch;
+        return container.termsAccepted;
+    }
+    
+    public void setTermsAccepted(boolean termsAccepted)
+    {
+        container.termsAccepted = termsAccepted;
     }
     
     public String getObsPath()

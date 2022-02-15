@@ -82,7 +82,7 @@ public class MainWindow implements Navigator
         mainPanel.add(clippingPanel, "clippingView");
         mainPanel.add(uploadPanel, "uploadView");
         mainPanel.add(licensePanel, "licenseView");
-        if(!settings.isFirstLaunch())
+        if(settings.isTermsAccepted())
         {
             mainLayout.show(mainPanel, "mainView");
         }
