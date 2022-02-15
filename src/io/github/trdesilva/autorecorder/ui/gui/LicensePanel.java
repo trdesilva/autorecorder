@@ -6,6 +6,7 @@
 package io.github.trdesilva.autorecorder.ui.gui;
 
 import com.google.inject.Inject;
+import io.github.trdesilva.autorecorder.Settings;
 import io.github.trdesilva.autorecorder.ui.gui.wrapper.DefaultPanel;
 import net.miginfocom.swing.MigLayout;
 import org.apache.commons.io.IOUtils;
@@ -20,7 +21,7 @@ import java.nio.charset.Charset;
 public class LicensePanel extends DefaultPanel
 {
     @Inject
-    public LicensePanel(Navigator navigator)
+    public LicensePanel(Settings settings, Navigator navigator)
     {
         setLayout(new MigLayout("fill", "[]", "[grow][]"));
         
@@ -51,6 +52,8 @@ public class LicensePanel extends DefaultPanel
         add(okButton, "cell 0 1, right, tag ok");
         
         okButton.addActionListener(e -> {
+            settings.setTermsAccepted(true);
+            settings.save();
             navigator.showMainView();
         });
     }
