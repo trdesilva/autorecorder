@@ -11,6 +11,7 @@ import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
 import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
 import io.github.trdesilva.autorecorder.ui.status.StatusType;
 
+import javax.annotation.Nullable;
 import javax.swing.JList;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
@@ -26,7 +27,7 @@ public class VideoListPanel extends JScrollPane
     private final JList<File> videos;
     
     @AssistedInject
-    public VideoListPanel(StatusQueue status, @Assisted File videoDir,
+    public VideoListPanel(StatusQueue status, @Assisted @Nullable File videoDir,
                           @Assisted VideoListSelectionConsumer selectionConsumer)
     {
         this.status = status;
