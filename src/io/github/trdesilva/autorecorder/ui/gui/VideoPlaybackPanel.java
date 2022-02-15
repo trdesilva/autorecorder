@@ -35,9 +35,10 @@ import static io.github.trdesilva.autorecorder.TimestampUtil.parseTime;
 
 public class VideoPlaybackPanel extends DefaultPanel implements AutoCloseable
 {
+    private final EmbeddedMediaPlayerComponent mediaPlayerComponent;
     private final SeekBar seekBar;
     private final JButton playPauseButton;
-    private final EmbeddedMediaPlayerComponent mediaPlayerComponent;
+    private final JSlider volumeBar;
     
     private final AtomicBoolean isPlaying = new AtomicBoolean(false);
     private Thread subsectionControlThread;
@@ -70,6 +71,20 @@ public class VideoPlaybackPanel extends DefaultPanel implements AutoCloseable
         controlPanel.setLayout(new MigLayout("fill", "[grow, center]", "[][]"));
         seekBar = new SeekBar();
         playPauseButton = new JButton("Pause");
+        volumeBar = new JSlider(0, 150, 100);
+        
+        JLabel volumeLabel = new JLabel("Vol");
+        
+        windowCloseHandler.addCloseable(this);
+        
+        controlPanel.add(seekBar, "cell 0 0, growx, id seekBar");
+        controlPanel.add(playPauseButton, "cell 0 1, pos 50% seekbar.y2, id play");
+        controlPanel.add(volumeBar, "cell 0 1, pos null seekbar.y2 visual.x2 null, w 100!, id volumeBar");
+        controlPanel.add(volumeLabel, "cell 0 1, pos null volumeBar.y volumeBar.x volumeBar.y2");
+        
+        add(mediaPlayerComponent, "span, grow, wmin 400, hmin 225");
+        add(controlPanel, "span, grow");
+    
         playPauseButton.addActionListener(new AbstractAction()
         {
             @Override
@@ -80,13 +95,10 @@ public class VideoPlaybackPanel extends DefaultPanel implements AutoCloseable
             }
         });
         
-        windowCloseHandler.addCloseable(this);
-        
-        controlPanel.add(seekBar, "cell 0 0, growx");
-        controlPanel.add(playPauseButton, "cell 0 1");
-        
-        add(mediaPlayerComponent, "span, grow, wmin 400, hmin 225");
-        add(controlPanel, "span, grow");
+        volumeBar.addChangeListener(e -> {
+            mediaPlayerComponent.mediaPlayer().audio().setVolume(volumeBar.getValue());
+            volumeBar.setToolTipText(volumeBar.getValue() + "%");
+        });
     }
     
     public synchronized void setIsPlaying(boolean isPlaying)
