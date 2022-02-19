@@ -6,6 +6,7 @@
 package io.github.trdesilva.autorecorder.clip;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
 import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
 import io.github.trdesilva.autorecorder.ui.status.StatusType;
@@ -14,6 +15,7 @@ import java.io.IOException;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
 
+@Singleton
 public class ClipQueue implements AutoCloseable
 {
     private final ClipTrimmer trimmer;
