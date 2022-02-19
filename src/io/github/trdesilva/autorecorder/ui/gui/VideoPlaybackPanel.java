@@ -19,6 +19,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
@@ -27,6 +28,8 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -38,6 +41,11 @@ public class VideoPlaybackPanel extends DefaultPanel implements AutoCloseable
 {
     private final EmbeddedMediaPlayerComponent mediaPlayerComponent;
     private final SeekBar seekBar;
+    
+    private final JButton slowerButton;
+    private final JTextField speedField;
+    private final JButton fasterButton;
+    
     private final JButton playPauseButton;
     private final JButton longRewindButton;
     private final JButton mediumRewindButton;
@@ -49,6 +57,7 @@ public class VideoPlaybackPanel extends DefaultPanel implements AutoCloseable
     private final JSlider volumeBar;
     
     private final AtomicBoolean isPlaying = new AtomicBoolean(false);
+    private float playbackRate;
     private int frameRate;
     private Thread subsectionControlThread;
     
@@ -80,6 +89,17 @@ public class VideoPlaybackPanel extends DefaultPanel implements AutoCloseable
         controlPanel.setLayout(new MigLayout("fill", "[grow, center]", "[][]"));
         seekBar = new SeekBar();
         
+        slowerButton = new JButton("-");
+        slowerButton.setToolTipText("Halve current playback speed");
+        
+        speedField = new JTextField("1.000x");
+        speedField.setToolTipText("Playback speed (click to reset)");
+        speedField.setEditable(false);
+        speedField.setHorizontalAlignment(SwingConstants.CENTER);
+        
+        fasterButton = new JButton("+");
+        fasterButton.setToolTipText("Double current playback speed");
+        
         playPauseButton = new JButton("Pause");
         
         longRewindButton = new JButton("<<<");
@@ -105,6 +125,10 @@ public class VideoPlaybackPanel extends DefaultPanel implements AutoCloseable
         
         controlPanel.add(seekBar, "cell 0 0, growx, id seekBar");
         
+        controlPanel.add(slowerButton, "cell 0 1, pos seekbar.x seekbar.y2, id slower");
+        controlPanel.add(speedField, "cell 0 1, pos slower.x2 slower.y, w 60:60:80, id speed");
+        controlPanel.add(fasterButton, "cell 0 1, pos speed.x2 slower.y, id faster");
+        
         controlPanel.add(playPauseButton, "cell 0 1, align center, id play");
         controlPanel.add(shortRewindButton, "cell 0 1, pos null play.y play.x null, id shortRewind");
         controlPanel.add(mediumRewindButton, "cell 0 1, pos null play.y shortRewind.x null, id mediumRewind");
@@ -118,6 +142,22 @@ public class VideoPlaybackPanel extends DefaultPanel implements AutoCloseable
         
         add(mediaPlayerComponent, "span, grow, wmin 400, hmin 225");
         add(controlPanel, "span, grow");
+        
+        slowerButton.addActionListener(e -> {
+            setPlaybackRate(playbackRate/2);
+        });
+        
+        speedField.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e)
+            {
+                setPlaybackRate(1.0f);
+            }
+        });
+        
+        fasterButton.addActionListener(e -> {
+            setPlaybackRate(playbackRate*2);
+        });
         
         playPauseButton.addActionListener(new AbstractAction()
         {
@@ -186,6 +226,7 @@ public class VideoPlaybackPanel extends DefaultPanel implements AutoCloseable
         System.out.println("playing " + videoFile);
         mediaPlayerComponent.mediaPlayer().media().prepare(videoFile.getAbsolutePath());
         setIsPlaying(true);
+        setPlaybackRate(1.0f);
         
         // mediaPlayer needs a moment to load metadata, so spin on it
         new Thread(() -> {
@@ -240,6 +281,14 @@ public class VideoPlaybackPanel extends DefaultPanel implements AutoCloseable
         
         subsectionControlThread.start();
         setIsPlaying(true);
+    }
+    
+    public void setPlaybackRate(float playbackRate)
+    {
+        // set bounds to powers of two that fit in %2.3f
+        this.playbackRate = Math.max(Math.min(playbackRate, 64.0f), 0.001953125f);
+        mediaPlayerComponent.mediaPlayer().controls().setRate(this.playbackRate);
+        speedField.setText(String.format("%2.3fx", this.playbackRate));
     }
     
     @Override
