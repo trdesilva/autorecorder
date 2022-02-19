@@ -8,6 +8,7 @@ package io.github.trdesilva.autorecorder.ui.gui;
 import com.google.inject.Inject;
 import io.github.trdesilva.autorecorder.ui.gui.wrapper.DefaultPanel;
 import net.miginfocom.swing.MigLayout;
+import uk.co.caprica.vlcj.media.VideoTrackInfo;
 import uk.co.caprica.vlcj.player.base.MediaPlayer;
 import uk.co.caprica.vlcj.player.base.MediaPlayerEventAdapter;
 import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent;
@@ -38,9 +39,17 @@ public class VideoPlaybackPanel extends DefaultPanel implements AutoCloseable
     private final EmbeddedMediaPlayerComponent mediaPlayerComponent;
     private final SeekBar seekBar;
     private final JButton playPauseButton;
+    private final JButton longRewindButton;
+    private final JButton mediumRewindButton;
+    private final JButton shortRewindButton;
+    private final JButton shortFastForwardButton;
+    private final JButton mediumFastForwardButton;
+    private final JButton longFastForwardButton;
+    
     private final JSlider volumeBar;
     
     private final AtomicBoolean isPlaying = new AtomicBoolean(false);
+    private int frameRate;
     private Thread subsectionControlThread;
     
     @Inject
@@ -70,21 +79,46 @@ public class VideoPlaybackPanel extends DefaultPanel implements AutoCloseable
         JPanel controlPanel = new JPanel();
         controlPanel.setLayout(new MigLayout("fill", "[grow, center]", "[][]"));
         seekBar = new SeekBar();
+        
         playPauseButton = new JButton("Pause");
+        
+        longRewindButton = new JButton("<<<");
+        longRewindButton.setToolTipText("Rewind 10 seconds");
+        mediumRewindButton = new JButton("<<");
+        mediumRewindButton.setToolTipText("Rewind 1 second");
+        shortRewindButton = new JButton("<");
+        shortRewindButton.setToolTipText("Rewind ~1 frame");
+        
+        longFastForwardButton = new JButton(">>>");
+        longFastForwardButton.setToolTipText("Fast-forward 10 seconds");
+        mediumFastForwardButton = new JButton(">>");
+        mediumFastForwardButton.setToolTipText("Fast-forward 1 second");
+        shortFastForwardButton = new JButton(">");
+        shortFastForwardButton.setToolTipText("Fast-forward ~1 frame");
+        
         volumeBar = new JSlider(0, 150, 100);
+        volumeBar.setToolTipText("100%");
         
         JLabel volumeLabel = new JLabel("Vol");
         
         windowCloseHandler.addCloseable(this);
         
         controlPanel.add(seekBar, "cell 0 0, growx, id seekBar");
-        controlPanel.add(playPauseButton, "cell 0 1, pos 50% seekbar.y2, id play");
+        
+        controlPanel.add(playPauseButton, "cell 0 1, align center, id play");
+        controlPanel.add(shortRewindButton, "cell 0 1, pos null play.y play.x null, id shortRewind");
+        controlPanel.add(mediumRewindButton, "cell 0 1, pos null play.y shortRewind.x null, id mediumRewind");
+        controlPanel.add(longRewindButton, "cell 0 1, pos null play.y mediumRewind.x null, id longRewind");
+        controlPanel.add(shortFastForwardButton, "cell 0 1, pos play.x2 play.y, id shortFastForward");
+        controlPanel.add(mediumFastForwardButton, "cell 0 1, pos shortFastForward.x2 play.y, id mediumFastForward");
+        controlPanel.add(longFastForwardButton, "cell 0 1, pos mediumFastForward.x2 play.y, id longFastForward");
+        
         controlPanel.add(volumeBar, "cell 0 1, pos null seekbar.y2 visual.x2 null, w 100!, id volumeBar");
         controlPanel.add(volumeLabel, "cell 0 1, pos null volumeBar.y volumeBar.x volumeBar.y2");
         
         add(mediaPlayerComponent, "span, grow, wmin 400, hmin 225");
         add(controlPanel, "span, grow");
-    
+        
         playPauseButton.addActionListener(new AbstractAction()
         {
             @Override
@@ -93,6 +127,36 @@ public class VideoPlaybackPanel extends DefaultPanel implements AutoCloseable
                 setIsPlaying(!isPlaying.get());
                 seekBar.refresh();
             }
+        });
+        
+        shortRewindButton.addActionListener(e -> {
+            mediaPlayerComponent.mediaPlayer().controls().skipTime(-1000 / Math.max(10, frameRate));
+            seekBar.refresh();
+        });
+        
+        mediumRewindButton.addActionListener(e -> {
+            mediaPlayerComponent.mediaPlayer().controls().skipTime(-1000);
+            seekBar.refresh();
+        });
+        
+        longRewindButton.addActionListener(e -> {
+            mediaPlayerComponent.mediaPlayer().controls().skipTime(-10000);
+            seekBar.refresh();
+        });
+        
+        shortFastForwardButton.addActionListener(e -> {
+            mediaPlayerComponent.mediaPlayer().controls().skipTime(1000 / Math.max(10, frameRate));
+            seekBar.refresh();
+        });
+        
+        mediumFastForwardButton.addActionListener(e -> {
+            mediaPlayerComponent.mediaPlayer().controls().skipTime(1000);
+            seekBar.refresh();
+        });
+        
+        longFastForwardButton.addActionListener(e -> {
+            mediaPlayerComponent.mediaPlayer().controls().skipTime(10000);
+            seekBar.refresh();
         });
         
         volumeBar.addChangeListener(e -> {
@@ -131,6 +195,12 @@ public class VideoPlaybackPanel extends DefaultPanel implements AutoCloseable
                 duration = mediaPlayerComponent.mediaPlayer().media().info().duration();
             }
             seekBar.setDuration(duration);
+            VideoTrackInfo track = mediaPlayerComponent.mediaPlayer()
+                                                       .media()
+                                                       .info()
+                                                       .videoTracks()
+                                                       .get(mediaPlayerComponent.mediaPlayer().video().track());
+            frameRate = track.frameRate() / track.frameRateBase();
         }).start();
     }
     
@@ -191,6 +261,7 @@ public class VideoPlaybackPanel extends DefaultPanel implements AutoCloseable
         private final JLabel durationLabel;
         
         private long time;
+        private long duration;
         private final AtomicBoolean sliderChanging = new AtomicBoolean();
         private final AtomicBoolean positionChanging = new AtomicBoolean();
         
@@ -276,6 +347,7 @@ public class VideoPlaybackPanel extends DefaultPanel implements AutoCloseable
         private void refresh()
         {
             time = mediaPlayerComponent.mediaPlayer().status().time();
+            
             timeField.setText(formatTime(time));
             
             if(!sliderChanging.get())
@@ -291,13 +363,14 @@ public class VideoPlaybackPanel extends DefaultPanel implements AutoCloseable
         {
             if(time != -1)
             {
-                this.time = time;
-                mediaPlayerComponent.mediaPlayer().controls().setTime(time);
+                this.time = Math.max(Math.min(time, duration), 0);
+                mediaPlayerComponent.mediaPlayer().controls().setTime(this.time);
             }
         }
         
         void setDuration(long duration)
         {
+            this.duration = duration;
             durationLabel.setText(formatTime(duration));
         }
     }
