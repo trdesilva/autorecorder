@@ -23,11 +23,18 @@ public class TimestampUtil
         
         if(numbers.length == 3)
         {
-            long millis = TimeUnit.SECONDS.toMillis(Long.parseLong(numbers[2]));
-            millis += TimeUnit.MINUTES.toMillis(Long.parseLong(numbers[1]));
-            millis += TimeUnit.HOURS.toMillis(Long.parseLong(numbers[0]));
-            
-            return millis;
+            try
+            {
+                long millis = TimeUnit.SECONDS.toMillis(Long.parseLong(numbers[2]));
+                millis += TimeUnit.MINUTES.toMillis(Long.parseLong(numbers[1]));
+                millis += TimeUnit.HOURS.toMillis(Long.parseLong(numbers[0]));
+    
+                return millis;
+            }
+            catch(NumberFormatException e)
+            {
+                // break out and return -1
+            }
         }
         return -1;
     }
