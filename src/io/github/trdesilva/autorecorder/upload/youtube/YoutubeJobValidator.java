@@ -7,6 +7,7 @@ package io.github.trdesilva.autorecorder.upload.youtube;
 
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
+import io.github.trdesilva.autorecorder.VideoFilenameValidator;
 import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
 import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
 import io.github.trdesilva.autorecorder.ui.status.StatusType;
@@ -18,15 +19,14 @@ import java.util.Set;
 
 public class YoutubeJobValidator implements UploadJobValidator
 {
-    private final Set<String> ALLOWED_EXTENSIONS = Sets.newHashSet(".mpg", ".mpeg", ".mp4", ".mkv", ".mov", ".avi",
-                                                                   ".wmv");
-    
     private final StatusQueue status;
+    private final VideoFilenameValidator videoFilenameValidator;
     
     @Inject
-    public YoutubeJobValidator(StatusQueue status)
+    public YoutubeJobValidator(StatusQueue status, VideoFilenameValidator videoFilenameValidator)
     {
         this.status = status;
+        this.videoFilenameValidator = videoFilenameValidator;
     }
     
     @Override
@@ -38,7 +38,7 @@ public class YoutubeJobValidator implements UploadJobValidator
             status.postMessage(new StatusMessage(StatusType.WARNING, "Clip file doesn't exist"));
             return false;
         }
-        if(!ALLOWED_EXTENSIONS.contains(clip.getName().substring(clip.getName().indexOf('.'))))
+        if(!videoFilenameValidator.hasValidName(clip.getName()))
         {
             status.postMessage(new StatusMessage(StatusType.WARNING, "Clip has invalid format"));
             return false;

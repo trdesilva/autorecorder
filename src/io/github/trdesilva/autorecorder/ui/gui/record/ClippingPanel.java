@@ -91,15 +91,31 @@ public class ClippingPanel extends DefaultPanel
         });
         
         previewButton.addActionListener(e -> {
-            playbackPanel.playSubsection(parseTime(startTimeField.getText()), parseTime(endTimeField.getText()));
+            long start = parseTime(startTimeField.getText());
+            long end = parseTime(endTimeField.getText());
+            if(start == -1)
+            {
+                status.postMessage(new StatusMessage(StatusType.WARNING, "Start time is invalid"));
+            }
+            else if(end == -1)
+            {
+                status.postMessage(new StatusMessage(StatusType.WARNING, "End time is invalid"));
+            }
+            else if(start >= end)
+            {
+                status.postMessage(new StatusMessage(StatusType.WARNING, "Start time must be after end time"));
+            }
+            else
+            {
+                playbackPanel.playSubsection(start, end);
+            }
         });
         
         saveButton.addActionListener(e -> {
-            // TODO input validation
-            String extension = videoFile.getName().substring(videoFile.getName().indexOf('.'));
-            clipQueue.enqueue(new ClipJob(videoFile.getAbsolutePath(), titleField.getText() + extension,
-                                          startTimeField.getText(), endTimeField.getText()));
             status.postMessage(new StatusMessage(StatusType.INFO, "Saving clip: " + titleField.getText()));
+            String extension = videoFile.getName().substring(videoFile.getName().indexOf('.'));
+            clipQueue.enqueue(new ClipJob(videoFile.getName(), titleField.getText() + extension,
+                                          startTimeField.getText(), endTimeField.getText()));
         });
     }
     
