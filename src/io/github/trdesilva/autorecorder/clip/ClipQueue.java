@@ -20,16 +20,18 @@ public class ClipQueue implements AutoCloseable
 {
     private final ClipTrimmer trimmer;
     private final StatusQueue status;
+    private final ClipJobValidator validator;
     
     private final ConcurrentLinkedQueue<ClipJob> jobs;
     private final Semaphore semaphore;
     private Thread clippingThread;
     
     @Inject
-    public ClipQueue(ClipTrimmer trimmer, StatusQueue status)
+    public ClipQueue(ClipTrimmer trimmer, StatusQueue status, ClipJobValidator validator)
     {
         this.trimmer = trimmer;
         this.status = status;
+        this.validator = validator;
         
         jobs = new ConcurrentLinkedQueue<>();
         semaphore = new Semaphore(0);
@@ -59,8 +61,11 @@ public class ClipQueue implements AutoCloseable
                     ClipJob job = jobs.poll();
                     try
                     {
-                        trimmer.makeClip(job.getSource(), job.getDest(), job.getStartArg(), job.getEndArg());
-                        status.postMessage(new StatusMessage(StatusType.SUCCESS, "Clip created: " + job.getDest()));
+                        if(validator.validate(job))
+                        {
+                            trimmer.makeClip(job.getSource(), job.getDest(), job.getStartArg(), job.getEndArg());
+                            status.postMessage(new StatusMessage(StatusType.SUCCESS, "Clip created: " + job.getDest()));
+                        }
                     }
                     catch(IOException | InterruptedException e)
                     {
