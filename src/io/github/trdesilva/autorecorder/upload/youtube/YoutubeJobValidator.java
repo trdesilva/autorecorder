@@ -19,9 +19,6 @@ import java.util.Set;
 
 public class YoutubeJobValidator implements UploadJobValidator
 {
-    private final Set<String> ALLOWED_EXTENSIONS = Sets.newHashSet(".mpg", ".mpeg", ".mp4", ".mkv", ".mov", ".avi",
-                                                                   ".wmv");
-    
     private final StatusQueue status;
     private final VideoFilenameValidator videoFilenameValidator;
     
