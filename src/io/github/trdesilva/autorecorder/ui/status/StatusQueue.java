@@ -50,6 +50,7 @@ public class StatusQueue
                 }
             }
         });
+        consumerThread.setName("Status thread");
     }
     
     public void setConsumer(StatusConsumer consumer)
