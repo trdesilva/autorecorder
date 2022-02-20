@@ -14,6 +14,7 @@ import io.github.trdesilva.autorecorder.ui.status.StatusType;
 import net.miginfocom.swing.MigLayout;
 import org.apache.commons.io.IOUtils;
 
+import javax.inject.Named;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import java.awt.Color;
@@ -30,6 +31,7 @@ import java.net.URISyntaxException;
 public class StatusPanel extends DefaultPanel implements StatusConsumer
 {
     private final StatusQueue status;
+    private final boolean isDebugMode;
     
     private final JLabel messageLabel;
     private ImageIcon recordingOnIcon;
@@ -38,9 +40,10 @@ public class StatusPanel extends DefaultPanel implements StatusConsumer
     private MouseListener mouseListener;
     
     @Inject
-    public StatusPanel(StatusQueue status)
+    public StatusPanel(StatusQueue status, @Named("isDebugMode") boolean isDebugMode)
     {
         this.status = status;
+        this.isDebugMode = isDebugMode;
         
         setLayout(new MigLayout("fill", "[grow][16!]"));
         
@@ -72,63 +75,78 @@ public class StatusPanel extends DefaultPanel implements StatusConsumer
     public synchronized void post(StatusMessage message) throws InterruptedException
     {
         System.out.println(message);
-        messageLabel.setText(message.getMessage());
-        messageLabel.setToolTipText(message.getTimestamp().toString());
-        switch(message.getType())
+        boolean pause = true;
+        boolean showMessage = true;
+        if(message.getType() == StatusType.DEBUG)
         {
-            case FAILURE:
-                setBackground(Color.RED);
-                break;
-            case SUCCESS:
-                setBackground(Color.GREEN);
-                break;
-            case WARNING:
-                setBackground(Color.YELLOW);
-                break;
-            case INFO:
-                setBackground(Color.CYAN);
-                break;
-            case RECORDING_START:
-                setRecordingIndicatorState(true);
-                break;
-            case RECORDING_END:
-                setRecordingIndicatorState(false);
-                break;
-            case DEBUG:
-            default:
-                setBackground(Color.LIGHT_GRAY);
+            pause = false;
+            showMessage = isDebugMode;
         }
-        String link = message.getLink();
-        if(link != null)
+        
+        if(showMessage)
         {
-            mouseListener = new MouseAdapter()
+            switch(message.getType())
             {
-                @Override
-                public void mouseClicked(MouseEvent e)
+                case FAILURE:
+                    setBackground(Color.RED);
+                    break;
+                case SUCCESS:
+                    setBackground(Color.GREEN);
+                    break;
+                case WARNING:
+                    setBackground(Color.YELLOW);
+                    break;
+                case INFO:
+                    setBackground(Color.CYAN);
+                    break;
+                case RECORDING_START:
+                    setRecordingIndicatorState(true);
+                    break;
+                case RECORDING_END:
+                    setRecordingIndicatorState(false);
+                    break;
+                default:
+                    setBackground(Color.LIGHT_GRAY);
+            }
+            
+            messageLabel.setText(message.getMessage());
+            messageLabel.setToolTipText(message.getTimestamp().toString());
+            
+            String link = message.getLink();
+            if(link != null)
+            {
+                mouseListener = new MouseAdapter()
                 {
-                    try
+                    @Override
+                    public void mouseClicked(MouseEvent e)
                     {
-                        Desktop.getDesktop().browse(new URI(link));
+                        try
+                        {
+                            Desktop.getDesktop().browse(new URI(link));
+                        }
+                        catch(URISyntaxException | IOException ex)
+                        {
+                            status.postMessage(new StatusMessage(StatusType.DEBUG, "Link navigation failed: " + link));
+                        }
                     }
-                    catch(URISyntaxException | IOException ex)
-                    {
-                        status.postMessage(new StatusMessage(StatusType.DEBUG, "Link navigation failed: " + link));
-                    }
-                }
-            };
-            messageLabel.addMouseListener(mouseListener);
-            messageLabel.setText(
-                    String.format("<html>%s (<a href='%s'>%s</a>)</html>", message.getMessage(), link, link));
-            messageLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        }
-        else
-        {
-            messageLabel.removeMouseListener(mouseListener);
-            messageLabel.setCursor(Cursor.getDefaultCursor());
+                };
+                messageLabel.addMouseListener(mouseListener);
+                messageLabel.setText(
+                        String.format("<html>%s (<a href='%s'>%s</a>)</html>", message.getMessage(), link, link));
+                messageLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            }
+            else
+            {
+                messageLabel.removeMouseListener(mouseListener);
+                messageLabel.setCursor(Cursor.getDefaultCursor());
+            }
         }
         
         // TODO if there are ever any other status consumers, this won't work
-        Thread.sleep(1000);
+        if(pause)
+        {
+            Thread.sleep(1000);
+        }
     }
     
     private void setRecordingIndicatorState(boolean isRecording)
