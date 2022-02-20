@@ -48,7 +48,7 @@ public class LicensePanel extends DefaultPanel
         
         scrollPane.getViewport().add(textArea);
         
-        add(scrollPane, "cell 0 0, grow");
+        add(scrollPane, "cell 0 0, grow, h 40:100%:100%");
         add(okButton, "cell 0 1, right, tag ok");
         
         okButton.addActionListener(e -> {

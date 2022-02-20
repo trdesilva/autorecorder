@@ -1,3 +1,4 @@
 Manifest-Version: 1.0
 Main-Class: io.github.trdesilva.autorecorder.Main
+Implementation-Version: 1.0
 
