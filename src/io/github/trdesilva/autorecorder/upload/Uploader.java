@@ -6,6 +6,7 @@
 package io.github.trdesilva.autorecorder.upload;
 
 import io.github.trdesilva.autorecorder.Settings;
+import io.github.trdesilva.autorecorder.ui.gui.ReportableException;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,7 +22,7 @@ public abstract class Uploader
     }
     
     // should return the URL of the uploaded video
-    public abstract String upload(UploadJob job) throws IOException;
+    public abstract String upload(UploadJob job) throws IOException, ReportableException;
     
     public abstract UploadJobValidator getValidator();
     

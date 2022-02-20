@@ -5,12 +5,12 @@
 
 package io.github.trdesilva.autorecorder;
 
+import com.google.common.collect.Sets;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.github.trdesilva.autorecorder.record.GameListener;
 import io.github.trdesilva.autorecorder.ui.cli.MainCli;
 import io.github.trdesilva.autorecorder.ui.gui.MainWindow;
-import io.github.trdesilva.autorecorder.ui.gui.WindowCloseHandler;
 import io.github.trdesilva.autorecorder.ui.gui.inject.GuiModule;
 import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
 import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
@@ -19,14 +19,28 @@ import io.github.trdesilva.autorecorder.ui.status.StatusType;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Set;
 
 public class Main
 {
     public static void main(String[] args) throws Exception
     {
         System.out.println("starting");
-    
-        Injector injector = Guice.createInjector(new GuiModule());
+        Set<String> argSet = Sets.newHashSet(args);
+        
+        if(argSet.contains("-?") || argSet.contains("--help"))
+        {
+            System.out.print("Arguments:\n\t-d or --debug: Enable debug output\n\t--cli: Run in CLI mode\n");
+            return;
+        }
+        
+        boolean isDebugMode = false;
+        if(argSet.contains("-d") || argSet.contains("--debug"))
+        {
+            isDebugMode = true;
+        }
+        
+        Injector injector = Guice.createInjector(new GuiModule(isDebugMode));
         
         Settings settings = injector.getInstance(Settings.class);
         settings.populate();
@@ -59,14 +73,14 @@ public class Main
                 status.postMessage(new StatusMessage(StatusType.DEBUG, "failed to copy ffprobe.exe"));
             }
         }
-    
+        
         GameListener listener = injector.getInstance(GameListener.class);
         
-        if(args.length >= 1 && args[0].equals("-cli"))
+        if(argSet.contains("--cli"))
         {
             System.out.println("running in CLI mode");
             listener.start();
-    
+            
             MainCli cli = injector.getInstance(MainCli.class);
             cli.run();
             

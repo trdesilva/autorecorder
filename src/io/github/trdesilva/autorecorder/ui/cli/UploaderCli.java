@@ -61,7 +61,7 @@ public class UploaderCli extends Cli
                         String url = uploader.upload(clip, videoTitle, description, PrivacyStatus.valueOf(privacy));
                         print("Video uploaded to " + url);
                     }
-                    catch(IOException e)
+                    catch(Exception e)
                     {
                         print("Upload failed");
                         e.printStackTrace();

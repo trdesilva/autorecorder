@@ -6,13 +6,17 @@
 package io.github.trdesilva.autorecorder.upload;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import io.github.trdesilva.autorecorder.ui.gui.ReportableException;
 import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
 import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
 import io.github.trdesilva.autorecorder.ui.status.StatusType;
 
+import java.util.Arrays;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
 
+@Singleton
 public class UploadQueue implements AutoCloseable
 {
     private final Uploader uploader;
@@ -65,10 +69,17 @@ public class UploadQueue implements AutoCloseable
                                     new StatusMessage(StatusType.SUCCESS, job.getVideoTitle() + " uploaded", url));
                         }
                     }
+                    catch(ReportableException e)
+                    {
+                        status.postMessage(new StatusMessage(StatusType.FAILURE,
+                                                             String.format("Failed to upload '%s': %s",
+                                                                           job.getClipName(), e.getMessage())));
+                    }
                     catch(Exception e)
                     {
-                        status.postMessage(
-                                new StatusMessage(StatusType.FAILURE, "Failed to upload clip: " + job.getClipName()));
+                        status.postMessage(new StatusMessage(StatusType.DEBUG, Arrays.toString(e.getStackTrace())));
+                        status.postMessage(new StatusMessage(StatusType.FAILURE, String.format("Failed to upload '%s'",
+                                                                                    job.getClipName())));
                     }
                 }
             });

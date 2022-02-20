@@ -11,6 +11,7 @@ import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.http.InputStreamContent;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
@@ -21,6 +22,10 @@ import com.google.api.services.youtube.model.VideoSnippet;
 import com.google.api.services.youtube.model.VideoStatus;
 import com.google.inject.Inject;
 import io.github.trdesilva.autorecorder.Settings;
+import io.github.trdesilva.autorecorder.ui.gui.ReportableException;
+import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
+import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
+import io.github.trdesilva.autorecorder.ui.status.StatusType;
 import io.github.trdesilva.autorecorder.upload.UploadJob;
 import io.github.trdesilva.autorecorder.upload.UploadJobValidator;
 import io.github.trdesilva.autorecorder.upload.Uploader;
@@ -48,16 +53,21 @@ public class YoutubeUploader extends Uploader
     private static final String VIDEO_URL_FORMAT = "https://www.youtube.com/watch?v=%s";
     
     private final YoutubeJobValidator validator;
+    private final YoutubeJsonErrorParser errorParser;
+    private final StatusQueue status;
     
     @Inject
-    public YoutubeUploader(Settings settings, YoutubeJobValidator validator)
+    public YoutubeUploader(Settings settings, YoutubeJobValidator validator, YoutubeJsonErrorParser errorParser,
+                           StatusQueue status)
     {
         super(settings);
         this.validator = validator;
+        this.errorParser = errorParser;
+        this.status = status;
     }
     
     @Override
-    public String upload(UploadJob uploadJob) throws IOException
+    public String upload(UploadJob uploadJob) throws IOException, ReportableException
     {
         return upload(uploadJob.getClipName(), uploadJob.getVideoTitle(), uploadJob.getDescription(),
                       PrivacyStatus.valueOf(uploadJob.getProperty(PRIVACY_PROPERTY)));
@@ -69,11 +79,21 @@ public class YoutubeUploader extends Uploader
         return validator;
     }
     
-    public String upload(String clipName, String videoTitle, String description, PrivacyStatus privacyStatus) throws
-                                                                                                              IOException
+    public String upload(String clipName, String videoTitle,
+                         String description, PrivacyStatus privacyStatus) throws IOException, ReportableException
     {
+        File clientSecretFile = Settings.SETTINGS_DIR.resolve(CLIENT_SECRETS).toFile();
+        if(!clientSecretFile.exists() || !clientSecretFile.canRead())
+        {
+            throw new ReportableException("Client secret file doesn't exist or isn't accessible");
+        }
+        
         try
         {
+            status.postMessage(new StatusMessage(StatusType.DEBUG,
+                                                 String.format("clip: %s\ttitle: %s\tdescription: %s\tprivacy: %s\n",
+                                                               clipName, videoTitle, description,
+                                                               privacyStatus.name())));
             YouTube youtubeService = getService();
             
             // Define the Video object, which will be uploaded as the request body.
@@ -106,15 +126,18 @@ public class YoutubeUploader extends Uploader
             YouTube.Videos.Insert request = youtubeService.videos()
                                                           .insert(Arrays.asList("snippet", "status"), video,
                                                                   mediaContent);
-            Video response = request.execute();
-            System.out.println(response);
-            
-            return String.format(VIDEO_URL_FORMAT, response.getId());
+            try
+            {
+                Video response = request.execute();
+                return String.format(VIDEO_URL_FORMAT, response.getId());
+            }
+            catch(GoogleJsonResponseException e)
+            {
+                throw errorParser.parseError(e);
+            }
         }
         catch(GeneralSecurityException e)
         {
-            System.out.println("Google API security error");
-            e.printStackTrace();
             throw new IOException(e);
         }
     }
@@ -128,7 +151,8 @@ public class YoutubeUploader extends Uploader
     private static Credential authorize(final NetHttpTransport httpTransport) throws IOException
     {
         // Load client secrets.
-        InputStream in = new FileInputStream(Settings.SETTINGS_DIR.resolve(CLIENT_SECRETS).toFile());
+        File clientSecretFile = Settings.SETTINGS_DIR.resolve(CLIENT_SECRETS).toFile();
+        InputStream in = new FileInputStream(clientSecretFile);
         GoogleClientSecrets clientSecrets =
                 GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
         // Build flow and trigger user authorization request.
