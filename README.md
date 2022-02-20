@@ -1,5 +1,5 @@
 # Autorecorder
-This is a Java tool that automates OBS Studio and FFMpeg on Windows to record game sessions and create highlight clips.
+This is a Java application that automates OBS Studio and FFMpeg on Windows to record game sessions and create highlight clips. It can also upload clips to YouTube.
 
 # Setup
 1. Install [OBS Studio](https://obsproject.com/download) and configure it however you like. Autorecorder will launch OBS Studio and start a new recording when it detects that a game has launched.
