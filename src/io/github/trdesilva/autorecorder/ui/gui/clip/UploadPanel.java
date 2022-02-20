@@ -86,9 +86,9 @@ public class UploadPanel extends DefaultPanel
                                           descriptionField.getText());
             job.addProperty(YoutubeUploader.PRIVACY_PROPERTY,
                             ((PrivacyStatus) (privacySelector.getSelectedItem())).name());
-            uploadQueue.enqueue(job);
             status.postMessage(
                     new StatusMessage(StatusType.INFO, "Adding " + job.getVideoTitle() + " to upload queue"));
+            uploadQueue.enqueue(job);
         });
     }
     
