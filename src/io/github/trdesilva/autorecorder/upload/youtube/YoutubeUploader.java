@@ -16,6 +16,8 @@ import com.google.api.client.http.InputStreamContent;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.client.util.store.DataStoreFactory;
+import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.youtube.YouTube;
 import com.google.api.services.youtube.model.Video;
 import com.google.api.services.youtube.model.VideoSnippet;
@@ -51,6 +53,20 @@ public class YoutubeUploader extends Uploader
     private static final String APPLICATION_NAME = "Autorecorder";
     private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
     private static final String VIDEO_URL_FORMAT = "https://www.youtube.com/watch?v=%s";
+    private static DataStoreFactory DATA_STORE_FACTORY;
+    
+    static
+    {
+        try
+        {
+            DATA_STORE_FACTORY = new FileDataStoreFactory(Settings.SETTINGS_DIR.toFile());
+        }
+        catch(IOException e)
+        {
+            System.out.println("DataStoreFactory failed to open settings dir");
+            e.printStackTrace();
+        }
+    }
     
     private final YoutubeJobValidator validator;
     private final YoutubeJsonErrorParser errorParser;
@@ -58,12 +74,13 @@ public class YoutubeUploader extends Uploader
     
     @Inject
     public YoutubeUploader(Settings settings, YoutubeJobValidator validator, YoutubeJsonErrorParser errorParser,
-                           StatusQueue status)
+                           StatusQueue status) throws IOException
     {
         super(settings);
         this.validator = validator;
         this.errorParser = errorParser;
         this.status = status;
+        
     }
     
     @Override
@@ -126,6 +143,7 @@ public class YoutubeUploader extends Uploader
             YouTube.Videos.Insert request = youtubeService.videos()
                                                           .insert(Arrays.asList("snippet", "status"), video,
                                                                   mediaContent);
+            
             try
             {
                 Video response = request.execute();
@@ -156,11 +174,11 @@ public class YoutubeUploader extends Uploader
         GoogleClientSecrets clientSecrets =
                 GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
         // Build flow and trigger user authorization request.
-        GoogleAuthorizationCodeFlow flow =
-                new GoogleAuthorizationCodeFlow.Builder(httpTransport, JSON_FACTORY, clientSecrets, SCOPES)
-                        .build();
-        Credential credential =
-                new AuthorizationCodeInstalledApp(flow, new LocalServerReceiver()).authorize("user");
+        GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(httpTransport, JSON_FACTORY,
+                                                                                   clientSecrets, SCOPES)
+                .setDataStoreFactory(DATA_STORE_FACTORY)
+                .build();
+        Credential credential = new AuthorizationCodeInstalledApp(flow, new LocalServerReceiver()).authorize("user");
         return credential;
     }
     
