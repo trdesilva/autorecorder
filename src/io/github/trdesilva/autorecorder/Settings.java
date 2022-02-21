@@ -224,7 +224,7 @@ public class Settings
             HttpResponse response = null;
             
             // discord's game list is public and requires no auth
-            response = client.execute(new HttpGet("https://discord.com/api/v8/applications/detectable"));
+            response = client.execute(new HttpGet("https://discord.com/api/v10/applications/detectable"));
             
             JsonNode root = new ObjectMapper().readTree(response.getEntity().getContent());
             System.out.println("got games from discord API: " + root.size());
