@@ -5,9 +5,8 @@
 
 package io.github.trdesilva.autorecorder.upload.youtube;
 
-import com.google.common.collect.Sets;
 import com.google.inject.Inject;
-import io.github.trdesilva.autorecorder.VideoFilenameValidator;
+import io.github.trdesilva.autorecorder.video.VideoFilenameValidator;
 import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
 import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
 import io.github.trdesilva.autorecorder.ui.status.StatusType;
@@ -15,7 +14,6 @@ import io.github.trdesilva.autorecorder.upload.UploadJob;
 import io.github.trdesilva.autorecorder.upload.UploadJobValidator;
 
 import java.io.File;
-import java.util.Set;
 
 public class YoutubeJobValidator implements UploadJobValidator
 {

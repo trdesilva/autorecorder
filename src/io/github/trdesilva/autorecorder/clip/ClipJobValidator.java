@@ -8,7 +8,7 @@ package io.github.trdesilva.autorecorder.clip;
 import com.google.inject.Inject;
 import io.github.trdesilva.autorecorder.Settings;
 import io.github.trdesilva.autorecorder.TimestampUtil;
-import io.github.trdesilva.autorecorder.VideoFilenameValidator;
+import io.github.trdesilva.autorecorder.video.VideoFilenameValidator;
 import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
 import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
 import io.github.trdesilva.autorecorder.ui.status.StatusType;
