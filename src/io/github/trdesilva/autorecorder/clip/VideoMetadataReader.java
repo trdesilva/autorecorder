@@ -76,7 +76,7 @@ public class VideoMetadataReader
         return "N/A";
     }
     
-    public Image getThumbnail()
+    public Image getThumbnail(File video)
     {
         return null;
     }

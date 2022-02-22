@@ -6,36 +6,24 @@
 package io.github.trdesilva.autorecorder.ui.gui.record;
 
 import com.google.inject.Inject;
-import io.github.trdesilva.autorecorder.Settings;
+import com.google.inject.name.Named;
 import io.github.trdesilva.autorecorder.ui.gui.VideoListPanel;
 import io.github.trdesilva.autorecorder.ui.gui.inject.VideoListPanelFactory;
 import io.github.trdesilva.autorecorder.ui.gui.wrapper.DefaultPanel;
+import io.github.trdesilva.autorecorder.video.VideoListHandler;
 import net.miginfocom.swing.MigLayout;
-
-import java.io.File;
 
 public class RecordingListPanel extends DefaultPanel
 {
-    private final Settings settings;
-    
     private final VideoListPanel videoListPanel;
     
     @Inject
-    public RecordingListPanel(Settings settings, RecordingInfoPanel recordingInfoPanel,
-                              VideoListPanelFactory videoListPanelFactory)
+    public RecordingListPanel(RecordingInfoPanel recordingInfoPanel, VideoListPanelFactory videoListPanelFactory,
+                              @Named("RECORDING") VideoListHandler recordingListHandler)
     {
-        this.settings = settings;
-        
         setLayout(new MigLayout("fill, insets 2", "[75%:75%:90%]2[10%::300]"));
         
-        // TODO error handling
-        File recordingDir = null;
-        if(settings.getRecordingPath() != null)
-        {
-            recordingDir = new File(settings.getRecordingPath());
-        }
-        
-        videoListPanel = videoListPanelFactory.create(recordingDir, recordingInfoPanel);
+        videoListPanel = videoListPanelFactory.create(recordingListHandler, recordingInfoPanel);
         
         add(videoListPanel, "grow");
         add(recordingInfoPanel, "grow");
@@ -43,13 +31,6 @@ public class RecordingListPanel extends DefaultPanel
     
     public void update()
     {
-        if(settings.getRecordingPath() != null)
-        {
-            videoListPanel.setVideoDir(new File(settings.getRecordingPath()));
-        }
-        else
-        {
-            videoListPanel.setVideoDir(null);
-        }
+        videoListPanel.updateList();
     }
 }

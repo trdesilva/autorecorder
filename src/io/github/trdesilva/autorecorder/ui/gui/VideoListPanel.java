@@ -7,11 +7,9 @@ package io.github.trdesilva.autorecorder.ui.gui;
 
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
-import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
 import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
-import io.github.trdesilva.autorecorder.ui.status.StatusType;
+import io.github.trdesilva.autorecorder.video.VideoListHandler;
 
-import javax.annotation.Nullable;
 import javax.swing.JList;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
@@ -23,27 +21,17 @@ import java.io.File;
 public class VideoListPanel extends JScrollPane
 {
     private final StatusQueue status;
-    private File videoDir;
+    private VideoListHandler videoListHandler;
     private final JList<File> videos;
     
     @AssistedInject
-    public VideoListPanel(StatusQueue status, @Assisted @Nullable File videoDir,
-                          @Assisted VideoListSelectionConsumer selectionConsumer)
+    public VideoListPanel(StatusQueue status, @Assisted VideoListHandler videoListHandler, @Assisted VideoListSelectionConsumer selectionConsumer)
     {
         this.status = status;
         
-        // TODO filename filter for only videos/error hadnling
         // TODO custom renderer with thumbnails
-        // TODO update file list
-        this.videoDir = videoDir;
-        if(videoDir != null && videoDir.exists() && videoDir.isDirectory())
-        {
-            videos = new JList<>(videoDir.listFiles());
-        }
-        else
-        {
-            videos = new JList<>(new File[0]);
-        }
+        this.videoListHandler = videoListHandler;
+        videos = new JList<>(videoListHandler.getVideoList().toArray(new File[0]));
         videos.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         videos.addListSelectionListener(new ListSelectionListener()
         {
@@ -63,20 +51,7 @@ public class VideoListPanel extends JScrollPane
     
     public void updateList()
     {
-        if(videoDir != null && videoDir.exists() && videoDir.isDirectory())
-        {
-            videos.setListData(videoDir.listFiles());
-        }
-        else
-        {
-            status.postMessage(new StatusMessage(StatusType.WARNING,
-                                                 "Couldn't find videos; please update recording/clip path in settings"));
-        }
-    }
-    
-    public void setVideoDir(File videoDir)
-    {
-        this.videoDir = videoDir;
-        updateList();
+        File[] videoList = videoListHandler.getVideoList().toArray(new File[0]);
+        videos.setListData(videoList);
     }
 }

@@ -135,7 +135,7 @@ public class GameListener implements AutoCloseable
         thread.interrupt();
         if(recording.get())
         {
-            System.out.println("thread shutting down, stopping recording");
+            status.postMessage(new StatusMessage(StatusType.DEBUG,"thread shutting down, stopping recording"));
             obs.stop();
         }
     }

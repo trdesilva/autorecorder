@@ -15,6 +15,7 @@ import io.github.trdesilva.autorecorder.ui.gui.inject.GuiModule;
 import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
 import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
 import io.github.trdesilva.autorecorder.ui.status.StatusType;
+import io.github.trdesilva.autorecorder.video.inject.VideoModule;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,7 +41,7 @@ public class Main
             isDebugMode = true;
         }
         
-        Injector injector = Guice.createInjector(new GuiModule(isDebugMode));
+        Injector injector = Guice.createInjector(new VideoModule(), new GuiModule(isDebugMode));
         
         Settings settings = injector.getInstance(Settings.class);
         settings.populate();

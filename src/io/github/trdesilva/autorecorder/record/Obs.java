@@ -35,9 +35,7 @@ public class Obs
         {
             String obsDir = Paths.get(settings.getObsPath()).getParent().toString();
             String[] obsArgs = {settings.getObsPath(), "--startrecording", "--minimize-to-tray"};
-            System.out.println("starting recording");
             process = Runtime.getRuntime().exec(obsArgs, null, new File(obsDir));
-            System.out.println("recording started");
             recording.set(true);
         }
     }
@@ -46,10 +44,8 @@ public class Obs
     {
         if(recording.get())
         {
-            System.out.println("stopping recording");
             // OBS prompts if you don't force kill
             process.destroyForcibly();
-            System.out.println("recording stopped");
             recording.set(false);
         }
     }

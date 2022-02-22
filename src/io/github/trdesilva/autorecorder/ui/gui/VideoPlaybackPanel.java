@@ -223,7 +223,6 @@ public class VideoPlaybackPanel extends DefaultPanel implements AutoCloseable
     
     public void play(File videoFile)
     {
-        System.out.println("playing " + videoFile);
         mediaPlayerComponent.mediaPlayer().media().prepare(videoFile.getAbsolutePath());
         setIsPlaying(true);
         setPlaybackRate(1.0f);

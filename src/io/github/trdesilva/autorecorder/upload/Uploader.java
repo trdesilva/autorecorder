@@ -5,8 +5,8 @@
 
 package io.github.trdesilva.autorecorder.upload;
 
-import io.github.trdesilva.autorecorder.Settings;
 import io.github.trdesilva.autorecorder.ui.gui.ReportableException;
+import io.github.trdesilva.autorecorder.video.VideoListHandler;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,11 +14,11 @@ import java.nio.file.Paths;
 
 public abstract class Uploader
 {
-    protected Settings settings;
+    protected final VideoListHandler clipListHandler;
     
-    public Uploader(Settings settings)
+    public Uploader(VideoListHandler clipListHandler)
     {
-        this.settings = settings;
+        this.clipListHandler = clipListHandler;
     }
     
     // should return the URL of the uploaded video
@@ -28,11 +28,6 @@ public abstract class Uploader
     
     protected File getClip(String clipName)
     {
-        if(!clipName.startsWith(settings.getClipPath()))
-        {
-            return Paths.get(settings.getClipPath()).resolve(clipName).toFile();
-        }
-        
-        return new File(clipName);
+        return clipListHandler.getVideo(clipName);
     }
 }

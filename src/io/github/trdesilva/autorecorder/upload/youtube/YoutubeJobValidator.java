@@ -5,42 +5,49 @@
 
 package io.github.trdesilva.autorecorder.upload.youtube;
 
-import com.google.common.collect.Sets;
 import com.google.inject.Inject;
-import io.github.trdesilva.autorecorder.VideoFilenameValidator;
+import com.google.inject.name.Named;
+import io.github.trdesilva.autorecorder.video.VideoFilenameValidator;
 import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
 import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
 import io.github.trdesilva.autorecorder.ui.status.StatusType;
 import io.github.trdesilva.autorecorder.upload.UploadJob;
 import io.github.trdesilva.autorecorder.upload.UploadJobValidator;
+import io.github.trdesilva.autorecorder.video.VideoListHandler;
 
 import java.io.File;
-import java.util.Set;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class YoutubeJobValidator implements UploadJobValidator
 {
     private final StatusQueue status;
     private final VideoFilenameValidator videoFilenameValidator;
+    private final VideoListHandler clipListHandler;
     
     @Inject
-    public YoutubeJobValidator(StatusQueue status, VideoFilenameValidator videoFilenameValidator)
+    public YoutubeJobValidator(StatusQueue status, VideoFilenameValidator videoFilenameValidator,
+                               @Named("CLIP") VideoListHandler clipListHandler)
     {
         this.status = status;
         this.videoFilenameValidator = videoFilenameValidator;
+        this.clipListHandler = clipListHandler;
     }
     
     @Override
     public boolean validate(UploadJob job)
     {
-        File clip = new File(job.getClipName());
-        if(!clip.exists())
-        {
-            status.postMessage(new StatusMessage(StatusType.WARNING, "Clip file doesn't exist"));
-            return false;
-        }
-        if(!videoFilenameValidator.hasValidName(clip.getName()))
+        String clipName = Paths.get(job.getClipName()).getFileName().toString();
+        if(!videoFilenameValidator.hasValidName(clipName))
         {
             status.postMessage(new StatusMessage(StatusType.WARNING, "Clip has invalid format"));
+            return false;
+        }
+        
+        File clip = clipListHandler.getVideo(job.getClipName());
+        if(clip == null || !clip.exists())
+        {
+            status.postMessage(new StatusMessage(StatusType.WARNING, "Clip file doesn't exist"));
             return false;
         }
         

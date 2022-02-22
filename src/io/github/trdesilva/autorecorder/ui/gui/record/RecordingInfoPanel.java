@@ -57,7 +57,6 @@ public class RecordingInfoPanel extends DefaultPanel implements VideoListSelecti
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                System.out.println("firing clipper start " + recording);
                 if(recording != null)
                 {
                     navigator.showClipView(recording);

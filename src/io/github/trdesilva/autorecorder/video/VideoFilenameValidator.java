@@ -3,7 +3,7 @@
  * Distributed under GPLv3.
  */
 
-package io.github.trdesilva.autorecorder;
+package io.github.trdesilva.autorecorder.video;
 
 public class VideoFilenameValidator
 {
