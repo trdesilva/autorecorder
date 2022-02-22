@@ -14,5 +14,5 @@ import java.io.File;
 
 public interface VideoListPanelFactory
 {
-    VideoListPanel create(VideoType videoType, VideoListSelectionConsumer selectionConsumer);
+    VideoListPanel create(VideoListHandler videoListHandler, VideoListSelectionConsumer selectionConsumer);
 }

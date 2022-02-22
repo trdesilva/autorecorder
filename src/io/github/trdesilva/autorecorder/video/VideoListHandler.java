@@ -16,6 +16,7 @@ import org.joda.time.DateTime;
 
 import java.awt.Image;
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -38,11 +39,28 @@ public class VideoListHandler
         this.status = status;
         this.filenameValidator = filenameValidator;
         this.type = type;
+        
+        update();
     }
     
     public File getVideo(String name)
     {
-        return new File(videoDir, name);
+        File video;
+        if(Paths.get(name).isAbsolute())
+        {
+            video = new File(name);
+        }
+        else
+        {
+            video = new File(videoDir, name);
+        }
+        
+        if(videoDir != null && videoDir.equals(video.getParentFile()) && filenameValidator.hasValidName(video.getName()))
+        {
+            return video;
+        }
+        
+        return null;
     }
     
     public List<File> getVideoList()
@@ -62,24 +80,44 @@ public class VideoListHandler
     public DateTime getCreationDate(String name)
     {
         File video = new File(videoDir, name);
+        return getCreationDate(video);
+    }
+    
+    public DateTime getCreationDate(File video)
+    {
         return metadataReader.getCreationDate(video);
     }
     
     public long getDuration(String name)
     {
         File video = new File(videoDir, name);
+        return getDuration(video);
+    }
+    
+    public long getDuration(File video)
+    {
         return metadataReader.getDuration(video);
     }
     
     public String getResolution(String name)
     {
         File video = new File(videoDir, name);
+        return getResolution(video);
+    }
+    
+    public String getResolution(File video)
+    {
         return metadataReader.getResolution(video);
     }
     
     public Image getThumbnail(String name)
     {
         File video = new File(videoDir, name);
+        return getThumbnail(video);
+    }
+    
+    public Image getThumbnail(File video)
+    {
         return metadataReader.getThumbnail(video);
     }
     

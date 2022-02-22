@@ -6,39 +6,43 @@
 package io.github.trdesilva.autorecorder.clip;
 
 import com.google.inject.Inject;
-import io.github.trdesilva.autorecorder.Settings;
+import com.google.inject.name.Named;
 import io.github.trdesilva.autorecorder.TimestampUtil;
 import io.github.trdesilva.autorecorder.video.VideoFilenameValidator;
 import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
 import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
 import io.github.trdesilva.autorecorder.ui.status.StatusType;
+import io.github.trdesilva.autorecorder.video.VideoListHandler;
+import io.github.trdesilva.autorecorder.video.VideoType;
 
 import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public class ClipJobValidator
 {
-    private final Settings settings;
+    private final VideoListHandler clipListHandler;
+    private final VideoListHandler recordingListHandler;
     private final StatusQueue status;
     private final VideoFilenameValidator videoFilenameValidator;
     
     @Inject
-    public ClipJobValidator(Settings settings, StatusQueue status, VideoFilenameValidator videoFilenameValidator)
+    public ClipJobValidator(@Named("CLIP") VideoListHandler clipListHandler,
+                            @Named("RECORDING") VideoListHandler recordingListHandler,
+                            StatusQueue status, VideoFilenameValidator videoFilenameValidator)
     {
-        this.settings = settings;
+        this.clipListHandler = clipListHandler;
+        this.recordingListHandler = recordingListHandler;
         this.status = status;
         this.videoFilenameValidator = videoFilenameValidator;
     }
     
     public boolean validate(ClipJob job)
     {
-        if(!validateVideo(job.getSource(), VideoSource.RECORDING))
+        if(!validateVideo(job.getSource(), VideoType.RECORDING))
         {
             return false;
         }
         
-        if(!validateVideo(job.getDest(), VideoSource.CLIP))
+        if(!validateVideo(job.getDest(), VideoType.CLIP))
         {
             return false;
         }
@@ -66,21 +70,21 @@ public class ClipJobValidator
         return true;
     }
     
-    private boolean validateVideo(String video, VideoSource source)
+    private boolean validateVideo(String video, VideoType source)
     {
-        String directory;
+        File videoFile;
         String label;
         boolean shouldExist;
         
-        if(source == VideoSource.RECORDING)
+        if(source == VideoType.RECORDING)
         {
-            directory = settings.getRecordingPath();
+            videoFile = recordingListHandler.getVideo(video);
             label = "Recording";
             shouldExist = true;
         }
         else
         {
-            directory = settings.getClipPath();
+            videoFile = clipListHandler.getVideo(video);
             label = "Clip";
             shouldExist = false;
         }
@@ -90,47 +94,24 @@ public class ClipJobValidator
             status.postMessage(new StatusMessage(StatusType.WARNING, label + " path cannot be blank"));
             return false;
         }
-        
-        Path directoryPath = Paths.get(directory);
-        Path videoPath;
-        if(video.startsWith(settings.getRecordingPath()))
-        {
-            videoPath = Paths.get(video);
-        }
-        else
-        {
-            videoPath = directoryPath.resolve(video);
-        }
-        
-        if(!videoPath.getParent().equals(directoryPath))
-        {
-            status.postMessage(new StatusMessage(StatusType.WARNING, label + " is not in recording directory: " + video));
-            return false;
-        }
-        File videoFile = videoPath.toFile();
-        if(!videoFile.exists() && shouldExist)
-        {
-            status.postMessage(new StatusMessage(StatusType.WARNING, label + " doesn't exist: " + video));
-            return false;
-        }
-        else if(videoFile.exists() && !shouldExist)
-        {
-            status.postMessage(new StatusMessage(StatusType.WARNING, label + " already exists: " + video));
-            return false;
-        }
-        
-        if(!videoFilenameValidator.hasValidName(videoFile.getName()))
+    
+        if(!videoFilenameValidator.hasValidName(video))
         {
             status.postMessage(new StatusMessage(StatusType.WARNING, label + " has invalid filename: " + video));
             return false;
         }
         
+        if(!(videoFile != null && videoFile.exists()) && shouldExist)
+        {
+            status.postMessage(new StatusMessage(StatusType.WARNING, label + " doesn't exist: " + video));
+            return false;
+        }
+        else if(videoFile != null && videoFile.exists() && !shouldExist)
+        {
+            status.postMessage(new StatusMessage(StatusType.WARNING, label + " already exists: " + video));
+            return false;
+        }
+        
         return true;
-    }
-    
-    private enum VideoSource
-    {
-        RECORDING,
-        CLIP
     }
 }

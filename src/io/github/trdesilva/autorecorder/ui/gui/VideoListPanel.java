@@ -9,8 +9,6 @@ import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
 import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
 import io.github.trdesilva.autorecorder.video.VideoListHandler;
-import io.github.trdesilva.autorecorder.video.inject.VideoListHandlerFactory;
-import io.github.trdesilva.autorecorder.video.VideoType;
 
 import javax.swing.JList;
 import javax.swing.JScrollPane;
@@ -27,13 +25,12 @@ public class VideoListPanel extends JScrollPane
     private final JList<File> videos;
     
     @AssistedInject
-    public VideoListPanel(StatusQueue status, VideoListHandlerFactory videoListHandlerFactory,
-                          @Assisted VideoType videoType, @Assisted VideoListSelectionConsumer selectionConsumer)
+    public VideoListPanel(StatusQueue status, @Assisted VideoListHandler videoListHandler, @Assisted VideoListSelectionConsumer selectionConsumer)
     {
         this.status = status;
         
         // TODO custom renderer with thumbnails
-        videoListHandler = videoListHandlerFactory.create(videoType);
+        this.videoListHandler = videoListHandler;
         videos = new JList<>(videoListHandler.getVideoList().toArray(new File[0]));
         videos.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         videos.addListSelectionListener(new ListSelectionListener()

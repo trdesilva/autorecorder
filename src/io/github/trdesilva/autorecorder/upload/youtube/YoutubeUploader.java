@@ -23,6 +23,7 @@ import com.google.api.services.youtube.model.Video;
 import com.google.api.services.youtube.model.VideoSnippet;
 import com.google.api.services.youtube.model.VideoStatus;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import io.github.trdesilva.autorecorder.Settings;
 import io.github.trdesilva.autorecorder.ui.gui.ReportableException;
 import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
@@ -31,6 +32,7 @@ import io.github.trdesilva.autorecorder.ui.status.StatusType;
 import io.github.trdesilva.autorecorder.upload.UploadJob;
 import io.github.trdesilva.autorecorder.upload.UploadJobValidator;
 import io.github.trdesilva.autorecorder.upload.Uploader;
+import io.github.trdesilva.autorecorder.video.VideoListHandler;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -73,10 +75,10 @@ public class YoutubeUploader extends Uploader
     private final StatusQueue status;
     
     @Inject
-    public YoutubeUploader(Settings settings, YoutubeJobValidator validator, YoutubeJsonErrorParser errorParser,
+    public YoutubeUploader(@Named("CLIP") VideoListHandler clipListHandler, YoutubeJobValidator validator, YoutubeJsonErrorParser errorParser,
                            StatusQueue status) throws IOException
     {
-        super(settings);
+        super(clipListHandler);
         this.validator = validator;
         this.errorParser = errorParser;
         this.status = status;
@@ -108,7 +110,7 @@ public class YoutubeUploader extends Uploader
         try
         {
             status.postMessage(new StatusMessage(StatusType.DEBUG,
-                                                 String.format("clip: %s\ttitle: %s\tdescription: %s\tprivacy: %s\n",
+                                                 String.format("uploading clip: %s\ttitle: %s\tdescription: %s\tprivacy: %s",
                                                                clipName, videoTitle, description,
                                                                privacyStatus.name())));
             YouTube youtubeService = getService();

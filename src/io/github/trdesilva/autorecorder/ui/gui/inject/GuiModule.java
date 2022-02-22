@@ -12,6 +12,7 @@ import io.github.trdesilva.autorecorder.ui.gui.MainWindow;
 import io.github.trdesilva.autorecorder.ui.gui.Navigator;
 import io.github.trdesilva.autorecorder.upload.Uploader;
 import io.github.trdesilva.autorecorder.upload.youtube.YoutubeUploader;
+import io.github.trdesilva.autorecorder.video.inject.VideoListHandlerFactory;
 
 public class GuiModule extends AbstractModule
 {
@@ -25,6 +26,8 @@ public class GuiModule extends AbstractModule
     @Override
     protected void configure()
     {
+        requireBinding(VideoListHandlerFactory.class);
+        
         install(new FactoryModuleBuilder().build(VideoListPanelFactory.class));
         bind(Uploader.class).to(YoutubeUploader.class);
         bind(Navigator.class).to(MainWindow.class);

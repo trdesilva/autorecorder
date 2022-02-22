@@ -6,7 +6,9 @@
 package io.github.trdesilva.autorecorder.clip;
 
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import io.github.trdesilva.autorecorder.Settings;
+import io.github.trdesilva.autorecorder.video.VideoListHandler;
 import org.apache.commons.io.IOUtils;
 
 import java.io.File;
@@ -20,11 +22,16 @@ import java.util.concurrent.TimeUnit;
 public class ClipTrimmer
 {
     private final Settings settings;
+    private final VideoListHandler clipListHandler;
+    private final VideoListHandler recordingListHandler;
     
     @Inject
-    public ClipTrimmer(Settings settings)
+    public ClipTrimmer(Settings settings, @Named("CLIP") VideoListHandler clipListHandler,
+                       @Named("RECORDING") VideoListHandler recordingListHandler)
     {
         this.settings = settings;
+        this.clipListHandler = clipListHandler;
+        this.recordingListHandler = recordingListHandler;
     }
     
     public void makeClip(String source, String dest, double start, double end) throws IOException, InterruptedException
@@ -43,23 +50,20 @@ public class ClipTrimmer
     public void makeClip(String source, String dest, String startArg, String endArg) throws IOException,
                                                                                             InterruptedException
     {
-        if(!source.startsWith(settings.getRecordingPath()))
+        File sourceFile = recordingListHandler.getVideo(source);
+        File destFile = clipListHandler.getVideo(dest);
+        
+        if(sourceFile == null || destFile == null)
         {
-            source = Paths.get(settings.getRecordingPath()).resolve(source).toString();
+            throw new IOException("Bad source or destination");
         }
         
-        if(!dest.startsWith(settings.getClipPath()))
-        {
-            dest = Paths.get(settings.getClipPath()).resolve(dest).toString();
-        }
-        
-        
-        if(new File(dest).exists())
+        if(destFile.exists())
         {
             throw new IOException("Destination already exists");
         }
         
-        String[] ffmpegArgs = {settings.getFfmpegPath(), "-i", source, "-ss", startArg, "-to", endArg, "-c", "copy", dest};
+        String[] ffmpegArgs = {settings.getFfmpegPath(), "-i", sourceFile.getAbsolutePath(), "-ss", startArg, "-to", endArg, "-c", "copy", destFile.getAbsolutePath()};
         Process ffmpegProc = Runtime.getRuntime()
                                     .exec(ffmpegArgs, null,
                                           new File(Paths.get(settings.getFfmpegPath()).getParent().toString()));
@@ -83,7 +87,6 @@ public class ClipTrimmer
         ffmpegResult = ffmpegProc.waitFor();
         if(ffmpegResult != 0)
         {
-            System.out.println("FFMpeg failed:\n" + ffmpegError);
             throw new IOException(ffmpegError);
         }
     }

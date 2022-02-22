@@ -6,11 +6,14 @@
 package io.github.trdesilva.autorecorder.ui.gui.clip;
 
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import io.github.trdesilva.autorecorder.clip.VideoMetadataReader;
 import io.github.trdesilva.autorecorder.ui.gui.Navigator;
 import io.github.trdesilva.autorecorder.ui.gui.VideoListSelectionConsumer;
 import io.github.trdesilva.autorecorder.ui.gui.wrapper.DefaultPanel;
 import io.github.trdesilva.autorecorder.ui.gui.wrapper.WrappingLabel;
+import io.github.trdesilva.autorecorder.video.VideoListHandler;
+import io.github.trdesilva.autorecorder.video.VideoType;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.JButton;
@@ -22,7 +25,7 @@ import static io.github.trdesilva.autorecorder.TimestampUtil.formatTime;
 
 public class ClipInfoPanel extends DefaultPanel implements VideoListSelectionConsumer
 {
-    private final VideoMetadataReader metadataReader;
+    private final VideoListHandler clipListHandler;
     
     private final WrappingLabel title;
     private final JLabel duration;
@@ -33,9 +36,9 @@ public class ClipInfoPanel extends DefaultPanel implements VideoListSelectionCon
     private File clip;
     
     @Inject
-    public ClipInfoPanel(VideoMetadataReader metadataReader, Navigator navigator)
+    public ClipInfoPanel(@Named("CLIP") VideoListHandler clipListHandler, Navigator navigator)
     {
-        this.metadataReader = metadataReader;
+        this.clipListHandler = clipListHandler;
         
         setLayout(new MigLayout("fill", "[100:null:null]", "[][][]push[]"));
         
@@ -66,8 +69,8 @@ public class ClipInfoPanel extends DefaultPanel implements VideoListSelectionCon
         if(video != null)
         {
             title.setText(video.getName());
-            duration.setText("Duration: " + formatTime(metadataReader.getDuration(video)));
-            resolution.setText("Resolution: " + metadataReader.getResolution(video));
+            duration.setText("Duration: " + formatTime(clipListHandler.getDuration(video)));
+            resolution.setText("Resolution: " + clipListHandler.getResolution(video));
             uploadButton.setEnabled(true);
         }
     }
