@@ -67,6 +67,12 @@ public class SettingsValidator
             return false;
         }
         
+        if(settings.autoDeleteThresholdGB < 0)
+        {
+            status.postMessage(new StatusMessage(StatusType.WARNING, "Maximum recording space must be a non-negative integer"));
+            return false;
+        }
+        
         return true;
     }
 }
