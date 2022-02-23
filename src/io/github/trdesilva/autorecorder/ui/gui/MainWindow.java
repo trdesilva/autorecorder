@@ -116,11 +116,11 @@ public class MainWindow implements Navigator
             int tabIndex = tabbedPane.getSelectedIndex();
             if(tabIndex == tabbedPane.indexOfTab("Recordings"))
             {
-                recordingListPanel.update();
+                recordingListPanel.update(true);
             }
             else if(tabIndex == tabbedPane.indexOfTab("Clips"))
             {
-                clipListPanel.update();
+                clipListPanel.update(true);
             }
         });
     }

@@ -64,11 +64,11 @@ public class RecordingInfoPanel extends DefaultPanel implements VideoListSelecti
             }
         });
         
-        add(title, "cell 0 0, growx, top");
-        add(creationDate, "cell 0 1, , growx");
-        add(duration, "cell 0 2, growx");
-        add(resolution, "cell 0 3, growx");
-        add(clipButton, "cell 0 4, growx, bottom");
+        add(title, "cell 0 0, growx, wmin 100");
+        add(creationDate, "cell 0 1, growx, wmin 100");
+        add(duration, "cell 0 2, growx, wmin 100");
+        add(resolution, "cell 0 3, growx, wmin 100");
+        add(clipButton, "cell 0 4, growx, wmin 100");
     }
     
     public void setVideo(File video)
@@ -82,6 +82,14 @@ public class RecordingInfoPanel extends DefaultPanel implements VideoListSelecti
             duration.setText("Duration: " + formatTime(metadataReader.getDuration(video)));
             resolution.setText("Resolution: " + metadataReader.getResolution(video));
             clipButton.setEnabled(true);
+        }
+        else
+        {
+            title.setText("");
+            creationDate.setText("");
+            duration.setText("");
+            resolution.setText("");
+            clipButton.setEnabled(false);
         }
     }
 }

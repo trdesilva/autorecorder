@@ -56,10 +56,10 @@ public class ClipInfoPanel extends DefaultPanel implements VideoListSelectionCon
             }
         });
         
-        add(title, "cell 0 0, growx");
-        add(duration, "cell 0 1, growx");
-        add(resolution, "cell 0 2, growx");
-        add(uploadButton, "cell 0 3, growx, tag next");
+        add(title, "cell 0 0, growx, wmin 100");
+        add(duration, "cell 0 1, growx, wmin 100");
+        add(resolution, "cell 0 2, growx, wmin 100");
+        add(uploadButton, "cell 0 3, growx, wmin 100, tag next");
     }
     
     public void setVideo(File video)
@@ -72,6 +72,13 @@ public class ClipInfoPanel extends DefaultPanel implements VideoListSelectionCon
             duration.setText("Duration: " + formatTime(clipListHandler.getDuration(video)));
             resolution.setText("Resolution: " + clipListHandler.getResolution(video));
             uploadButton.setEnabled(true);
+        }
+        else
+        {
+            title.setText("");
+            duration.setText("");
+            resolution.setText("");
+            uploadButton.setEnabled(false);
         }
     }
 }
