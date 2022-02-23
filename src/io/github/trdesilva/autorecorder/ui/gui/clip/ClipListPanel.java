@@ -14,13 +14,13 @@ import io.github.trdesilva.autorecorder.video.VideoListHandler;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.ButtonGroup;
-import javax.swing.ButtonModel;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 
 public class ClipListPanel extends DefaultPanel
 {
+    private final ClipInfoPanel clipInfoPanel;
     private final VideoListPanel videoListPanel;
     private final JRadioButton dateSortButton;
     private final JRadioButton nameSortButton;
@@ -31,6 +31,7 @@ public class ClipListPanel extends DefaultPanel
     {
         setLayout(new MigLayout("fill, insets 2", "[75%:75%:90%]2[10%:25%:300]", "[][grow]"));
         
+        this.clipInfoPanel = clipInfoPanel;
         videoListPanel = videoListPanelFactory.create(clipListHandler, clipInfoPanel);
         
         JPanel sortPanel = new JPanel();
@@ -50,14 +51,19 @@ public class ClipListPanel extends DefaultPanel
         add(videoListPanel, "cell 0 1, grow");
         add(clipInfoPanel, "cell 1 0, grow, span 1 2");
     
-        dateSortButton.addActionListener(e -> update());
-        nameSortButton.addActionListener(e -> update());
+        dateSortButton.addActionListener(e -> update(false));
+        nameSortButton.addActionListener(e -> update(false));
         
-        update();
+        update(false);
     }
     
-    public void update()
+    public void update(boolean clearSelection)
     {
+        if(clearSelection)
+        {
+            clipInfoPanel.setVideo(null);
+        }
+        
         if(dateSortButton.isSelected())
         {
             videoListPanel.updateList(VideoListPanel.SortOrder.DATE);

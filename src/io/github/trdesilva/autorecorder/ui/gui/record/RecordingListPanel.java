@@ -20,6 +20,7 @@ import javax.swing.JRadioButton;
 
 public class RecordingListPanel extends DefaultPanel
 {
+    private final RecordingInfoPanel recordingInfoPanel;
     private final VideoListPanel videoListPanel;
     private final JRadioButton dateSortButton;
     private final JRadioButton nameSortButton;
@@ -29,7 +30,8 @@ public class RecordingListPanel extends DefaultPanel
                               @Named("RECORDING") VideoListHandler recordingListHandler)
     {
         setLayout(new MigLayout("fill, insets 2", "[75%:75%:90%]2[10%::300]", "[][grow]"));
-        
+    
+        this.recordingInfoPanel = recordingInfoPanel;
         videoListPanel = videoListPanelFactory.create(recordingListHandler, recordingInfoPanel);
         
         JPanel sortPanel = new JPanel();
@@ -49,14 +51,19 @@ public class RecordingListPanel extends DefaultPanel
         add(videoListPanel, "cell 0 1, grow");
         add(recordingInfoPanel, "cell 1 0, grow, span 1 2");
         
-        dateSortButton.addActionListener(e -> update());
-        nameSortButton.addActionListener(e -> update());
+        dateSortButton.addActionListener(e -> update(false));
+        nameSortButton.addActionListener(e -> update(false));
         
-        update();
+        update(false);
     }
     
-    public void update()
+    public void update(boolean clearSelection)
     {
+        if(clearSelection)
+        {
+            recordingInfoPanel.setVideo(null);
+        }
+        
         if(dateSortButton.isSelected())
         {
             videoListPanel.updateList(VideoListPanel.SortOrder.DATE);
