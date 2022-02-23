@@ -10,13 +10,16 @@ import io.github.trdesilva.autorecorder.Settings;
 import io.github.trdesilva.autorecorder.SettingsValidator;
 import io.github.trdesilva.autorecorder.ui.gui.Navigator;
 import io.github.trdesilva.autorecorder.ui.gui.wrapper.DefaultPanel;
+import io.github.trdesilva.autorecorder.ui.gui.wrapper.ValidatingTextField;
 import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
 import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
 import io.github.trdesilva.autorecorder.ui.status.StatusType;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 public class SettingsPanel extends DefaultPanel
@@ -24,7 +27,7 @@ public class SettingsPanel extends DefaultPanel
     @Inject
     public SettingsPanel(Settings settings, StatusQueue status, SettingsValidator validator, Navigator navigator)
     {
-        setLayout(new MigLayout("fill", "[50%][50%]", "[][][grow]push[]"));
+        setLayout(new MigLayout("fill", "[50%][50%]", "[][][grow][]push[]"));
         
         JLabel obsPathLabel = new JLabel("OBS Path");
         JTextField obsPathField = new JTextField(settings.getObsPath());
@@ -36,6 +39,35 @@ public class SettingsPanel extends DefaultPanel
                                                                "These executables will be added to the auto-detection list");
         GameListPanel excludedGamesPanel = new GameListPanel(settings.getExcludedGames(), "Excluded Games",
                                                              "These executables will be removed from the auto-detection list (they will not trigger recording)");
+        
+        JPanel autoDeletePanel = new JPanel();
+        autoDeletePanel.setLayout(new MigLayout("fill", "[][30!][grow]"));
+        JCheckBox autoDeleteCheckbox = new JCheckBox();
+        autoDeleteCheckbox.setSelected(settings.isAutoDeleteEnabled());
+        autoDeleteCheckbox.setText("Automatically delete old recordings when over");
+        ValidatingTextField autoDeleteThresholdField =
+                new ValidatingTextField(Integer.toString(settings.getAutoDeleteThresholdGB()), input -> {
+                    try
+                    {
+                        int number = Integer.parseInt(input);
+                        if(number >= 0)
+                        {
+                            return null;
+                        }
+                        return "Cannot be negative";
+                    }
+                    catch(NumberFormatException e)
+                    {
+                        return "Must be an integer";
+                    }
+                });
+        autoDeleteThresholdField.setEnabled(settings.isAutoDeleteEnabled());
+        JLabel autoDeleteSizeLabel = new JLabel("GB of disk space");
+        
+        autoDeletePanel.add(autoDeleteCheckbox, "cell 0 0, left");
+        autoDeletePanel.add(autoDeleteThresholdField, "cell 1 0, w 30");
+        autoDeletePanel.add(autoDeleteSizeLabel, "cell 2 0, grow, left");
+        
         JButton licenseButton = new JButton("View License/Terms of Use");
         JButton saveButton = new JButton("Save");
         
@@ -47,8 +79,13 @@ public class SettingsPanel extends DefaultPanel
         add(clipPathField, "cell 1 1, growx");
         add(additionalGamesPanel, "cell 0 2, grow");
         add(excludedGamesPanel, "cell 1 2, grow");
-        add(licenseButton, "cell 0 3, left");
-        add(saveButton, "cell 1 3, right, tag apply");
+        add(autoDeletePanel, "cell 0 3");
+        add(licenseButton, "cell 0 4, left");
+        add(saveButton, "cell 1 4, right, tag apply");
+        
+        autoDeleteCheckbox.addChangeListener(e -> {
+            autoDeleteThresholdField.setEnabled(autoDeleteCheckbox.isSelected());
+        });
         
         licenseButton.addActionListener(e -> {
             navigator.showLicenseView();
@@ -61,6 +98,15 @@ public class SettingsPanel extends DefaultPanel
             tempSettings.clipPath = clipPathField.getText();
             tempSettings.additionalGames = additionalGamesPanel.getGames();
             tempSettings.excludedGames = excludedGamesPanel.getGames();
+            tempSettings.autoDeleteEnabled = autoDeleteCheckbox.isSelected();
+            if(autoDeleteThresholdField.isValid())
+            {
+                tempSettings.autoDeleteThresholdGB = Integer.parseInt(autoDeleteThresholdField.getText());
+            }
+            else
+            {
+                tempSettings.autoDeleteThresholdGB = -1;
+            }
             
             if(validator.validate(tempSettings))
             {
@@ -69,6 +115,8 @@ public class SettingsPanel extends DefaultPanel
                 settings.setClipPath(clipPathField.getText());
                 settings.setAdditionalGames(additionalGamesPanel.getGames());
                 settings.setExcludedGames(excludedGamesPanel.getGames());
+                settings.setAutoDeleteEnabled(tempSettings.autoDeleteEnabled);
+                settings.setAutoDeleteThresholdGB(tempSettings.autoDeleteThresholdGB);
                 
                 settings.save();
                 status.postMessage(new StatusMessage(StatusType.SUCCESS, "Settings saved"));

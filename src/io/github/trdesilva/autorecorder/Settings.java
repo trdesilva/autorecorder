@@ -51,6 +51,9 @@ public class Settings
         public long lastFetchedGamesTimestamp;
         
         public boolean termsAccepted = false;
+        
+        public boolean autoDeleteEnabled = false;
+        public int autoDeleteThresholdGB = 100;
     }
     
     private final StatusQueue status;
@@ -204,6 +207,26 @@ public class Settings
             container.games.addAll(container.additionalGames);
             container.games.removeAll(container.excludedGames); //excluded has priority over additional
         }
+    }
+    
+    public boolean isAutoDeleteEnabled()
+    {
+        return container.autoDeleteEnabled;
+    }
+    
+    public void setAutoDeleteEnabled(boolean autoDeleteEnabled)
+    {
+        this.container.autoDeleteEnabled = autoDeleteEnabled;
+    }
+    
+    public int getAutoDeleteThresholdGB()
+    {
+        return container.autoDeleteThresholdGB;
+    }
+    
+    public void setAutoDeleteThresholdGB(int autoDeleteThresholdGB)
+    {
+        this.container.autoDeleteThresholdGB = autoDeleteThresholdGB;
     }
     
     public String getSettingsFilePath()

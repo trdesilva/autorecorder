@@ -20,6 +20,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class VideoListHandler
 {
@@ -32,7 +33,8 @@ public class VideoListHandler
     private File videoDir;
     
     @AssistedInject
-    public VideoListHandler(Settings settings, VideoMetadataReader metadataReader, StatusQueue status, VideoFilenameValidator filenameValidator, @Assisted VideoType type)
+    public VideoListHandler(Settings settings, VideoMetadataReader metadataReader, StatusQueue status,
+                            VideoFilenameValidator filenameValidator, @Assisted VideoType type)
     {
         this.settings = settings;
         this.metadataReader = metadataReader;
@@ -55,7 +57,8 @@ public class VideoListHandler
             video = new File(videoDir, name);
         }
         
-        if(videoDir != null && videoDir.equals(video.getParentFile()) && filenameValidator.hasValidName(video.getName()))
+        if(videoDir != null && videoDir.equals(video.getParentFile()) && filenameValidator.hasValidName(
+                video.getName()))
         {
             return video;
         }
@@ -72,7 +75,9 @@ public class VideoListHandler
         }
         else
         {
-            status.postMessage(new StatusMessage(StatusType.WARNING, String.format("Problem reading %s directory; check your settings", type.name().toLowerCase())));
+            status.postMessage(new StatusMessage(StatusType.WARNING,
+                                                 String.format("Problem reading %s directory; check your settings",
+                                                               type.name().toLowerCase())));
             return Collections.emptyList();
         }
     }
@@ -132,6 +137,61 @@ public class VideoListHandler
             if(!updatedDir.equals(videoDir) && updatedDir.exists() && updatedDir.isDirectory())
             {
                 this.videoDir = updatedDir;
+            }
+        }
+    }
+    
+    public void runAutoDelete()
+    {
+        if(type == VideoType.RECORDING && settings.isAutoDeleteEnabled())
+        {
+            status.postMessage(new StatusMessage(StatusType.DEBUG, "Starting autodelete check"));
+            // sort videos oldest to newest (in deletion order)
+            List<File> videoList = getVideoList().stream()
+                                                 .sorted((f1, f2) -> (int) (f1.lastModified() - f2.lastModified()))
+                                                 .collect(Collectors.toList());
+            
+            long totalSize = 0;
+            long threshold = settings.getAutoDeleteThresholdGB() * 1024L * 1024L * 1024L;
+            for(File video : videoList)
+            {
+                totalSize += video.length();
+            }
+    
+            if(totalSize > threshold)
+            {
+                status.postMessage(new StatusMessage(StatusType.INFO, String.format(
+                        "Recording storage is over %dGB capacity; cleaning up old recordings",
+                        settings.getAutoDeleteThresholdGB())));
+            }
+            
+            int i = 0;
+            int deletedVideos = 0;
+            while(totalSize > threshold && i < videoList.size())
+            {
+                File video = videoList.get(i++);
+                totalSize -= video.length();
+                if(video.delete())
+                {
+                    deletedVideos++;
+                }
+                else
+                {
+                    status.postMessage(
+                            new StatusMessage(StatusType.DEBUG, "Failed to delete " + video.getAbsolutePath()));
+                    totalSize += video.length(); // undo decrement because the file is still there
+                }
+            }
+            
+            if(deletedVideos > 0)
+            {
+                status.postMessage(
+                        new StatusMessage(StatusType.INFO, String.format("Deleted %d recordings", deletedVideos)));
+            }
+            else
+            {
+                status.postMessage(new StatusMessage(StatusType.DEBUG,
+                                                     String.format("Nothing deleted, total size %d", totalSize)));
             }
         }
     }
