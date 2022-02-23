@@ -45,6 +45,7 @@ public class SettingsPanel extends DefaultPanel
         JCheckBox autoDeleteCheckbox = new JCheckBox();
         autoDeleteCheckbox.setSelected(settings.isAutoDeleteEnabled());
         autoDeleteCheckbox.setText("Automatically delete old recordings when over");
+        autoDeleteCheckbox.setToolTipText("When enabled, recordings will be deleted in order of age (oldest first) when a new recording starts and the total space used is over the limit.");
         ValidatingTextField autoDeleteThresholdField =
                 new ValidatingTextField(Integer.toString(settings.getAutoDeleteThresholdGB()), input -> {
                     try
