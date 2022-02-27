@@ -103,7 +103,12 @@ public class Settings
     
     public void save()
     {
-        settingsFile.getParentFile().mkdirs();
+        if(!settingsFile.getParentFile().exists())
+        {
+            settingsFile.getParentFile().mkdirs();
+            settingsFile.getParentFile().setReadable(true);
+            settingsFile.getParentFile().setWritable(true);
+        }
         
         try
         {

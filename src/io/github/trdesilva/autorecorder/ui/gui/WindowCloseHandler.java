@@ -33,6 +33,7 @@ public class WindowCloseHandler extends WindowAdapter
     public void windowClosing(WindowEvent e)
     {
         super.windowClosing(e);
+        System.out.println("close started");
         closeables.forEach(ac -> {
             try
             {
@@ -43,5 +44,6 @@ public class WindowCloseHandler extends WindowAdapter
                 ex.printStackTrace();
             }
         });
+        System.out.println("close complete");
     }
 }
