@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Optional;
+import java.util.Scanner;
 
 public class Updater
 {
@@ -63,7 +64,8 @@ public class Updater
             launcher.setExecutable(true, true);
             System.out.println("Created launcher script at " + SETTINGS_DIR.resolve(
                     LAUNCHER_FILENAME) + " (make Windows run this on startup if you want Autorecorder to launch on boot)");
-            System.out.println("Please run the launcher script to continue");
+            System.out.println("Please run the launcher script to continue; you may now close this window");
+            new Scanner(System.in).next();
             return;
         }
     
