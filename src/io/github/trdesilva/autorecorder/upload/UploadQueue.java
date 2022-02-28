@@ -74,6 +74,7 @@ public class UploadQueue implements AutoCloseable
                         status.postMessage(new StatusMessage(StatusType.FAILURE,
                                                              String.format("Failed to upload '%s': %s",
                                                                            job.getClipName(), e.getMessage())));
+                        status.postMessage(new StatusMessage(StatusType.DEBUG, Arrays.toString(e.getCause().getStackTrace())));
                     }
                     catch(Exception e)
                     {

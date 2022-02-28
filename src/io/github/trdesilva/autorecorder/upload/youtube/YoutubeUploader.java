@@ -6,6 +6,8 @@
 package io.github.trdesilva.autorecorder.upload.youtube;
 
 import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.auth.oauth2.CredentialRefreshListener;
+import com.google.api.client.auth.oauth2.TokenResponseException;
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
 import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
@@ -155,6 +157,10 @@ public class YoutubeUploader extends Uploader
             {
                 throw errorParser.parseError(e);
             }
+            catch(TokenResponseException e)
+            {
+                throw new ReportableException("Google authentication failed: " + e.getDetails().getErrorDescription(), e);
+            }
         }
         catch(GeneralSecurityException e)
         {
@@ -179,6 +185,8 @@ public class YoutubeUploader extends Uploader
         GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(httpTransport, JSON_FACTORY,
                                                                                    clientSecrets, SCOPES)
                 .setDataStoreFactory(DATA_STORE_FACTORY)
+                .setAccessType("offline")
+                .setApprovalPrompt("force")
                 .build();
         Credential credential = new AuthorizationCodeInstalledApp(flow, new LocalServerReceiver()).authorize("user");
         return credential;
