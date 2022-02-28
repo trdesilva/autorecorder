@@ -10,9 +10,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.github.trdesilva.autorecorder.Settings;
-import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
-import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
-import io.github.trdesilva.autorecorder.ui.status.StatusType;
+import io.github.trdesilva.autorecorder.ui.status.Event;
+import io.github.trdesilva.autorecorder.ui.status.EventQueue;
+import io.github.trdesilva.autorecorder.ui.status.EventType;
 import org.joda.time.DateTime;
 
 import java.awt.Image;
@@ -28,17 +28,17 @@ import java.util.concurrent.TimeUnit;
 public class VideoMetadataReader
 {
     private final Settings settings;
-    private final StatusQueue status;
+    private final EventQueue events;
     
     private final ObjectMapper objectMapper = new ObjectMapper();
     
     private final Map<File, JsonNode> metadataMapping;
     
     @Inject
-    public VideoMetadataReader(Settings settings, StatusQueue status)
+    public VideoMetadataReader(Settings settings, EventQueue events)
     {
         this.settings = settings;
-        this.status = status;
+        this.events = events;
         
         metadataMapping = new HashMap<>();
     }
@@ -103,14 +103,15 @@ public class VideoMetadataReader
             }
             catch(IOException e)
             {
-                status.postMessage(
-                        new StatusMessage(StatusType.WARNING, "Couldn't read metadata for " + video.getName()));
+                events.postEvent(
+                        new Event(EventType.WARNING, "Couldn't read metadata for " + video.getName()));
             }
         }
     }
     
     private JsonNode getMetadataJson(File video) throws IOException
     {
+        events.postEvent(new Event(EventType.DEBUG, "reading metadata for " + video.getAbsolutePath()));
         String[] ffprobeArgs = {settings.getFfprobePath(), "-v", "quiet", "-print_format", "json", "-show_format", "-show_streams", "-select_streams", "v:0", video.getAbsolutePath()};
         Process ffprobeProc = Runtime.getRuntime()
                                      .exec(ffprobeArgs, null,

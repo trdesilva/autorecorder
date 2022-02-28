@@ -7,9 +7,9 @@ package io.github.trdesilva.autorecorder.clip;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
-import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
-import io.github.trdesilva.autorecorder.ui.status.StatusType;
+import io.github.trdesilva.autorecorder.ui.status.Event;
+import io.github.trdesilva.autorecorder.ui.status.EventQueue;
+import io.github.trdesilva.autorecorder.ui.status.EventType;
 
 import java.io.IOException;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -19,7 +19,7 @@ import java.util.concurrent.Semaphore;
 public class ClipQueue implements AutoCloseable
 {
     private final ClipTrimmer trimmer;
-    private final StatusQueue status;
+    private final EventQueue events;
     private final ClipJobValidator validator;
     
     private final ConcurrentLinkedQueue<ClipJob> jobs;
@@ -27,10 +27,10 @@ public class ClipQueue implements AutoCloseable
     private Thread clippingThread;
     
     @Inject
-    public ClipQueue(ClipTrimmer trimmer, StatusQueue status, ClipJobValidator validator)
+    public ClipQueue(ClipTrimmer trimmer, EventQueue events, ClipJobValidator validator)
     {
         this.trimmer = trimmer;
-        this.status = status;
+        this.events = events;
         this.validator = validator;
         
         jobs = new ConcurrentLinkedQueue<>();
@@ -64,13 +64,13 @@ public class ClipQueue implements AutoCloseable
                         if(validator.validate(job))
                         {
                             trimmer.makeClip(job.getSource(), job.getDest(), job.getStartArg(), job.getEndArg());
-                            status.postMessage(new StatusMessage(StatusType.SUCCESS, "Clip created: " + job.getDest()));
+                            events.postEvent(new Event(EventType.SUCCESS, "Clip created: " + job.getDest()));
                         }
                     }
                     catch(IOException | InterruptedException e)
                     {
-                        status.postMessage(
-                                new StatusMessage(StatusType.FAILURE, "Failed to create clip: " + job.getDest()));
+                        events.postEvent(
+                                new Event(EventType.FAILURE, "Failed to create clip: " + job.getDest()));
                     }
                 }
             });

@@ -8,11 +8,13 @@ package io.github.trdesilva.autorecorder.upload;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.github.trdesilva.autorecorder.ui.gui.ReportableException;
-import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
-import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
-import io.github.trdesilva.autorecorder.ui.status.StatusType;
+import io.github.trdesilva.autorecorder.ui.status.Event;
+import io.github.trdesilva.autorecorder.ui.status.EventProperty;
+import io.github.trdesilva.autorecorder.ui.status.EventQueue;
+import io.github.trdesilva.autorecorder.ui.status.EventType;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
 
@@ -20,17 +22,17 @@ import java.util.concurrent.Semaphore;
 public class UploadQueue implements AutoCloseable
 {
     private final Uploader uploader;
-    private final StatusQueue status;
+    private final EventQueue events;
     
     private final ConcurrentLinkedQueue<UploadJob> jobs;
     private final Semaphore semaphore;
     private Thread uploadingThread;
     
     @Inject
-    public UploadQueue(Uploader uploader, StatusQueue status)
+    public UploadQueue(Uploader uploader, EventQueue events)
     {
         this.uploader = uploader;
-        this.status = status;
+        this.events = events;
         
         jobs = new ConcurrentLinkedQueue<>();
         semaphore = new Semaphore(0);
@@ -62,24 +64,25 @@ public class UploadQueue implements AutoCloseable
                     {
                         if(uploader.getValidator().validate(job))
                         {
-                            status.postMessage(
-                                    new StatusMessage(StatusType.INFO, "Starting upload of " + job.getVideoTitle()));
+                            events.postEvent(
+                                    new Event(EventType.INFO, "Starting upload of " + job.getVideoTitle()));
                             String url = uploader.upload(job);
-                            status.postMessage(
-                                    new StatusMessage(StatusType.SUCCESS, job.getVideoTitle() + " uploaded", url));
+                            events.postEvent(
+                                    new Event(EventType.SUCCESS, job.getVideoTitle() + " uploaded",
+                                              Collections.singletonMap(EventProperty.LINK, url)));
                         }
                     }
                     catch(ReportableException e)
                     {
-                        status.postMessage(new StatusMessage(StatusType.FAILURE,
-                                                             String.format("Failed to upload '%s': %s",
+                        events.postEvent(new Event(EventType.FAILURE,
+                                                   String.format("Failed to upload '%s': %s",
                                                                            job.getClipName(), e.getMessage())));
-                        status.postMessage(new StatusMessage(StatusType.DEBUG, Arrays.toString(e.getCause().getStackTrace())));
+                        events.postEvent(new Event(EventType.DEBUG, Arrays.toString(e.getCause().getStackTrace())));
                     }
                     catch(Exception e)
                     {
-                        status.postMessage(new StatusMessage(StatusType.DEBUG, Arrays.toString(e.getStackTrace())));
-                        status.postMessage(new StatusMessage(StatusType.FAILURE, String.format("Failed to upload '%s'",
+                        events.postEvent(new Event(EventType.DEBUG, Arrays.toString(e.getStackTrace())));
+                        events.postEvent(new Event(EventType.FAILURE, String.format("Failed to upload '%s'",
                                                                                     job.getClipName())));
                     }
                 }

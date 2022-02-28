@@ -10,9 +10,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.inject.Inject;
 import io.github.trdesilva.autorecorder.ui.gui.ReportableException;
-import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
-import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
-import io.github.trdesilva.autorecorder.ui.status.StatusType;
+import io.github.trdesilva.autorecorder.ui.status.Event;
+import io.github.trdesilva.autorecorder.ui.status.EventQueue;
+import io.github.trdesilva.autorecorder.ui.status.EventType;
 
 import java.io.IOException;
 
@@ -21,14 +21,14 @@ public class YoutubeJsonErrorParser
     private static final String QUOTA_EXCEEDED = "quotaExceeded";
     private static final String UPLOAD_LIMIT_EXCEEDED = "uploadLimitExceeded";
     
-    private final StatusQueue status;
+    private final EventQueue events;
     
     private final ObjectMapper objectMapper;
     
     @Inject
-    public YoutubeJsonErrorParser(StatusQueue status)
+    public YoutubeJsonErrorParser(EventQueue events)
     {
-        this.status = status;
+        this.events = events;
         
         this.objectMapper = new ObjectMapper();
     }
@@ -37,7 +37,7 @@ public class YoutubeJsonErrorParser
     {
         try
         {
-            status.postMessage(new StatusMessage(StatusType.DEBUG, e.getContent()));
+            events.postEvent(new Event(EventType.DEBUG, e.getContent()));
             JsonNode errorContent = objectMapper.readTree(e.getContent()).get("errors").get(0);
             String reason = errorContent.get("reason").asText();
             if(e.getStatusCode() == 403)

@@ -11,9 +11,9 @@ import io.github.trdesilva.autorecorder.SettingsValidator;
 import io.github.trdesilva.autorecorder.ui.gui.Navigator;
 import io.github.trdesilva.autorecorder.ui.gui.wrapper.DefaultPanel;
 import io.github.trdesilva.autorecorder.ui.gui.wrapper.ValidatingTextField;
-import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
-import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
-import io.github.trdesilva.autorecorder.ui.status.StatusType;
+import io.github.trdesilva.autorecorder.ui.status.Event;
+import io.github.trdesilva.autorecorder.ui.status.EventQueue;
+import io.github.trdesilva.autorecorder.ui.status.EventType;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.JButton;
@@ -25,7 +25,7 @@ import javax.swing.JTextField;
 public class SettingsPanel extends DefaultPanel
 {
     @Inject
-    public SettingsPanel(Settings settings, StatusQueue status, SettingsValidator validator, Navigator navigator)
+    public SettingsPanel(Settings settings, EventQueue events, SettingsValidator validator, Navigator navigator)
     {
         setLayout(new MigLayout("fill", "[50%][50%]", "[][][grow][]push[]"));
         
@@ -120,7 +120,7 @@ public class SettingsPanel extends DefaultPanel
                 settings.setAutoDeleteThresholdGB(tempSettings.autoDeleteThresholdGB);
                 
                 settings.save();
-                status.postMessage(new StatusMessage(StatusType.SUCCESS, "Settings saved"));
+                events.postEvent(new Event(EventType.SUCCESS, "Settings saved"));
             }
         });
     }

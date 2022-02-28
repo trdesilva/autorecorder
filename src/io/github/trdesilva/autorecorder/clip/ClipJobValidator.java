@@ -9,9 +9,9 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import io.github.trdesilva.autorecorder.TimestampUtil;
 import io.github.trdesilva.autorecorder.video.VideoFilenameValidator;
-import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
-import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
-import io.github.trdesilva.autorecorder.ui.status.StatusType;
+import io.github.trdesilva.autorecorder.ui.status.Event;
+import io.github.trdesilva.autorecorder.ui.status.EventQueue;
+import io.github.trdesilva.autorecorder.ui.status.EventType;
 import io.github.trdesilva.autorecorder.video.VideoListHandler;
 import io.github.trdesilva.autorecorder.video.VideoType;
 
@@ -21,17 +21,17 @@ public class ClipJobValidator
 {
     private final VideoListHandler clipListHandler;
     private final VideoListHandler recordingListHandler;
-    private final StatusQueue status;
+    private final EventQueue events;
     private final VideoFilenameValidator videoFilenameValidator;
     
     @Inject
     public ClipJobValidator(@Named("CLIP") VideoListHandler clipListHandler,
                             @Named("RECORDING") VideoListHandler recordingListHandler,
-                            StatusQueue status, VideoFilenameValidator videoFilenameValidator)
+                            EventQueue events, VideoFilenameValidator videoFilenameValidator)
     {
         this.clipListHandler = clipListHandler;
         this.recordingListHandler = recordingListHandler;
-        this.status = status;
+        this.events = events;
         this.videoFilenameValidator = videoFilenameValidator;
     }
     
@@ -50,20 +50,20 @@ public class ClipJobValidator
         long startTime = TimestampUtil.parseTime(job.getStartArg());
         if(startTime == -1)
         {
-            status.postMessage(new StatusMessage(StatusType.WARNING, "Start time is invalid: " + job.getStartArg()));
+            events.postEvent(new Event(EventType.WARNING, "Start time is invalid: " + job.getStartArg()));
             return false;
         }
     
         long endTime = TimestampUtil.parseTime(job.getEndArg());
         if(endTime == -1)
         {
-            status.postMessage(new StatusMessage(StatusType.WARNING, "End time is invalid: " + job.getEndArg()));
+            events.postEvent(new Event(EventType.WARNING, "End time is invalid: " + job.getEndArg()));
             return false;
         }
         
         if(startTime >= endTime)
         {
-            status.postMessage(new StatusMessage(StatusType.WARNING, "Start time must be greater than end time"));
+            events.postEvent(new Event(EventType.WARNING, "Start time must be greater than end time"));
             return false;
         }
     
@@ -91,24 +91,24 @@ public class ClipJobValidator
         
         if(video == null || video.isBlank())
         {
-            status.postMessage(new StatusMessage(StatusType.WARNING, label + " path cannot be blank"));
+            events.postEvent(new Event(EventType.WARNING, label + " path cannot be blank"));
             return false;
         }
     
         if(!videoFilenameValidator.hasValidName(video))
         {
-            status.postMessage(new StatusMessage(StatusType.WARNING, label + " has invalid filename: " + video));
+            events.postEvent(new Event(EventType.WARNING, label + " has invalid filename: " + video));
             return false;
         }
         
         if(!(videoFile != null && videoFile.exists()) && shouldExist)
         {
-            status.postMessage(new StatusMessage(StatusType.WARNING, label + " doesn't exist: " + video));
+            events.postEvent(new Event(EventType.WARNING, label + " doesn't exist: " + video));
             return false;
         }
         else if(videoFile != null && videoFile.exists() && !shouldExist)
         {
-            status.postMessage(new StatusMessage(StatusType.WARNING, label + " already exists: " + video));
+            events.postEvent(new Event(EventType.WARNING, label + " already exists: " + video));
             return false;
         }
         

@@ -6,70 +6,72 @@
 package io.github.trdesilva.autorecorder;
 
 import com.google.inject.Inject;
-import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
-import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
-import io.github.trdesilva.autorecorder.ui.status.StatusType;
+import io.github.trdesilva.autorecorder.ui.status.Event;
+import io.github.trdesilva.autorecorder.ui.status.EventProperty;
+import io.github.trdesilva.autorecorder.ui.status.EventQueue;
+import io.github.trdesilva.autorecorder.ui.status.EventType;
 
 import java.io.File;
+import java.util.Collections;
 
 public class SettingsValidator
 {
-    private final StatusQueue status;
+    private final EventQueue events;
     
     @Inject
-    public SettingsValidator(StatusQueue status)
+    public SettingsValidator(EventQueue events)
     {
-        this.status = status;
+        this.events = events;
     }
     
     public boolean validate(Settings.SettingsContainer settings)
     {
         if(settings.obsPath.isBlank())
         {
-            status.postMessage(new StatusMessage(StatusType.WARNING,
-                                                 "OBS path is unset in settings. You can download OBS Studio here:",
-                                                 "https://obsproject.com/download"));
+            events.postEvent(new Event(EventType.WARNING,
+                                       "OBS path is unset in settings. You can download OBS Studio here:",
+                                       Collections.singletonMap(EventProperty.LINK, "https://obsproject.com/download")));
             return false;
         }
         File obsFile = new File(settings.obsPath);
         if(!obsFile.exists())
         {
-            status.postMessage(new StatusMessage(StatusType.WARNING, "OBS path doesn't point to a file"));
+            events.postEvent(new Event(EventType.WARNING, "OBS path doesn't point to a file"));
             return false;
         }
         if(!settings.obsPath.endsWith(".exe") || !obsFile.canExecute())
         {
-            status.postMessage(new StatusMessage(StatusType.WARNING, "OBS path doesn't point to an executable"));
+            events.postEvent(new Event(EventType.WARNING, "OBS path doesn't point to an executable"));
             return false;
         }
         
         if(settings.recordingPath.isBlank())
         {
-            status.postMessage(new StatusMessage(StatusType.WARNING, "Recording path is unset"));
+            events.postEvent(new Event(EventType.WARNING, "Recording path is unset"));
             return false;
         }
         File recordingFile = new File(settings.recordingPath);
         if(!recordingFile.exists() || !recordingFile.isDirectory())
         {
-            status.postMessage(new StatusMessage(StatusType.WARNING, "Recording path doesn't point to a directory"));
+            events.postEvent(new Event(EventType.WARNING, "Recording path doesn't point to a directory"));
             return false;
         }
         
         if(settings.clipPath.isBlank())
         {
-            status.postMessage(new StatusMessage(StatusType.WARNING, "Clip path is unset"));
+            events.postEvent(new Event(EventType.WARNING, "Clip path is unset"));
             return false;
         }
         File clipFile = new File(settings.clipPath);
         if(!clipFile.exists() || !clipFile.isDirectory())
         {
-            status.postMessage(new StatusMessage(StatusType.WARNING, "Clip path doesn't point to a directory"));
+            events.postEvent(new Event(EventType.WARNING, "Clip path doesn't point to a directory"));
             return false;
         }
         
         if(settings.autoDeleteThresholdGB < 0)
         {
-            status.postMessage(new StatusMessage(StatusType.WARNING, "Maximum recording space must be a non-negative integer"));
+            events.postEvent(new Event(EventType.WARNING, "Maximum recording space must be a non-negative integer"));
             return false;
         }
         

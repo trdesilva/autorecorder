@@ -10,9 +10,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
-import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
-import io.github.trdesilva.autorecorder.ui.status.StatusType;
+import io.github.trdesilva.autorecorder.ui.status.Event;
+import io.github.trdesilva.autorecorder.ui.status.EventQueue;
+import io.github.trdesilva.autorecorder.ui.status.EventType;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -56,15 +56,15 @@ public class Settings
         public int autoDeleteThresholdGB = 100;
     }
     
-    private final StatusQueue status;
+    private final EventQueue events;
     
     private final ObjectMapper objectMapper;
     private SettingsContainer container;
     
     @Inject
-    public Settings(StatusQueue status)
+    public Settings(EventQueue events)
     {
-        this.status = status;
+        this.events = events;
         
         objectMapper = new ObjectMapper();
         container = new SettingsContainer();
@@ -76,19 +76,19 @@ public class Settings
         if(!settingsFile.exists())
         {
             container.excludedGames.add("leagueclientux.exe");
-            status.postMessage(new StatusMessage(StatusType.INFO, "Creating settings file on first launch"));
+            events.postEvent(new Event(EventType.INFO, "Creating settings file on first launch"));
         }
         else
         {
-            status.postMessage(new StatusMessage(StatusType.DEBUG, "Loading settings"));
+            events.postEvent(new Event(EventType.DEBUG, "Loading settings"));
             try
             {
                 container = objectMapper.readValue(settingsFile, SettingsContainer.class);
-                status.postMessage(new StatusMessage(StatusType.DEBUG, "Settings loaded"));
+                events.postEvent(new Event(EventType.DEBUG, "Settings loaded"));
             }
             catch(IOException e)
             {
-                status.postMessage(new StatusMessage(StatusType.WARNING, "Failed to load settings"));
+                events.postEvent(new Event(EventType.WARNING, "Failed to load settings"));
                 container.excludedGames.add("leagueclientux.exe");
             }
         }
@@ -97,7 +97,7 @@ public class Settings
         {
             populateGamesFromApi();
             save();
-            status.postMessage(new StatusMessage(StatusType.SUCCESS, "Settings saved"));
+            events.postEvent(new Event(EventType.SUCCESS, "Settings saved"));
         }
     }
     
@@ -281,7 +281,7 @@ public class Settings
         }
         catch(IOException e)
         {
-            status.postMessage(new StatusMessage(StatusType.WARNING, "Failed to retrieve game list"));
+            events.postEvent(new Event(EventType.WARNING, "Failed to retrieve game list"));
         }
     }
 }

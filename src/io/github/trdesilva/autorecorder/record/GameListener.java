@@ -9,9 +9,9 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import io.github.trdesilva.autorecorder.Settings;
-import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
-import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
-import io.github.trdesilva.autorecorder.ui.status.StatusType;
+import io.github.trdesilva.autorecorder.ui.status.Event;
+import io.github.trdesilva.autorecorder.ui.status.EventQueue;
+import io.github.trdesilva.autorecorder.ui.status.EventType;
 import io.github.trdesilva.autorecorder.video.VideoListHandler;
 
 import java.io.IOException;
@@ -25,7 +25,7 @@ public class GameListener implements AutoCloseable
 {
     private final Obs obs;
     private final Settings settings;
-    private final StatusQueue status;
+    private final EventQueue events;
     private final VideoListHandler recordingListHandler;
     
     private final AtomicBoolean recording;
@@ -34,12 +34,12 @@ public class GameListener implements AutoCloseable
     private Thread thread;
     
     @Inject
-    public GameListener(Obs obs, Settings settings, StatusQueue status,
+    public GameListener(Obs obs, Settings settings, EventQueue events,
                         @Named("RECORDING") VideoListHandler recordingListHandler)
     {
         this.obs = obs;
         this.settings = settings;
-        this.status = status;
+        this.events = events;
         this.recordingListHandler = recordingListHandler;
         
         recording = new AtomicBoolean(false);
@@ -48,7 +48,7 @@ public class GameListener implements AutoCloseable
     
     public void start()
     {
-        status.postMessage(new StatusMessage(StatusType.DEBUG, "Starting listener thread"));
+        events.postEvent(new Event(EventType.DEBUG, "Starting listener thread"));
         thread = new Thread(() ->
                             {
                                 while(true)
@@ -74,13 +74,13 @@ public class GameListener implements AutoCloseable
                                                         {
                                                             if(recording.get())
                                                             {
-                                                                status.postMessage(new StatusMessage(StatusType.DEBUG,
-                                                                                                     "already recording " + currentGame.get()));
+                                                                events.postEvent(new Event(EventType.DEBUG,
+                                                                                           "already recording " + currentGame.get()));
                                                                 return;
                                                             }
-                                                            status.postMessage(
-                                                                    new StatusMessage(StatusType.RECORDING_START,
-                                                                                      "Recording " + program));
+                                                            events.postEvent(
+                                                                    new Event(EventType.RECORDING_START,
+                                                                              "Recording " + program));
                                                             recordingListHandler.runAutoDelete(); // TODO #7 change this to status consumer
                                                             recording.set(true);
                                                             obs.start();
@@ -89,9 +89,9 @@ public class GameListener implements AutoCloseable
                                                         catch(IOException e)
                                                         {
                                                             // TODO after StatusQueue -> EventQueue refactor, thread should wait for settings update event
-                                                            status.postMessage(new StatusMessage(StatusType.RECORDING_END, e.getMessage()));
-                                                            status.postMessage(new StatusMessage(StatusType.FAILURE,
-                                                                                                 "Couldn't start OBS"));
+                                                            events.postEvent(new Event(EventType.RECORDING_END, e.getMessage()));
+                                                            events.postEvent(new Event(EventType.FAILURE,
+                                                                                       "Couldn't start OBS"));
                                                             recording.set(false);
                                                             currentGame.set(null);
                                                         }
@@ -108,8 +108,8 @@ public class GameListener implements AutoCloseable
                                                         .noneMatch(ph -> Paths.get(ph.info().command().orElse(""))
                                                                               .endsWith(currentGame.get())))
                                         {
-                                            status.postMessage(new StatusMessage(StatusType.RECORDING_END,
-                                                                                 "Stopped recording " + currentGame.get()));
+                                            events.postEvent(new Event(EventType.RECORDING_END,
+                                                                       "Stopped recording " + currentGame.get()));
                                             obs.stop();
                                             recording.set(false);
                                             currentGame.set(null);
@@ -122,7 +122,7 @@ public class GameListener implements AutoCloseable
                                     }
                                     catch(InterruptedException e)
                                     {
-                                        status.postMessage(new StatusMessage(StatusType.DEBUG, "Game listening ended"));
+                                        events.postEvent(new Event(EventType.DEBUG, "Game listening ended"));
                                         return;
                                     }
                                 }
@@ -136,7 +136,7 @@ public class GameListener implements AutoCloseable
         thread.interrupt();
         if(recording.get())
         {
-            status.postMessage(new StatusMessage(StatusType.DEBUG, "thread shutting down, stopping recording"));
+            events.postEvent(new Event(EventType.DEBUG, "thread shutting down, stopping recording"));
             obs.stop();
         }
     }

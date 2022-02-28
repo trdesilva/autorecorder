@@ -15,9 +15,9 @@ import io.github.trdesilva.autorecorder.ui.gui.clip.UploadPanel;
 import io.github.trdesilva.autorecorder.ui.gui.record.ClippingPanel;
 import io.github.trdesilva.autorecorder.ui.gui.record.RecordingListPanel;
 import io.github.trdesilva.autorecorder.ui.gui.settings.SettingsPanel;
-import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
-import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
-import io.github.trdesilva.autorecorder.ui.status.StatusType;
+import io.github.trdesilva.autorecorder.ui.status.Event;
+import io.github.trdesilva.autorecorder.ui.status.EventQueue;
+import io.github.trdesilva.autorecorder.ui.status.EventType;
 import io.github.trdesilva.autorecorder.upload.UploadQueue;
 import net.miginfocom.swing.MigLayout;
 
@@ -44,7 +44,7 @@ public class MainWindow implements Navigator
     private final UploadPanel uploadPanel;
     private final StatusPanel statusPanel;
     
-    private final StatusQueue statusQueue;
+    private final EventQueue eventQueue;
     private final ClipQueue clipQueue;
     private final UploadQueue uploadQueue;
     
@@ -54,7 +54,7 @@ public class MainWindow implements Navigator
     @Inject
     public MainWindow(Settings settings, RecordingListPanel recordingListPanel, ClipListPanel clipListPanel,
                       SettingsPanel settingsPanel, ClippingPanel clippingPanel, UploadPanel uploadPanel,
-                      LicensePanel licensePanel, StatusPanel statusPanel, StatusQueue statusQueue, ClipQueue clipQueue,
+                      LicensePanel licensePanel, StatusPanel statusPanel, EventQueue eventQueue, ClipQueue clipQueue,
                       UploadQueue uploadQueue, GameListener gameListener, WindowCloseHandler windowCloseHandler)
     {
         // components
@@ -95,7 +95,7 @@ public class MainWindow implements Navigator
         }
         
         this.statusPanel = statusPanel;
-        this.statusQueue = statusQueue;
+        this.eventQueue = eventQueue;
         
         this.clipQueue = clipQueue;
         this.uploadQueue = uploadQueue;
@@ -129,7 +129,7 @@ public class MainWindow implements Navigator
     {
         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         
-        statusQueue.setConsumer(statusPanel);
+        eventQueue.addConsumer(statusPanel);
         
         clipQueue.startProcessing();
         uploadQueue.startProcessing();
@@ -150,7 +150,7 @@ public class MainWindow implements Navigator
     @Override
     public void showClipView(File videoFile)
     {
-        statusQueue.postMessage(new StatusMessage(StatusType.DEBUG, "showing clippingView"));
+        eventQueue.postEvent(new Event(EventType.DEBUG, "showing clippingView"));
         clippingPanel.setRecording(videoFile);
         mainLayout.show(mainPanel, "clippingView");
     }
@@ -158,7 +158,7 @@ public class MainWindow implements Navigator
     @Override
     public void showUploadView(File videoFile)
     {
-        statusQueue.postMessage(new StatusMessage(StatusType.DEBUG, "showing uploadView"));
+        eventQueue.postEvent(new Event(EventType.DEBUG, "showing uploadView"));
         uploadPanel.setRecording(videoFile);
         mainLayout.show(mainPanel, "uploadView");
     }
