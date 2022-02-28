@@ -101,9 +101,11 @@ public class StatusPanel extends DefaultPanel implements StatusConsumer
                     break;
                 case RECORDING_START:
                     setRecordingIndicatorState(true);
+                    pause = false;
                     break;
                 case RECORDING_END:
                     setRecordingIndicatorState(false);
+                    pause = false;
                     break;
                 default:
                     setBackground(Color.LIGHT_GRAY);

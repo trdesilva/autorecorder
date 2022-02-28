@@ -33,10 +33,17 @@ public class Obs
     {
         if(!recording.get())
         {
-            String obsDir = Paths.get(settings.getObsPath()).getParent().toString();
-            String[] obsArgs = {settings.getObsPath(), "--startrecording", "--minimize-to-tray"};
-            process = Runtime.getRuntime().exec(obsArgs, null, new File(obsDir));
-            recording.set(true);
+            if(settings.getObsPath() != null && !settings.getObsPath().isBlank())
+            {
+                String obsDir = Paths.get(settings.getObsPath()).getParent().toString();
+                String[] obsArgs = {settings.getObsPath(), "--startrecording", "--minimize-to-tray"};
+                process = Runtime.getRuntime().exec(obsArgs, null, new File(obsDir));
+                recording.set(true);
+            }
+            else
+            {
+                throw new IOException("OBS Path is not set");
+            }
         }
     }
     

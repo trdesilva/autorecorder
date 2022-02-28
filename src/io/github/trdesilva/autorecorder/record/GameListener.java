@@ -88,8 +88,12 @@ public class GameListener implements AutoCloseable
                                                         }
                                                         catch(IOException e)
                                                         {
+                                                            // TODO after StatusQueue -> EventQueue refactor, thread should wait for settings update event
+                                                            status.postMessage(new StatusMessage(StatusType.RECORDING_END, e.getMessage()));
                                                             status.postMessage(new StatusMessage(StatusType.FAILURE,
                                                                                                  "Couldn't start OBS"));
+                                                            recording.set(false);
+                                                            currentGame.set(null);
                                                         }
                                                         break;
                                                     }
@@ -123,6 +127,7 @@ public class GameListener implements AutoCloseable
                                     }
                                 }
                             });
+        thread.setName("Listener thread");
         thread.start();
     }
     
