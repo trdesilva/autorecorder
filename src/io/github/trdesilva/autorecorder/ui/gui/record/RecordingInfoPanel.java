@@ -79,9 +79,17 @@ public class RecordingInfoPanel extends DefaultPanel implements VideoListSelecti
         {
             title.setText(video.getName());
             creationDate.setText("Created: " + metadataReader.getCreationDate(video));
-            duration.setText("Duration: " + formatTime(metadataReader.getDuration(video)));
+            long duration = metadataReader.getDuration(video);
+            this.duration.setText("Duration: " + formatTime(duration));
             resolution.setText("Resolution: " + metadataReader.getResolution(video));
-            clipButton.setEnabled(true);
+            if(duration != -1)
+            {
+                clipButton.setEnabled(true);
+            }
+            else
+            {
+                clipButton.setEnabled(false);
+            }
         }
         else
         {
