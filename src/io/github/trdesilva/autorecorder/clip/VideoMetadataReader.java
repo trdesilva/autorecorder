@@ -57,8 +57,20 @@ public class VideoMetadataReader
         parseVideo(video);
         if(video != null && metadataMapping.containsKey(video))
         {
-            double durationSeconds = metadataMapping.get(video).get("format").get("duration").asDouble();
-            return (long) (durationSeconds * 1000);
+            JsonNode metadata = metadataMapping.get(video);
+            // duration won't be filled in until recording is complete, so if it's missing, try parsing again
+            if(!metadata.get("format").has("duration"))
+            {
+                metadataMapping.remove(video);
+                parseVideo(video);
+            }
+    
+            // check again after reparse
+            if(metadata.get("format").has("duration"))
+            {
+                double durationSeconds = metadataMapping.get(video).get("format").get("duration").asDouble();
+                return (long) (durationSeconds * 1000);
+            }
         }
         return -1;
     }

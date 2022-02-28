@@ -11,10 +11,17 @@ public class TimestampUtil
 {
     public static String formatTime(long millis)
     {
-        long hours = TimeUnit.MILLISECONDS.toHours(millis);
-        long minutes = TimeUnit.MILLISECONDS.toMinutes(millis % TimeUnit.HOURS.toMillis(1));
-        long seconds = TimeUnit.MILLISECONDS.toSeconds(millis % TimeUnit.MINUTES.toMillis(1));
-        return String.format("%d:%02d:%02d", hours, minutes, seconds);
+        if(millis > 0)
+        {
+            long hours = TimeUnit.MILLISECONDS.toHours(millis);
+            long minutes = TimeUnit.MILLISECONDS.toMinutes(millis % TimeUnit.HOURS.toMillis(1));
+            long seconds = TimeUnit.MILLISECONDS.toSeconds(millis % TimeUnit.MINUTES.toMillis(1));
+            return String.format("%d:%02d:%02d", hours, minutes, seconds);
+        }
+        else
+        {
+            return "N/A";
+        }
     }
     
     public static long parseTime(String timestamp)
