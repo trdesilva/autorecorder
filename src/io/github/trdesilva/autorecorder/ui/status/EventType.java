@@ -13,5 +13,6 @@ public enum EventType
     INFO,
     RECORDING_START,
     RECORDING_END,
+    SETTINGS_CHANGE,
     DEBUG
 }

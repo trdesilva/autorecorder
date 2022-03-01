@@ -5,45 +5,50 @@
 
 package io.github.trdesilva.autorecorder.record;
 
+import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 import io.github.trdesilva.autorecorder.Settings;
 import io.github.trdesilva.autorecorder.ui.status.Event;
+import io.github.trdesilva.autorecorder.ui.status.EventConsumer;
 import io.github.trdesilva.autorecorder.ui.status.EventQueue;
 import io.github.trdesilva.autorecorder.ui.status.EventType;
-import io.github.trdesilva.autorecorder.video.VideoListHandler;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Singleton
-public class GameListener implements AutoCloseable
+public class GameListener implements AutoCloseable, EventConsumer
 {
+    private static final Set<EventType> EVENT_TYPES = Sets.immutableEnumSet(EventType.SETTINGS_CHANGE);
     private final Obs obs;
     private final Settings settings;
     private final EventQueue events;
-    private final VideoListHandler recordingListHandler;
     
+    private final ConcurrentHashMap<Path, Optional<String>> exeCheckResults;
     private final AtomicBoolean recording;
     private final AtomicReference<String> currentGame;
     
     private Thread thread;
     
     @Inject
-    public GameListener(Obs obs, Settings settings, EventQueue events,
-                        @Named("RECORDING") VideoListHandler recordingListHandler)
+    public GameListener(Obs obs, Settings settings, EventQueue events)
     {
         this.obs = obs;
         this.settings = settings;
         this.events = events;
-        this.recordingListHandler = recordingListHandler;
         
+        exeCheckResults = new ConcurrentHashMap<>();
         recording = new AtomicBoolean(false);
         currentGame = new AtomicReference<>();
+        
+        events.addConsumer(this);
     }
     
     public void start()
@@ -59,43 +64,52 @@ public class GameListener implements AutoCloseable
                                             // some game exes are identified by more of their path than just filename
                                             if(ph.info().command().isPresent())
                                             {
-                                                // TODO memoization
-                                                Path command = Paths.get(
-                                                        ph.info().command().orElse(""));
-                                                for(int i = 1; i <= command.getNameCount(); i++)
+                                                Path command = Paths.get(ph.info().command().orElse(""));
+                                                if(!exeCheckResults.containsKey(command))
                                                 {
-                                                    String program = command.subpath(
-                                                                                    command.getNameCount() - i,
-                                                                                    command.getNameCount())
-                                                                            .toString();
-                                                    if(settings.getGames().contains(settings.formatExeName(program)))
+                                                    Optional<String> programOptional = Optional.empty();
+                                                    for(int i = 1; i <= command.getNameCount(); i++)
                                                     {
-                                                        try
+                                                        String program = command.subpath(
+                                                                                        command.getNameCount() - i,
+                                                                                        command.getNameCount())
+                                                                                .toString();
+                                                        if(settings.getGames()
+                                                                   .contains(settings.formatExeName(program)))
                                                         {
-                                                            if(recording.get())
-                                                            {
-                                                                events.postEvent(new Event(EventType.DEBUG,
-                                                                                           "already recording " + currentGame.get()));
-                                                                return;
-                                                            }
-                                                            events.postEvent(
-                                                                    new Event(EventType.RECORDING_START,
-                                                                              "Recording " + program));
-                                                            recordingListHandler.runAutoDelete(); // TODO #7 change this to status consumer
-                                                            recording.set(true);
-                                                            obs.start();
-                                                            currentGame.set(program);
+                                                            programOptional = Optional.of(program);
+                                                            break;
                                                         }
-                                                        catch(IOException e)
+                                                    }
+                                
+                                                    exeCheckResults.put(command, programOptional);
+                                                }
+                            
+                                                if(exeCheckResults.containsKey(command) && exeCheckResults.get(command)
+                                                                                                          .isPresent())
+                                                {
+                                                    try
+                                                    {
+                                                        if(recording.get())
                                                         {
-                                                            // TODO after StatusQueue -> EventQueue refactor, thread should wait for settings update event
-                                                            events.postEvent(new Event(EventType.RECORDING_END, e.getMessage()));
-                                                            events.postEvent(new Event(EventType.FAILURE,
-                                                                                       "Couldn't start OBS"));
-                                                            recording.set(false);
-                                                            currentGame.set(null);
+                                                            events.postEvent(new Event(EventType.DEBUG,
+                                                                                       "already recording " + currentGame.get()));
+                                                            return;
                                                         }
-                                                        break;
+                                                        String program = exeCheckResults.get(command).get();
+                                                        recording.set(true);
+                                                        obs.start();
+                                                        currentGame.set(program);
+                                                        events.postEvent(new Event(EventType.RECORDING_START,
+                                                                                   "Recording " + program));
+                                                    }
+                                                    catch(IOException e)
+                                                    {
+                                                        events.postEvent(new Event(EventType.FAILURE,
+                                                                                   "Couldn't start OBS; waiting for settings change before attempting to record again"));
+                                                        recording.set(false);
+                                                        currentGame.set(null);
+                                                        stop();
                                                     }
                                                 }
                                             }
@@ -104,9 +118,10 @@ public class GameListener implements AutoCloseable
                                     else
                                     {
                                         if(!settings.getGames().contains(settings.formatExeName(currentGame.get()))
-                                        || ProcessHandle.allProcesses()
-                                                        .noneMatch(ph -> Paths.get(ph.info().command().orElse(""))
-                                                                              .endsWith(currentGame.get())))
+                                                || ProcessHandle.allProcesses()
+                                                                .noneMatch(
+                                                                        ph -> Paths.get(ph.info().command().orElse(""))
+                                                                                   .endsWith(currentGame.get())))
                                         {
                                             events.postEvent(new Event(EventType.RECORDING_END,
                                                                        "Stopped recording " + currentGame.get()));
@@ -141,10 +156,28 @@ public class GameListener implements AutoCloseable
         }
     }
     
-    
     @Override
     public void close() throws Exception
     {
         stop();
+    }
+    
+    @Override
+    public void post(Event message)
+    {
+        if(message.getType().equals(EventType.SETTINGS_CHANGE))
+        {
+            exeCheckResults.clear();
+            if(!thread.isAlive())
+            {
+                start();
+            }
+        }
+    }
+    
+    @Override
+    public Set<EventType> getSubscriptions()
+    {
+        return EVENT_TYPES;
     }
 }

@@ -129,8 +129,6 @@ public class MainWindow implements Navigator
     {
         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         
-        eventQueue.addConsumer(statusPanel);
-        
         clipQueue.startProcessing();
         uploadQueue.startProcessing();
         

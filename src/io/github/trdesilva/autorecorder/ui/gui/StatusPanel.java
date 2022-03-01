@@ -8,8 +8,8 @@ package io.github.trdesilva.autorecorder.ui.gui;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import io.github.trdesilva.autorecorder.ui.gui.wrapper.DefaultPanel;
-import io.github.trdesilva.autorecorder.ui.status.EventConsumer;
 import io.github.trdesilva.autorecorder.ui.status.Event;
+import io.github.trdesilva.autorecorder.ui.status.EventConsumer;
 import io.github.trdesilva.autorecorder.ui.status.EventProperty;
 import io.github.trdesilva.autorecorder.ui.status.EventQueue;
 import io.github.trdesilva.autorecorder.ui.status.EventType;
@@ -30,11 +30,17 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Set;
-import java.util.concurrent.Executors;
 
 
 public class StatusPanel extends DefaultPanel implements EventConsumer
 {
+    private static final Set<EventType> EVENT_TYPES = Sets.immutableEnumSet(EventType.SUCCESS,
+                                                                            EventType.FAILURE,
+                                                                            EventType.WARNING,
+                                                                            EventType.INFO,
+                                                                            EventType.RECORDING_START,
+                                                                            EventType.RECORDING_END,
+                                                                            EventType.DEBUG);
     private final EventQueue events;
     private final boolean isDebugMode;
     
@@ -74,6 +80,8 @@ public class StatusPanel extends DefaultPanel implements EventConsumer
         
         add(messageLabel, "cell 0 0, growx");
         add(recordingIndicator, "cell 1 0");
+        
+        events.addConsumer(this);
     }
     
     @Override
@@ -118,7 +126,7 @@ public class StatusPanel extends DefaultPanel implements EventConsumer
             messageLabel.setText(message.getMessage());
             messageLabel.setToolTipText(message.getTimestamp().toString());
             
-            String link = (String)(message.getProperties().get(EventProperty.LINK));
+            String link = (String) (message.getProperties().get(EventProperty.LINK));
             if(link != null)
             {
                 mouseListener = new MouseAdapter()
@@ -165,13 +173,7 @@ public class StatusPanel extends DefaultPanel implements EventConsumer
     @Override
     public Set<EventType> getSubscriptions()
     {
-        return Sets.immutableEnumSet(EventType.SUCCESS,
-                                     EventType.FAILURE,
-                                     EventType.WARNING,
-                                     EventType.INFO,
-                                     EventType.RECORDING_START,
-                                     EventType.RECORDING_END,
-                                     EventType.DEBUG);
+        return EVENT_TYPES;
     }
     
     private void setRecordingIndicatorState(boolean isRecording)

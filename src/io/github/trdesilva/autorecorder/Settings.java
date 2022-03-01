@@ -115,6 +115,7 @@ public class Settings
             container.games.addAll(container.additionalGames);
             container.games.removeAll(container.excludedGames);
             objectMapper.writerWithDefaultPrettyPrinter().writeValue(settingsFile, container);
+            events.postEvent(new Event(EventType.SETTINGS_CHANGE, "Settings saved"));
         }
         catch(IOException e)
         {
@@ -255,7 +256,7 @@ public class Settings
             response = client.execute(new HttpGet("https://discord.com/api/v10/applications/detectable"));
             
             JsonNode root = new ObjectMapper().readTree(response.getEntity().getContent());
-            System.out.println("got games from discord API: " + root.size());
+            events.postEvent(new Event(EventType.DEBUG, "got games from discord API: " + root.size()));
             synchronized(container.games)
             {
                 for(Iterator<JsonNode> gameIter = root.elements(); gameIter.hasNext(); )
@@ -275,7 +276,7 @@ public class Settings
                     }
                     
                 }
-                System.out.println("got executables: " + container.games.size());
+                events.postEvent(new Event(EventType.DEBUG,"got executables: " + container.games.size()));
                 container.lastFetchedGamesTimestamp = DateTime.now().getMillis();
             }
         }
