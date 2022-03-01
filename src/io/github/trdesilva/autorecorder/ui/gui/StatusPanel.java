@@ -5,12 +5,14 @@
 
 package io.github.trdesilva.autorecorder.ui.gui;
 
+import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import io.github.trdesilva.autorecorder.ui.gui.wrapper.DefaultPanel;
-import io.github.trdesilva.autorecorder.ui.status.StatusConsumer;
-import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
-import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
-import io.github.trdesilva.autorecorder.ui.status.StatusType;
+import io.github.trdesilva.autorecorder.ui.status.Event;
+import io.github.trdesilva.autorecorder.ui.status.EventConsumer;
+import io.github.trdesilva.autorecorder.ui.status.EventProperty;
+import io.github.trdesilva.autorecorder.ui.status.EventQueue;
+import io.github.trdesilva.autorecorder.ui.status.EventType;
 import net.miginfocom.swing.MigLayout;
 import org.apache.commons.io.IOUtils;
 
@@ -27,10 +29,19 @@ import java.awt.event.MouseListener;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Set;
 
-public class StatusPanel extends DefaultPanel implements StatusConsumer
+
+public class StatusPanel extends DefaultPanel implements EventConsumer
 {
-    private final StatusQueue status;
+    private static final Set<EventType> EVENT_TYPES = Sets.immutableEnumSet(EventType.SUCCESS,
+                                                                            EventType.FAILURE,
+                                                                            EventType.WARNING,
+                                                                            EventType.INFO,
+                                                                            EventType.RECORDING_START,
+                                                                            EventType.RECORDING_END,
+                                                                            EventType.DEBUG);
+    private final EventQueue events;
     private final boolean isDebugMode;
     
     private final JLabel messageLabel;
@@ -40,9 +51,9 @@ public class StatusPanel extends DefaultPanel implements StatusConsumer
     private MouseListener mouseListener;
     
     @Inject
-    public StatusPanel(StatusQueue status, @Named("isDebugMode") boolean isDebugMode)
+    public StatusPanel(EventQueue events, @Named("isDebugMode") boolean isDebugMode)
     {
-        this.status = status;
+        this.events = events;
         this.isDebugMode = isDebugMode;
         
         setLayout(new MigLayout("fill", "[grow][16!]"));
@@ -60,7 +71,7 @@ public class StatusPanel extends DefaultPanel implements StatusConsumer
         }
         catch(IOException e)
         {
-            status.postMessage(new StatusMessage(StatusType.DEBUG, "Failed to load icons"));
+            events.postEvent(new Event(EventType.DEBUG, "Failed to load icons"));
             recordingOnIcon = null;
             recordingOffIcon = null;
             recordingIndicator = new JLabel("Stopped");
@@ -69,15 +80,16 @@ public class StatusPanel extends DefaultPanel implements StatusConsumer
         
         add(messageLabel, "cell 0 0, growx");
         add(recordingIndicator, "cell 1 0");
+        
+        events.addConsumer(this);
     }
     
     @Override
-    public synchronized void post(StatusMessage message) throws InterruptedException
+    public synchronized void post(Event message)
     {
-        System.out.println(message);
         boolean pause = true;
         boolean showMessage = true;
-        if(message.getType() == StatusType.DEBUG)
+        if(message.getType() == EventType.DEBUG)
         {
             pause = false;
             showMessage = isDebugMode;
@@ -114,7 +126,7 @@ public class StatusPanel extends DefaultPanel implements StatusConsumer
             messageLabel.setText(message.getMessage());
             messageLabel.setToolTipText(message.getTimestamp().toString());
             
-            String link = message.getLink();
+            String link = (String) (message.getProperties().get(EventProperty.LINK));
             if(link != null)
             {
                 mouseListener = new MouseAdapter()
@@ -128,7 +140,7 @@ public class StatusPanel extends DefaultPanel implements StatusConsumer
                         }
                         catch(URISyntaxException | IOException ex)
                         {
-                            status.postMessage(new StatusMessage(StatusType.DEBUG, "Link navigation failed: " + link));
+                            events.postEvent(new Event(EventType.DEBUG, "Link navigation failed: " + link));
                         }
                     }
                 };
@@ -147,8 +159,21 @@ public class StatusPanel extends DefaultPanel implements StatusConsumer
         // TODO if there are ever any other status consumers, this won't work
         if(pause)
         {
-            Thread.sleep(1000);
+            try
+            {
+                Thread.sleep(1000);
+            }
+            catch(InterruptedException e)
+            {
+                // TODO should schedule messages that should have delay
+            }
         }
+    }
+    
+    @Override
+    public Set<EventType> getSubscriptions()
+    {
+        return EVENT_TYPES;
     }
     
     private void setRecordingIndicatorState(boolean isRecording)

@@ -9,9 +9,9 @@ import com.google.inject.Inject;
 import io.github.trdesilva.autorecorder.ui.gui.Navigator;
 import io.github.trdesilva.autorecorder.ui.gui.VideoPlaybackPanel;
 import io.github.trdesilva.autorecorder.ui.gui.wrapper.DefaultPanel;
-import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
-import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
-import io.github.trdesilva.autorecorder.ui.status.StatusType;
+import io.github.trdesilva.autorecorder.ui.status.Event;
+import io.github.trdesilva.autorecorder.ui.status.EventQueue;
+import io.github.trdesilva.autorecorder.ui.status.EventType;
 import io.github.trdesilva.autorecorder.upload.UploadJob;
 import io.github.trdesilva.autorecorder.upload.UploadQueue;
 import io.github.trdesilva.autorecorder.upload.youtube.PrivacyStatus;
@@ -35,7 +35,7 @@ public class UploadPanel extends DefaultPanel
     private File videoFile;
     
     @Inject
-    public UploadPanel(VideoPlaybackPanel playbackPanel, UploadQueue uploadQueue, StatusQueue status,
+    public UploadPanel(VideoPlaybackPanel playbackPanel, UploadQueue uploadQueue, EventQueue events,
                        Navigator navigator)
     {
         setLayout(new MigLayout("fill", "[grow]", "[30!][grow][]"));
@@ -86,8 +86,8 @@ public class UploadPanel extends DefaultPanel
                                           descriptionField.getText());
             job.addProperty(YoutubeUploader.PRIVACY_PROPERTY,
                             ((PrivacyStatus) (privacySelector.getSelectedItem())).name());
-            status.postMessage(
-                    new StatusMessage(StatusType.INFO, "Adding " + job.getVideoTitle() + " to upload queue"));
+            events.postEvent(
+                    new Event(EventType.INFO, "Adding " + job.getVideoTitle() + " to upload queue"));
             uploadQueue.enqueue(job);
         });
     }

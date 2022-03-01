@@ -5,7 +5,10 @@
 
 package io.github.trdesilva.autorecorder.ui.status;
 
-public interface StatusConsumer
+import java.util.Set;
+
+public interface EventConsumer
 {
-    void post(StatusMessage message) throws InterruptedException;
+    void post(Event message);
+    Set<EventType> getSubscriptions();
 }

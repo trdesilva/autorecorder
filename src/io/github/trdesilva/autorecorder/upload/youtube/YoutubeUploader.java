@@ -6,7 +6,6 @@
 package io.github.trdesilva.autorecorder.upload.youtube;
 
 import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.auth.oauth2.CredentialRefreshListener;
 import com.google.api.client.auth.oauth2.TokenResponseException;
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
 import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
@@ -28,9 +27,9 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import io.github.trdesilva.autorecorder.Settings;
 import io.github.trdesilva.autorecorder.ui.gui.ReportableException;
-import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
-import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
-import io.github.trdesilva.autorecorder.ui.status.StatusType;
+import io.github.trdesilva.autorecorder.ui.status.Event;
+import io.github.trdesilva.autorecorder.ui.status.EventQueue;
+import io.github.trdesilva.autorecorder.ui.status.EventType;
 import io.github.trdesilva.autorecorder.upload.UploadJob;
 import io.github.trdesilva.autorecorder.upload.UploadJobValidator;
 import io.github.trdesilva.autorecorder.upload.Uploader;
@@ -74,16 +73,16 @@ public class YoutubeUploader extends Uploader
     
     private final YoutubeJobValidator validator;
     private final YoutubeJsonErrorParser errorParser;
-    private final StatusQueue status;
+    private final EventQueue events;
     
     @Inject
     public YoutubeUploader(@Named("CLIP") VideoListHandler clipListHandler, YoutubeJobValidator validator, YoutubeJsonErrorParser errorParser,
-                           StatusQueue status) throws IOException
+                           EventQueue events) throws IOException
     {
         super(clipListHandler);
         this.validator = validator;
         this.errorParser = errorParser;
-        this.status = status;
+        this.events = events;
         
     }
     
@@ -111,8 +110,8 @@ public class YoutubeUploader extends Uploader
         
         try
         {
-            status.postMessage(new StatusMessage(StatusType.DEBUG,
-                                                 String.format("uploading clip: %s\ttitle: %s\tdescription: %s\tprivacy: %s",
+            events.postEvent(new Event(EventType.DEBUG,
+                                       String.format("uploading clip: %s\ttitle: %s\tdescription: %s\tprivacy: %s",
                                                                clipName, videoTitle, description,
                                                                privacyStatus.name())));
             YouTube youtubeService = getService();

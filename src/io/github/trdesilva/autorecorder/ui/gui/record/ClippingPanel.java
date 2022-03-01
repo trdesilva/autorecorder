@@ -12,9 +12,9 @@ import io.github.trdesilva.autorecorder.clip.ClipQueue;
 import io.github.trdesilva.autorecorder.ui.gui.Navigator;
 import io.github.trdesilva.autorecorder.ui.gui.VideoPlaybackPanel;
 import io.github.trdesilva.autorecorder.ui.gui.wrapper.DefaultPanel;
-import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
-import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
-import io.github.trdesilva.autorecorder.ui.status.StatusType;
+import io.github.trdesilva.autorecorder.ui.status.Event;
+import io.github.trdesilva.autorecorder.ui.status.EventQueue;
+import io.github.trdesilva.autorecorder.ui.status.EventType;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.JButton;
@@ -31,7 +31,7 @@ public class ClippingPanel extends DefaultPanel
     private File videoFile;
     
     @Inject
-    public ClippingPanel(VideoPlaybackPanel playbackPanel, ClipQueue clipQueue, StatusQueue status, Navigator navigator)
+    public ClippingPanel(VideoPlaybackPanel playbackPanel, ClipQueue clipQueue, EventQueue events, Navigator navigator)
     {
         setLayout(new MigLayout("fill", "[grow]", "[30!][grow][]"));
         
@@ -95,15 +95,15 @@ public class ClippingPanel extends DefaultPanel
             long end = parseTime(endTimeField.getText());
             if(start == -1)
             {
-                status.postMessage(new StatusMessage(StatusType.WARNING, "Start time is invalid"));
+                events.postEvent(new Event(EventType.WARNING, "Start time is invalid"));
             }
             else if(end == -1)
             {
-                status.postMessage(new StatusMessage(StatusType.WARNING, "End time is invalid"));
+                events.postEvent(new Event(EventType.WARNING, "End time is invalid"));
             }
             else if(start >= end)
             {
-                status.postMessage(new StatusMessage(StatusType.WARNING, "Start time must be after end time"));
+                events.postEvent(new Event(EventType.WARNING, "Start time must be after end time"));
             }
             else
             {
@@ -112,7 +112,7 @@ public class ClippingPanel extends DefaultPanel
         });
         
         saveButton.addActionListener(e -> {
-            status.postMessage(new StatusMessage(StatusType.INFO, "Saving clip: " + titleField.getText()));
+            events.postEvent(new Event(EventType.INFO, "Saving clip: " + titleField.getText()));
             String extension = videoFile.getName().substring(videoFile.getName().indexOf('.'));
             clipQueue.enqueue(new ClipJob(videoFile.getName(), titleField.getText() + extension,
                                           startTimeField.getText(), endTimeField.getText()));

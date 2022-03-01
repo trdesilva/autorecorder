@@ -12,9 +12,9 @@ import io.github.trdesilva.autorecorder.record.GameListener;
 import io.github.trdesilva.autorecorder.ui.cli.MainCli;
 import io.github.trdesilva.autorecorder.ui.gui.MainWindow;
 import io.github.trdesilva.autorecorder.ui.gui.inject.GuiModule;
-import io.github.trdesilva.autorecorder.ui.status.StatusMessage;
-import io.github.trdesilva.autorecorder.ui.status.StatusQueue;
-import io.github.trdesilva.autorecorder.ui.status.StatusType;
+import io.github.trdesilva.autorecorder.ui.status.Event;
+import io.github.trdesilva.autorecorder.ui.status.EventQueue;
+import io.github.trdesilva.autorecorder.ui.status.EventType;
 import io.github.trdesilva.autorecorder.video.inject.VideoModule;
 
 import java.io.File;
@@ -46,11 +46,11 @@ public class Main
         Settings settings = injector.getInstance(Settings.class);
         settings.populate();
         
-        StatusQueue status = injector.getInstance(StatusQueue.class);
+        EventQueue events = injector.getInstance(EventQueue.class);
         
         if(!new File(settings.getFfmpegPath()).exists())
         {
-            status.postMessage(new StatusMessage(StatusType.DEBUG, "copying ffmpeg.exe from resources"));
+            events.postEvent(new Event(EventType.DEBUG, "copying ffmpeg.exe from resources"));
             try
             {
                 Files.copy(ClassLoader.getSystemClassLoader().getResourceAsStream("ffmpeg.exe"),
@@ -58,12 +58,12 @@ public class Main
             }
             catch(IOException e)
             {
-                status.postMessage(new StatusMessage(StatusType.DEBUG, "failed to copy ffmpeg.exe"));
+                events.postEvent(new Event(EventType.DEBUG, "failed to copy ffmpeg.exe"));
             }
         }
         if(!new File(settings.getFfprobePath()).exists())
         {
-            status.postMessage(new StatusMessage(StatusType.DEBUG, "copying ffprobe.exe from resources"));
+            events.postEvent(new Event(EventType.DEBUG, "copying ffprobe.exe from resources"));
             try
             {
                 Files.copy(ClassLoader.getSystemClassLoader().getResourceAsStream("ffprobe.exe"),
@@ -71,7 +71,7 @@ public class Main
             }
             catch(IOException e)
             {
-                status.postMessage(new StatusMessage(StatusType.DEBUG, "failed to copy ffprobe.exe"));
+                events.postEvent(new Event(EventType.DEBUG, "failed to copy ffprobe.exe"));
             }
         }
         

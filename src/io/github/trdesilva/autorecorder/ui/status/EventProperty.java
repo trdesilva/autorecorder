@@ -5,13 +5,7 @@
 
 package io.github.trdesilva.autorecorder.ui.status;
 
-public enum StatusType
+public enum EventProperty
 {
-    SUCCESS,
-    FAILURE,
-    WARNING,
-    INFO,
-    RECORDING_START,
-    RECORDING_END,
-    DEBUG
+    LINK
 }
