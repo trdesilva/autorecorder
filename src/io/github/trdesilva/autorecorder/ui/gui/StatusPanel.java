@@ -19,6 +19,7 @@ import org.apache.commons.io.IOUtils;
 import javax.inject.Named;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
+import javax.swing.SwingUtilities;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Desktop;
@@ -30,6 +31,11 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 
 public class StatusPanel extends DefaultPanel implements EventConsumer
@@ -38,136 +44,44 @@ public class StatusPanel extends DefaultPanel implements EventConsumer
                                                                             EventType.FAILURE,
                                                                             EventType.WARNING,
                                                                             EventType.INFO,
-                                                                            EventType.RECORDING_START,
-                                                                            EventType.RECORDING_END,
                                                                             EventType.DEBUG);
     private final EventQueue events;
+    private final IndicatorPanel indicatorPanel;
     private final boolean isDebugMode;
     
     private final JLabel messageLabel;
-    private ImageIcon recordingOnIcon;
-    private ImageIcon recordingOffIcon;
-    private JLabel recordingIndicator;
+    
+    private ConcurrentLinkedQueue<Event> messageQueue;
+    private Semaphore semaphore;
+    
     private MouseListener mouseListener;
     
     @Inject
-    public StatusPanel(EventQueue events, @Named("isDebugMode") boolean isDebugMode)
+    public StatusPanel(EventQueue events, IndicatorPanel indicatorPanel, @Named("isDebugMode") boolean isDebugMode)
     {
         this.events = events;
+        this.indicatorPanel = indicatorPanel;
         this.isDebugMode = isDebugMode;
         
-        setLayout(new MigLayout("fill", "[grow][16!]"));
+        setLayout(new MigLayout("fill", "[grow][]", "[grow]"));
         
         messageLabel = new JLabel("Welcome to Autorecorder");
-        try
-        {
-            recordingOnIcon = new ImageIcon(
-                    IOUtils.resourceToByteArray("recordingonicon.png", getClass().getClassLoader()));
-            recordingOnIcon.setImage(recordingOnIcon.getImage().getScaledInstance(16, 16, Image.SCALE_SMOOTH));
-            recordingOffIcon = new ImageIcon(
-                    IOUtils.resourceToByteArray("recordingofficon.png", getClass().getClassLoader()));
-            recordingOffIcon.setImage(recordingOffIcon.getImage().getScaledInstance(16, 16, Image.SCALE_SMOOTH));
-            recordingIndicator = new JLabel(recordingOffIcon);
-        }
-        catch(IOException e)
-        {
-            events.postEvent(new Event(EventType.DEBUG, "Failed to load icons"));
-            recordingOnIcon = null;
-            recordingOffIcon = null;
-            recordingIndicator = new JLabel("Stopped");
-        }
-        setRecordingIndicatorState(false);
         
-        add(messageLabel, "cell 0 0, growx");
-        add(recordingIndicator, "cell 1 0");
+        add(messageLabel, "cell 0 0, growx, growy, dock west, gapleft 4");
+        add(this.indicatorPanel, "cell 1 0, growy, dock east");
+        
+        messageQueue = new ConcurrentLinkedQueue<>();
+        semaphore = new Semaphore(0);
         
         events.addConsumer(this);
+        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(this::consume, 0, 1500, TimeUnit.MILLISECONDS);
     }
     
     @Override
-    public synchronized void post(Event message)
+    public synchronized void post(Event event)
     {
-        boolean pause = true;
-        boolean showMessage = true;
-        if(message.getType() == EventType.DEBUG)
-        {
-            pause = false;
-            showMessage = isDebugMode;
-        }
-        
-        if(showMessage)
-        {
-            switch(message.getType())
-            {
-                case FAILURE:
-                    setBackground(Color.RED);
-                    break;
-                case SUCCESS:
-                    setBackground(Color.GREEN);
-                    break;
-                case WARNING:
-                    setBackground(Color.YELLOW);
-                    break;
-                case INFO:
-                    setBackground(Color.CYAN);
-                    break;
-                case RECORDING_START:
-                    setRecordingIndicatorState(true);
-                    pause = false;
-                    break;
-                case RECORDING_END:
-                    setRecordingIndicatorState(false);
-                    pause = false;
-                    break;
-                default:
-                    setBackground(Color.LIGHT_GRAY);
-            }
-            
-            messageLabel.setText(message.getMessage());
-            messageLabel.setToolTipText(message.getTimestamp().toString());
-            
-            String link = (String) (message.getProperties().get(EventProperty.LINK));
-            if(link != null)
-            {
-                mouseListener = new MouseAdapter()
-                {
-                    @Override
-                    public void mouseClicked(MouseEvent e)
-                    {
-                        try
-                        {
-                            Desktop.getDesktop().browse(new URI(link));
-                        }
-                        catch(URISyntaxException | IOException ex)
-                        {
-                            events.postEvent(new Event(EventType.DEBUG, "Link navigation failed: " + link));
-                        }
-                    }
-                };
-                messageLabel.addMouseListener(mouseListener);
-                messageLabel.setText(
-                        String.format("<html>%s (<a href='%s'>%s</a>)</html>", message.getMessage(), link, link));
-                messageLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            }
-            else
-            {
-                messageLabel.removeMouseListener(mouseListener);
-                messageLabel.setCursor(Cursor.getDefaultCursor());
-            }
-        }
-        
-        // TODO if there are ever any other status consumers, this won't work
-        if(pause)
-        {
-            try
-            {
-                Thread.sleep(1000);
-            }
-            catch(InterruptedException e)
-            {
-                // TODO should schedule messages that should have delay
-            }
-        }
+        messageQueue.offer(event);
+        semaphore.release();
     }
     
     @Override
@@ -176,31 +90,81 @@ public class StatusPanel extends DefaultPanel implements EventConsumer
         return EVENT_TYPES;
     }
     
-    private void setRecordingIndicatorState(boolean isRecording)
+    private void consume()
     {
-        if(isRecording)
+        try
         {
-            if(recordingOnIcon != null)
-            {
-                recordingIndicator.setIcon(recordingOnIcon);
-            }
-            else
-            {
-                recordingIndicator.setText("R");
-            }
-            recordingIndicator.setToolTipText("Recording");
+            semaphore.acquire();
         }
-        else
+        catch(InterruptedException e)
         {
-            if(recordingOffIcon != null)
+            events.postEvent(new Event(EventType.DEBUG, "StatusPanel consumer thread interrupted"));
+            return;
+        }
+    
+        Event event = messageQueue.poll();
+        boolean showMessage = true;
+        if(event.getType() == EventType.DEBUG)
+        {
+            showMessage = isDebugMode;
+        }
+    
+        if(showMessage)
+        {
+            Color background;
+            switch(event.getType())
             {
-                recordingIndicator.setIcon(recordingOffIcon);
+                case FAILURE:
+                    background = Color.RED;
+                    break;
+                case SUCCESS:
+                    background = Color.GREEN;
+                    break;
+                case WARNING:
+                    background = Color.YELLOW;
+                    break;
+                case INFO:
+                    background = Color.CYAN;
+                    break;
+                default:
+                    background = Color.LIGHT_GRAY;
             }
-            else
-            {
-                recordingIndicator.setText("S");
-            }
-            recordingIndicator.setToolTipText("Not recording");
+    
+            SwingUtilities.invokeLater(() -> {
+                setBackground(background);
+                indicatorPanel.setBackground(background);
+                messageLabel.setText(event.getMessage());
+                messageLabel.setToolTipText(event.getTimestamp().toString());
+    
+                String link = (String) (event.getProperties().get(EventProperty.LINK));
+                if(link != null)
+                {
+                    mouseListener = new MouseAdapter()
+                    {
+                        @Override
+                        public void mouseClicked(MouseEvent e)
+                        {
+                            try
+                            {
+                                Desktop.getDesktop().browse(new URI(link));
+                            }
+                            catch(URISyntaxException | IOException ex)
+                            {
+                                events.postEvent(new Event(EventType.DEBUG, "Link navigation failed: " + link));
+                            }
+                        }
+                    };
+                    messageLabel.addMouseListener(mouseListener);
+                    messageLabel.setText(
+                            String.format("<html>%s (<a href='%s'>%s</a>)</html>", event.getMessage(), link, link));
+                    messageLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                }
+                else
+                {
+                    messageLabel.removeMouseListener(mouseListener);
+                    messageLabel.setCursor(Cursor.getDefaultCursor());
+                }
+            });
         }
     }
 }

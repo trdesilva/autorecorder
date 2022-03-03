@@ -8,10 +8,12 @@ package io.github.trdesilva.autorecorder.clip;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.github.trdesilva.autorecorder.ui.status.Event;
+import io.github.trdesilva.autorecorder.ui.status.EventProperty;
 import io.github.trdesilva.autorecorder.ui.status.EventQueue;
 import io.github.trdesilva.autorecorder.ui.status.EventType;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
 
@@ -63,14 +65,21 @@ public class ClipQueue implements AutoCloseable
                     {
                         if(validator.validate(job))
                         {
+                            events.postEvent(new Event(EventType.INFO, "Saving clip: " + job.getDest()));
+                            events.postEvent(new Event(EventType.CLIP_START, "Clipping " + job.getDest(), Collections.singletonMap(
+                                    EventProperty.CLIP_JOB, job)));
                             trimmer.makeClip(job.getSource(), job.getDest(), job.getStartArg(), job.getEndArg());
                             events.postEvent(new Event(EventType.SUCCESS, "Clip created: " + job.getDest()));
+                            events.postEvent(new Event(EventType.CLIP_END, "Created clip " + job.getDest(), Collections.singletonMap(
+                                    EventProperty.CLIP_JOB, job)));
                         }
                     }
                     catch(IOException | InterruptedException e)
                     {
                         events.postEvent(
                                 new Event(EventType.FAILURE, "Failed to create clip: " + job.getDest()));
+                        events.postEvent(new Event(EventType.CLIP_END, "", Collections.singletonMap(
+                                EventProperty.CLIP_JOB, job)));
                     }
                 }
             });

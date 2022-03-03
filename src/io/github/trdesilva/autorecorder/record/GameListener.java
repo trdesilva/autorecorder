@@ -163,9 +163,9 @@ public class GameListener implements AutoCloseable, EventConsumer
     }
     
     @Override
-    public void post(Event message)
+    public void post(Event event)
     {
-        if(message.getType().equals(EventType.SETTINGS_CHANGE))
+        if(event.getType().equals(EventType.SETTINGS_CHANGE))
         {
             exeCheckResults.clear();
             if(!thread.isAlive())

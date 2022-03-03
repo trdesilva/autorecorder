@@ -9,6 +9,6 @@ import java.util.Set;
 
 public interface EventConsumer
 {
-    void post(Event message);
+    void post(Event event);
     Set<EventType> getSubscriptions();
 }

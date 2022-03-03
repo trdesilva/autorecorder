@@ -1,5 +1,5 @@
 <component name="ArtifactManager">
-  <artifact type="jar" build-on-make="true" name="autorecorder:jar">
+  <artifact type="jar" name="autorecorder:jar">
     <output-path>$PROJECT_DIR$/out/artifacts/autorecorder_jar</output-path>
     <root id="archive" name="autorecorder.jar">
       <element id="module-output" name="autorecorder" />

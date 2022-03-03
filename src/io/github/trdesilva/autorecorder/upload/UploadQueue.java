@@ -64,12 +64,13 @@ public class UploadQueue implements AutoCloseable
                     {
                         if(uploader.getValidator().validate(job))
                         {
-                            events.postEvent(
-                                    new Event(EventType.INFO, "Starting upload of " + job.getVideoTitle()));
+                            events.postEvent(new Event(EventType.INFO, "Starting upload of " + job.getVideoTitle()));
+                            events.postEvent(new Event(EventType.UPLOAD_START, "Uploading " + job.getVideoTitle(), Collections.singletonMap(EventProperty.UPLOAD_JOB, job)));
                             String url = uploader.upload(job);
                             events.postEvent(
                                     new Event(EventType.SUCCESS, job.getVideoTitle() + " uploaded",
                                               Collections.singletonMap(EventProperty.LINK, url)));
+                            events.postEvent(new Event(EventType.UPLOAD_END, "", Collections.singletonMap(EventProperty.UPLOAD_JOB, job)));
                         }
                     }
                     catch(ReportableException e)
@@ -78,12 +79,14 @@ public class UploadQueue implements AutoCloseable
                                                    String.format("Failed to upload '%s': %s",
                                                                            job.getClipName(), e.getMessage())));
                         events.postEvent(new Event(EventType.DEBUG, Arrays.toString(e.getCause().getStackTrace())));
+                        events.postEvent(new Event(EventType.UPLOAD_END, "", Collections.singletonMap(EventProperty.UPLOAD_JOB, job)));
                     }
                     catch(Exception e)
                     {
                         events.postEvent(new Event(EventType.DEBUG, Arrays.toString(e.getStackTrace())));
                         events.postEvent(new Event(EventType.FAILURE, String.format("Failed to upload '%s'",
                                                                                     job.getClipName())));
+                        events.postEvent(new Event(EventType.UPLOAD_END, "Finished uploading " + job.getVideoTitle(), Collections.singletonMap(EventProperty.UPLOAD_JOB, job)));
                     }
                 }
             });

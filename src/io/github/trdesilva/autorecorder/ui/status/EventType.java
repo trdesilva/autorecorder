@@ -13,6 +13,10 @@ public enum EventType
     INFO,
     RECORDING_START,
     RECORDING_END,
+    CLIP_START,
+    CLIP_END,
+    UPLOAD_START,
+    UPLOAD_END,
     SETTINGS_CHANGE,
     DEBUG
 }

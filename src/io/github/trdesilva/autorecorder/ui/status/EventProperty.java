@@ -7,5 +7,7 @@ package io.github.trdesilva.autorecorder.ui.status;
 
 public enum EventProperty
 {
-    LINK
+    LINK,
+    CLIP_JOB,
+    UPLOAD_JOB
 }
