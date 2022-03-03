@@ -112,7 +112,7 @@ public class ClippingPanel extends DefaultPanel
         });
         
         saveButton.addActionListener(e -> {
-            events.postEvent(new Event(EventType.INFO, "Saving clip: " + titleField.getText()));
+            events.postEvent(new Event(EventType.INFO, "Adding clip to queue: " + titleField.getText()));
             String extension = videoFile.getName().substring(videoFile.getName().indexOf('.'));
             clipQueue.enqueue(new ClipJob(videoFile.getName(), titleField.getText() + extension,
                                           startTimeField.getText(), endTimeField.getText()));

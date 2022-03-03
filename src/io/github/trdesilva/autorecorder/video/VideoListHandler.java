@@ -209,16 +209,16 @@ public class VideoListHandler implements EventConsumer
     }
     
     @Override
-    public void post(Event message)
+    public void post(Event event)
     {
-        if(message.getType().equals(EventType.RECORDING_START))
+        if(event.getType().equals(EventType.RECORDING_START))
         {
             new Thread(() -> {
                 runAutoDelete();
                 update();
             }).start();
         }
-        else if(message.getType().equals(EventType.SETTINGS_CHANGE))
+        else if(event.getType().equals(EventType.SETTINGS_CHANGE))
         {
             new Thread(this::update).start();
         }
