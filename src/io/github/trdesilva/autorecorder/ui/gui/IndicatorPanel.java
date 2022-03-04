@@ -18,6 +18,8 @@ import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import java.awt.Image;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.Set;
 
@@ -59,7 +61,7 @@ public class IndicatorPanel extends JPanel implements EventConsumer
             clipIcon.setImage(clipIcon.getImage().getScaledInstance(16, 16, Image.SCALE_SMOOTH));
             
             recordingIndicator = new JLabel(recordingOffIcon);
-            recordingIndicator.setToolTipText("Not recording");
+            recordingIndicator.setToolTipText("Not recording, click to force start");
             uploadIndicator = new JLabel(uploadIcon);
             uploadIndicator.setVisible(false);
             clipIndicator = new JLabel(clipIcon);
@@ -79,6 +81,35 @@ public class IndicatorPanel extends JPanel implements EventConsumer
             clipIndicator = new JLabel("C");
             clipIndicator.setVisible(false);
         }
+        
+        recordingIndicator.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e)
+            {
+                if(recordingOnIcon != null && recordingOffIcon != null)
+                {
+                    if(recordingIndicator.getIcon().equals(recordingOnIcon))
+                    {
+                        events.postEvent(new Event(EventType.MANUAL_RECORDING_END, "Requesting manual recording stop"));
+                    }
+                    else
+                    {
+                        events.postEvent(new Event(EventType.MANUAL_RECORDING_START, "Requesting manual recording start"));
+                    }
+                }
+                else
+                {
+                    if(recordingIndicator.getText().equals("R"))
+                    {
+                        events.postEvent(new Event(EventType.MANUAL_RECORDING_END, "Requesting manual recording stop"));
+                    }
+                    else if(recordingIndicator.getText().equals("S"))
+                    {
+                        events.postEvent(new Event(EventType.MANUAL_RECORDING_START, "Requesting manual recording start"));
+                    }
+                }
+            }
+        });
         
         add(clipIndicator, "center, growy");
         add(uploadIndicator, "center, growy");
@@ -127,7 +158,7 @@ public class IndicatorPanel extends JPanel implements EventConsumer
                 recordingIndicator.setText("R");
             }
             recordingIndicator.setToolTipText(
-                    String.format("%s (started at %s)", event.getMessage(), event.getTimestamp().toLocalTime()));
+                    String.format("%s (started at %s, click to force stop)", event.getMessage(), event.getTimestamp().toLocalTime()));
         }
         else
         {
@@ -139,7 +170,7 @@ public class IndicatorPanel extends JPanel implements EventConsumer
             {
                 recordingIndicator.setText("S");
             }
-            recordingIndicator.setToolTipText("Not recording");
+            recordingIndicator.setToolTipText("Not recording, click to force start");
         }
     }
     

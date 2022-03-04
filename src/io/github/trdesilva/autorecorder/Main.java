@@ -80,12 +80,12 @@ public class Main
         if(argSet.contains("--cli"))
         {
             System.out.println("running in CLI mode");
-            listener.start();
+            listener.startListener();
             
             MainCli cli = injector.getInstance(MainCli.class);
             cli.run();
             
-            listener.stop();
+            listener.stopListener();
         }
         else
         {

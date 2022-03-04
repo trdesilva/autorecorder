@@ -132,7 +132,7 @@ public class MainWindow implements Navigator
         clipQueue.startProcessing();
         uploadQueue.startProcessing();
         
-        gameListener.start();
+        gameListener.startListener();
         
         windowCloseHandler.addCloseable(clipQueue);
         windowCloseHandler.addCloseable(uploadQueue);
