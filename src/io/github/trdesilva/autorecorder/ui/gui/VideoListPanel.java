@@ -8,10 +8,10 @@ package io.github.trdesilva.autorecorder.ui.gui;
 import com.google.common.collect.Sets;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
-import io.github.trdesilva.autorecorder.ui.status.Event;
-import io.github.trdesilva.autorecorder.ui.status.EventConsumer;
-import io.github.trdesilva.autorecorder.ui.status.EventQueue;
-import io.github.trdesilva.autorecorder.ui.status.EventType;
+import io.github.trdesilva.autorecorder.event.Event;
+import io.github.trdesilva.autorecorder.event.EventConsumer;
+import io.github.trdesilva.autorecorder.event.EventQueue;
+import io.github.trdesilva.autorecorder.event.EventType;
 import io.github.trdesilva.autorecorder.video.VideoListHandler;
 
 import javax.swing.JList;

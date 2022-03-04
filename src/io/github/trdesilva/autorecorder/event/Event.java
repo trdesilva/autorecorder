@@ -3,7 +3,7 @@
  * Distributed under GPLv3.
  */
 
-package io.github.trdesilva.autorecorder.ui.status;
+package io.github.trdesilva.autorecorder.event;
 
 import org.joda.time.DateTime;
 

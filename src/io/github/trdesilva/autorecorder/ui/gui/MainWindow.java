@@ -15,9 +15,9 @@ import io.github.trdesilva.autorecorder.ui.gui.clip.UploadPanel;
 import io.github.trdesilva.autorecorder.ui.gui.record.ClippingPanel;
 import io.github.trdesilva.autorecorder.ui.gui.record.RecordingListPanel;
 import io.github.trdesilva.autorecorder.ui.gui.settings.SettingsPanel;
-import io.github.trdesilva.autorecorder.ui.status.Event;
-import io.github.trdesilva.autorecorder.ui.status.EventQueue;
-import io.github.trdesilva.autorecorder.ui.status.EventType;
+import io.github.trdesilva.autorecorder.event.Event;
+import io.github.trdesilva.autorecorder.event.EventQueue;
+import io.github.trdesilva.autorecorder.event.EventType;
 import io.github.trdesilva.autorecorder.upload.UploadQueue;
 import net.miginfocom.swing.MigLayout;
 

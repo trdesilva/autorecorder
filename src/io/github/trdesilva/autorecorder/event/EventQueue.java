@@ -3,21 +3,17 @@
  * Distributed under GPLv3.
  */
 
-package io.github.trdesilva.autorecorder.ui.status;
+package io.github.trdesilva.autorecorder.event;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class EventQueue

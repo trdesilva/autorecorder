@@ -7,10 +7,10 @@ package io.github.trdesilva.autorecorder.clip;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import io.github.trdesilva.autorecorder.ui.status.Event;
-import io.github.trdesilva.autorecorder.ui.status.EventProperty;
-import io.github.trdesilva.autorecorder.ui.status.EventQueue;
-import io.github.trdesilva.autorecorder.ui.status.EventType;
+import io.github.trdesilva.autorecorder.event.Event;
+import io.github.trdesilva.autorecorder.event.EventProperty;
+import io.github.trdesilva.autorecorder.event.EventQueue;
+import io.github.trdesilva.autorecorder.event.EventType;
 
 import java.io.IOException;
 import java.util.Collections;
