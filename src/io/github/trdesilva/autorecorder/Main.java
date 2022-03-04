@@ -12,9 +12,9 @@ import io.github.trdesilva.autorecorder.record.GameListener;
 import io.github.trdesilva.autorecorder.ui.cli.MainCli;
 import io.github.trdesilva.autorecorder.ui.gui.MainWindow;
 import io.github.trdesilva.autorecorder.ui.gui.inject.GuiModule;
-import io.github.trdesilva.autorecorder.ui.status.Event;
-import io.github.trdesilva.autorecorder.ui.status.EventQueue;
-import io.github.trdesilva.autorecorder.ui.status.EventType;
+import io.github.trdesilva.autorecorder.event.Event;
+import io.github.trdesilva.autorecorder.event.EventQueue;
+import io.github.trdesilva.autorecorder.event.EventType;
 import io.github.trdesilva.autorecorder.video.inject.VideoModule;
 
 import java.io.File;
@@ -80,12 +80,12 @@ public class Main
         if(argSet.contains("--cli"))
         {
             System.out.println("running in CLI mode");
-            listener.start();
+            listener.startListener();
             
             MainCli cli = injector.getInstance(MainCli.class);
             cli.run();
             
-            listener.stop();
+            listener.stopListener();
         }
         else
         {

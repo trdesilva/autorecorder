@@ -9,9 +9,9 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import io.github.trdesilva.autorecorder.TimestampUtil;
 import io.github.trdesilva.autorecorder.video.VideoFilenameValidator;
-import io.github.trdesilva.autorecorder.ui.status.Event;
-import io.github.trdesilva.autorecorder.ui.status.EventQueue;
-import io.github.trdesilva.autorecorder.ui.status.EventType;
+import io.github.trdesilva.autorecorder.event.Event;
+import io.github.trdesilva.autorecorder.event.EventQueue;
+import io.github.trdesilva.autorecorder.event.EventType;
 import io.github.trdesilva.autorecorder.video.VideoListHandler;
 import io.github.trdesilva.autorecorder.video.VideoType;
 

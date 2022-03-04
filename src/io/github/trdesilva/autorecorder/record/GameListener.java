@@ -9,10 +9,10 @@ import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.github.trdesilva.autorecorder.Settings;
-import io.github.trdesilva.autorecorder.ui.status.Event;
-import io.github.trdesilva.autorecorder.ui.status.EventConsumer;
-import io.github.trdesilva.autorecorder.ui.status.EventQueue;
-import io.github.trdesilva.autorecorder.ui.status.EventType;
+import io.github.trdesilva.autorecorder.event.Event;
+import io.github.trdesilva.autorecorder.event.EventConsumer;
+import io.github.trdesilva.autorecorder.event.EventQueue;
+import io.github.trdesilva.autorecorder.event.EventType;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -26,13 +26,19 @@ import java.util.concurrent.atomic.AtomicReference;
 @Singleton
 public class GameListener implements AutoCloseable, EventConsumer
 {
-    private static final Set<EventType> EVENT_TYPES = Sets.immutableEnumSet(EventType.SETTINGS_CHANGE);
+    private static final Set<EventType> EVENT_TYPES = Sets.immutableEnumSet(EventType.SETTINGS_CHANGE,
+                                                                            EventType.MANUAL_RECORDING_START,
+                                                                            EventType.MANUAL_RECORDING_END);
     private final Obs obs;
     private final Settings settings;
     private final EventQueue events;
     
     private final ConcurrentHashMap<Path, Optional<String>> exeCheckResults;
     private final AtomicBoolean recording;
+    // when set, don't allow the listener to start recordings
+    private final AtomicBoolean forceDisableListening;
+    // when set, don't allow the listener to stop recordings
+    private final AtomicBoolean forceRecording;
     private final AtomicReference<String> currentGame;
     
     private Thread thread;
@@ -46,19 +52,21 @@ public class GameListener implements AutoCloseable, EventConsumer
         
         exeCheckResults = new ConcurrentHashMap<>();
         recording = new AtomicBoolean(false);
+        forceDisableListening = new AtomicBoolean(false);
+        forceRecording = new AtomicBoolean(false);
         currentGame = new AtomicReference<>();
         
         events.addConsumer(this);
     }
     
-    public void start()
+    public void startListener()
     {
         events.postEvent(new Event(EventType.DEBUG, "Starting listener thread"));
         thread = new Thread(() ->
                             {
                                 while(true)
                                 {
-                                    if(!recording.get())
+                                    if(!recording.get() && !forceDisableListening.get())
                                     {
                                         ProcessHandle.allProcesses().forEach(ph -> {
                                             // some game exes are identified by more of their path than just filename
@@ -88,34 +96,13 @@ public class GameListener implements AutoCloseable, EventConsumer
                                                 if(exeCheckResults.containsKey(command) && exeCheckResults.get(command)
                                                                                                           .isPresent())
                                                 {
-                                                    try
-                                                    {
-                                                        if(recording.get())
-                                                        {
-                                                            events.postEvent(new Event(EventType.DEBUG,
-                                                                                       "already recording " + currentGame.get()));
-                                                            return;
-                                                        }
-                                                        String program = exeCheckResults.get(command).get();
-                                                        recording.set(true);
-                                                        obs.start();
-                                                        currentGame.set(program);
-                                                        events.postEvent(new Event(EventType.RECORDING_START,
-                                                                                   "Recording " + program));
-                                                    }
-                                                    catch(IOException e)
-                                                    {
-                                                        events.postEvent(new Event(EventType.FAILURE,
-                                                                                   "Couldn't start OBS; waiting for settings change before attempting to record again"));
-                                                        recording.set(false);
-                                                        currentGame.set(null);
-                                                        stop();
-                                                    }
+                                                    String program = exeCheckResults.get(command).get();
+                                                    startRecording(program);
                                                 }
                                             }
                                         });
                                     }
-                                    else
+                                    else if(!forceRecording.get())
                                     {
                                         if(!settings.getGames().contains(settings.formatExeName(currentGame.get()))
                                                 || ProcessHandle.allProcesses()
@@ -123,10 +110,10 @@ public class GameListener implements AutoCloseable, EventConsumer
                                                                         ph -> Paths.get(ph.info().command().orElse(""))
                                                                                    .endsWith(currentGame.get())))
                                         {
-                                            events.postEvent(new Event(EventType.RECORDING_END,
-                                                                       "Stopped recording " + currentGame.get()));
-                                            obs.stop();
-                                            recording.set(false);
+                                            stopRecording();
+                                            // allow listener to start recordings again now that the game we force-stopped has terminated
+                                            forceDisableListening.set(false);
+                                            // currentGame exists for the listener to keep track of its state, so updating here is fine
                                             currentGame.set(null);
                                         }
                                     }
@@ -146,7 +133,7 @@ public class GameListener implements AutoCloseable, EventConsumer
         thread.start();
     }
     
-    public void stop()
+    public void stopListener()
     {
         thread.interrupt();
         if(recording.get())
@@ -156,10 +143,49 @@ public class GameListener implements AutoCloseable, EventConsumer
         }
     }
     
+    private void startRecording(String program)
+    {
+        try
+        {
+            if(recording.get())
+            {
+                events.postEvent(new Event(EventType.DEBUG, String.format("Tried to record %s but already recording %s", program, currentGame.get())));
+                return;
+            }
+            recording.set(true);
+            obs.start();
+            currentGame.set(program);
+            events.postEvent(new Event(EventType.RECORDING_START,
+                                       "Recording " + program));
+        }
+        catch(IOException e)
+        {
+            events.postEvent(new Event(EventType.FAILURE,
+                                       "Couldn't start OBS; waiting for settings change before attempting to record again"));
+            recording.set(false);
+            currentGame.set(null);
+            stopListener();
+        }
+    }
+    
+    private void stopRecording()
+    {
+        if(!recording.get())
+        {
+            events.postEvent(new Event(EventType.DEBUG, "Tried to stop recording, but recording is already stopped"));
+            return;
+        }
+        
+        events.postEvent(new Event(EventType.RECORDING_END,
+                                   "Stopped recording " + currentGame.get()));
+        obs.stop();
+        recording.set(false);
+    }
+    
     @Override
     public void close() throws Exception
     {
-        stop();
+        stopListener();
     }
     
     @Override
@@ -168,10 +194,43 @@ public class GameListener implements AutoCloseable, EventConsumer
         if(event.getType().equals(EventType.SETTINGS_CHANGE))
         {
             exeCheckResults.clear();
-            if(!thread.isAlive())
+        }
+        else if(event.getType().equals(EventType.MANUAL_RECORDING_START))
+        {
+            // if we're resuming an automatic recording, restore the listener to its normal state
+            if(forceDisableListening.get())
             {
-                start();
+                events.postEvent(new Event(EventType.DEBUG, "Resuming automatic recording"));
+                forceDisableListening.set(false);
             }
+            else // and if we're starting a manual recording, stop the listener from ending the manual recording
+            {
+                events.postEvent(new Event(EventType.DEBUG, "Starting manual recording"));
+                forceRecording.set(true);
+                startRecording("(Manual)");
+            }
+        }
+        else if(event.getType().equals(EventType.MANUAL_RECORDING_END))
+        {
+            // if we're stopping a manual recording, restore the listener to its normal state
+            if(forceRecording.get())
+            {
+                events.postEvent(new Event(EventType.DEBUG, "Stopping manual recording"));
+                forceRecording.set(false);
+                currentGame.set(null);
+            }
+            else // and if we're stopping an automatic recording, stop the listener from starting new recordings
+            {
+                events.postEvent(new Event(EventType.DEBUG, "Stopping automatic recording"));
+                // don't clear currentGame here so the listener can reenable itself after currentGame terminates
+                forceDisableListening.set(true);
+            }
+            stopRecording();
+        }
+    
+        if(!thread.isAlive())
+        {
+            startListener();
         }
     }
     

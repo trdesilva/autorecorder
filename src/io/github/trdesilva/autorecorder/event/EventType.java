@@ -3,7 +3,7 @@
  * Distributed under GPLv3.
  */
 
-package io.github.trdesilva.autorecorder.ui.status;
+package io.github.trdesilva.autorecorder.event;
 
 public enum EventType
 {
@@ -17,6 +17,8 @@ public enum EventType
     CLIP_END,
     UPLOAD_START,
     UPLOAD_END,
+    MANUAL_RECORDING_START,
+    MANUAL_RECORDING_END,
     SETTINGS_CHANGE,
     DEBUG
 }
