@@ -6,7 +6,7 @@
 package io.github.trdesilva.autorecorder.ui.gui.record;
 
 import com.google.inject.Inject;
-import io.github.trdesilva.autorecorder.clip.VideoMetadataReader;
+import io.github.trdesilva.autorecorder.video.VideoMetadataReader;
 import io.github.trdesilva.autorecorder.ui.gui.Navigator;
 import io.github.trdesilva.autorecorder.ui.gui.VideoListSelectionConsumer;
 import io.github.trdesilva.autorecorder.ui.gui.wrapper.DefaultPanel;
@@ -77,6 +77,7 @@ public class RecordingInfoPanel extends DefaultPanel implements VideoListSelecti
         
         if(video != null)
         {
+            // TODO just get the whole VideoMetadata object from VideoListHandler
             title.setText(video.getName());
             creationDate.setText("Created: " + metadataReader.getCreationDate(video));
             long duration = metadataReader.getDuration(video);

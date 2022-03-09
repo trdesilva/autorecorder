@@ -19,5 +19,6 @@
     <orderEntry type="library" name="miglayout" level="project" />
     <orderEntry type="library" name="google.inject.guice" level="project" />
     <orderEntry type="library" name="google.inject.extensions.guice.assistedinject" level="project" />
+    <orderEntry type="library" name="fasterxml.jackson.datatype.joda" level="project" />
   </component>
 </module>
