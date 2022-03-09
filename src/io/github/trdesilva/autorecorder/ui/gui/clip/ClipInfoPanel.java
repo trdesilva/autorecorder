@@ -7,13 +7,11 @@ package io.github.trdesilva.autorecorder.ui.gui.clip;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import io.github.trdesilva.autorecorder.clip.VideoMetadataReader;
 import io.github.trdesilva.autorecorder.ui.gui.Navigator;
 import io.github.trdesilva.autorecorder.ui.gui.VideoListSelectionConsumer;
 import io.github.trdesilva.autorecorder.ui.gui.wrapper.DefaultPanel;
 import io.github.trdesilva.autorecorder.ui.gui.wrapper.WrappingLabel;
 import io.github.trdesilva.autorecorder.video.VideoListHandler;
-import io.github.trdesilva.autorecorder.video.VideoType;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.JButton;

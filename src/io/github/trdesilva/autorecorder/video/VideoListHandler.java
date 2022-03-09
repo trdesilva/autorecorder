@@ -9,7 +9,6 @@ import com.google.common.collect.Sets;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
 import io.github.trdesilva.autorecorder.Settings;
-import io.github.trdesilva.autorecorder.clip.VideoMetadataReader;
 import io.github.trdesilva.autorecorder.event.Event;
 import io.github.trdesilva.autorecorder.event.EventConsumer;
 import io.github.trdesilva.autorecorder.event.EventQueue;

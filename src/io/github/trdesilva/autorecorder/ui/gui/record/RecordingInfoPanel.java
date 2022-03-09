@@ -6,7 +6,7 @@
 package io.github.trdesilva.autorecorder.ui.gui.record;
 
 import com.google.inject.Inject;
-import io.github.trdesilva.autorecorder.clip.VideoMetadataReader;
+import io.github.trdesilva.autorecorder.video.VideoMetadataReader;
 import io.github.trdesilva.autorecorder.ui.gui.Navigator;
 import io.github.trdesilva.autorecorder.ui.gui.VideoListSelectionConsumer;
 import io.github.trdesilva.autorecorder.ui.gui.wrapper.DefaultPanel;
