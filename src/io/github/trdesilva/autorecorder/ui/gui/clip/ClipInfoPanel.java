@@ -66,6 +66,7 @@ public class ClipInfoPanel extends DefaultPanel implements VideoListSelectionCon
         
         if(video != null)
         {
+            // TODO just get the whole VideoMetadata object from VideoListHandler
             title.setText(video.getName());
             duration.setText("Duration: " + formatTime(clipListHandler.getDuration(video)));
             resolution.setText("Resolution: " + clipListHandler.getResolution(video));

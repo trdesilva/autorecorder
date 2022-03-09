@@ -77,6 +77,7 @@ public class RecordingInfoPanel extends DefaultPanel implements VideoListSelecti
         
         if(video != null)
         {
+            // TODO just get the whole VideoMetadata object from VideoListHandler
             title.setText(video.getName());
             creationDate.setText("Created: " + metadataReader.getCreationDate(video));
             long duration = metadataReader.getDuration(video);
