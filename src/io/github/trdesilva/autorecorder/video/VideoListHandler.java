@@ -131,6 +131,16 @@ public class VideoListHandler implements EventConsumer
         return metadataReader.getThumbnail(video);
     }
     
+    public VideoMetadata getMetadata(File video)
+    {
+        return metadataReader.getMetadata(video);
+    }
+    
+    public void saveMetadata(File video, VideoMetadata metadata)
+    {
+        metadataReader.saveMetadata(video, metadata);
+    }
+    
     public void update()
     {
         String updatedSetting = type.getPathSetting(settings);

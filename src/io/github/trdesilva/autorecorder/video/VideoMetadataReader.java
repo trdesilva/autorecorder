@@ -145,6 +145,39 @@ public class VideoMetadataReader
         return null;
     }
     
+    public VideoMetadata getMetadata(File video)
+    {
+        if(video != null && video.exists())
+        {
+            try
+            {
+                return metadataMapping.get(video);
+            }
+            catch(ExecutionException e)
+            {
+                events.postEvent(new Event(EventType.DEBUG, "cache load failed " + e.getMessage()));
+            }
+        }
+        
+        return new VideoMetadata();
+    }
+    
+    public void saveMetadata(File video, VideoMetadata metadata)
+    {
+        if(video != null && video.exists() && metadata != null)
+        {
+            try
+            {
+                objectMapper.writeValue(findCacheFile(video), metadata);
+            }
+            catch(IOException e)
+            {
+                events.postEvent(new Event(EventType.DEBUG, String.format("failed to save metadata %s for file %s: %s", metadata, video.getName(), e.getMessage())));
+            }
+            metadataMapping.put(video, metadata);
+        }
+    }
+    
     private VideoMetadata parseVideo(File video)
     {
         if(video != null && video.exists())

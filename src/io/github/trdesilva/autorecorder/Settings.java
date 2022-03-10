@@ -13,6 +13,7 @@ import com.google.inject.Singleton;
 import io.github.trdesilva.autorecorder.event.Event;
 import io.github.trdesilva.autorecorder.event.EventQueue;
 import io.github.trdesilva.autorecorder.event.EventType;
+import io.github.trdesilva.autorecorder.video.Hotkey;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -54,6 +55,9 @@ public class Settings
         
         public boolean autoDeleteEnabled = false;
         public int autoDeleteThresholdGB = 100;
+        
+        public boolean bookmarksEnabled = false;
+        public Hotkey bookmarkKey = new Hotkey();
     }
     
     private final EventQueue events;
@@ -233,6 +237,26 @@ public class Settings
     public void setAutoDeleteThresholdGB(int autoDeleteThresholdGB)
     {
         this.container.autoDeleteThresholdGB = autoDeleteThresholdGB;
+    }
+    
+    public boolean areBookmarksEnabled()
+    {
+        return container.bookmarksEnabled;
+    }
+    
+    public void setBookmarksEnabled(boolean bookmarksEnabled)
+    {
+        this.container.bookmarksEnabled = bookmarksEnabled;
+    }
+    
+    public Hotkey getBookmarkKey()
+    {
+        return container.bookmarkKey;
+    }
+    
+    public void setBookmarkKey(Hotkey bookmarkKey)
+    {
+        this.container.bookmarkKey = bookmarkKey;
     }
     
     public String getSettingsFilePath()

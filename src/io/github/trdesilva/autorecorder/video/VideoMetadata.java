@@ -7,11 +7,15 @@ package io.github.trdesilva.autorecorder.video;
 
 import org.joda.time.DateTime;
 
+import java.util.LinkedList;
+import java.util.List;
+
 public class VideoMetadata
 {
     private DateTime creationDate = new DateTime(0);
     private long duration = -1;
     private String resolution = "N/A";
+    private List<Long> bookmarks = new LinkedList<>();
     
     public DateTime getCreationDate()
     {
@@ -41,5 +45,15 @@ public class VideoMetadata
     public void setResolution(String resolution)
     {
         this.resolution = resolution;
+    }
+    
+    public List<Long> getBookmarks()
+    {
+        return bookmarks;
+    }
+    
+    public void setBookmarks(List<Long> bookmarks)
+    {
+        this.bookmarks = bookmarks;
     }
 }

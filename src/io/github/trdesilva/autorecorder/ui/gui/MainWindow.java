@@ -9,16 +9,17 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.github.trdesilva.autorecorder.Settings;
 import io.github.trdesilva.autorecorder.clip.ClipQueue;
+import io.github.trdesilva.autorecorder.event.Event;
+import io.github.trdesilva.autorecorder.event.EventQueue;
+import io.github.trdesilva.autorecorder.event.EventType;
 import io.github.trdesilva.autorecorder.record.GameListener;
 import io.github.trdesilva.autorecorder.ui.gui.clip.ClipListPanel;
 import io.github.trdesilva.autorecorder.ui.gui.clip.UploadPanel;
 import io.github.trdesilva.autorecorder.ui.gui.record.ClippingPanel;
 import io.github.trdesilva.autorecorder.ui.gui.record.RecordingListPanel;
 import io.github.trdesilva.autorecorder.ui.gui.settings.SettingsPanel;
-import io.github.trdesilva.autorecorder.event.Event;
-import io.github.trdesilva.autorecorder.event.EventQueue;
-import io.github.trdesilva.autorecorder.event.EventType;
 import io.github.trdesilva.autorecorder.upload.UploadQueue;
+import io.github.trdesilva.autorecorder.video.BookmarkListener;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.JFrame;
@@ -49,13 +50,15 @@ public class MainWindow implements Navigator
     private final UploadQueue uploadQueue;
     
     private final GameListener gameListener;
+    private final BookmarkListener bookmarkListener;
     private final WindowCloseHandler windowCloseHandler;
     
     @Inject
     public MainWindow(Settings settings, RecordingListPanel recordingListPanel, ClipListPanel clipListPanel,
                       SettingsPanel settingsPanel, ClippingPanel clippingPanel, UploadPanel uploadPanel,
                       LicensePanel licensePanel, StatusPanel statusPanel, EventQueue eventQueue, ClipQueue clipQueue,
-                      UploadQueue uploadQueue, GameListener gameListener, WindowCloseHandler windowCloseHandler)
+                      UploadQueue uploadQueue, GameListener gameListener, BookmarkListener bookmarkListener,
+                      WindowCloseHandler windowCloseHandler)
     {
         // components
         mainFrame = new JFrame("Autorecorder");
@@ -101,6 +104,7 @@ public class MainWindow implements Navigator
         this.uploadQueue = uploadQueue;
         
         this.gameListener = gameListener;
+        this.bookmarkListener = bookmarkListener;
         
         this.windowCloseHandler = windowCloseHandler;
         
@@ -137,6 +141,7 @@ public class MainWindow implements Navigator
         windowCloseHandler.addCloseable(clipQueue);
         windowCloseHandler.addCloseable(uploadQueue);
         windowCloseHandler.addCloseable(gameListener);
+        windowCloseHandler.addCloseable(bookmarkListener);
         
         mainFrame.addWindowListener(windowCloseHandler);
         
