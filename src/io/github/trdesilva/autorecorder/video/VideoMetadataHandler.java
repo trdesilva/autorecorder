@@ -25,11 +25,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Singleton
-public class VideoMetadataReader
+public class VideoMetadataHandler
 {
     private static final Path CACHE_PATH = Settings.SETTINGS_DIR.resolve("videoMetadata");
     
@@ -40,9 +43,10 @@ public class VideoMetadataReader
     
     private final File cacheDir;
     private final LoadingCache<File, VideoMetadata> metadataMapping;
+    private final Map<File, ReentrantLock> metadataLocks;
     
     @Inject
-    public VideoMetadataReader(Settings settings, EventQueue events)
+    public VideoMetadataHandler(Settings settings, EventQueue events)
     {
         this.settings = settings;
         this.events = events;
@@ -51,6 +55,7 @@ public class VideoMetadataReader
         objectMapper.registerModule(new JodaModule());
         
         cacheDir = CACHE_PATH.toFile();
+        metadataLocks = new ConcurrentHashMap<>();
         
         metadataMapping = CacheBuilder.newBuilder()
                                       .maximumSize(100)
@@ -61,6 +66,8 @@ public class VideoMetadataReader
                                           public VideoMetadata load(File key) throws Exception
                                           {
                                               // check if directory exists on load because SETTINGS_DIR doesn't exist during construction on first launch
+                                              events.postEvent(new Event(EventType.DEBUG,
+                                                                         "metadata cache load for " + key.getName()));
                                               if(!cacheDir.exists())
                                               {
                                                   if(cacheDir.mkdir())
@@ -79,11 +86,22 @@ public class VideoMetadataReader
                                               File cacheFile = findCacheFile(key);
                                               if(cacheFile.exists())
                                               {
-                                                  VideoMetadata metadata = objectMapper.readValue(cacheFile,
-                                                                                                  VideoMetadata.class);
-                                                  if(!needsReparse(metadata))
+                                                  events.postEvent(new Event(EventType.DEBUG,
+                                                                             "found cache file " + cacheFile.getName()));
+                                                  ReentrantLock lock = getMetadataLock(key);
+                                                  lock.lock();
+                                                  try
                                                   {
-                                                      return metadata;
+                                                      VideoMetadata metadata = objectMapper.readValue(cacheFile,
+                                                                                                      VideoMetadata.class);
+                                                      if(!needsReparse(metadata))
+                                                      {
+                                                          return metadata;
+                                                      }
+                                                  }
+                                                  finally
+                                                  {
+                                                      lock.unlock();
                                                   }
                                               }
                 
@@ -98,7 +116,12 @@ public class VideoMetadataReader
         {
             try
             {
-                return metadataMapping.get(video).getCreationDate();
+                VideoMetadata metadata = metadataMapping.get(video);
+                if(needsReparse(metadata))
+                {
+                    metadataMapping.invalidate(video);
+                }
+                return metadata.getCreationDate();
             }
             catch(ExecutionException e)
             {
@@ -114,7 +137,12 @@ public class VideoMetadataReader
         {
             try
             {
-                return metadataMapping.get(video).getDuration();
+                VideoMetadata metadata = metadataMapping.get(video);
+                if(needsReparse(metadata))
+                {
+                    metadataMapping.invalidate(video);
+                }
+                return metadata.getDuration();
             }
             catch(ExecutionException e)
             {
@@ -130,7 +158,12 @@ public class VideoMetadataReader
         {
             try
             {
-                return metadataMapping.get(video).getResolution();
+                VideoMetadata metadata = metadataMapping.get(video);
+                if(needsReparse(metadata))
+                {
+                    metadataMapping.invalidate(video);
+                }
+                return metadata.getResolution();
             }
             catch(ExecutionException e)
             {
@@ -151,7 +184,12 @@ public class VideoMetadataReader
         {
             try
             {
-                return metadataMapping.get(video);
+                VideoMetadata metadata = metadataMapping.get(video);
+                if(needsReparse(metadata))
+                {
+                    metadataMapping.invalidate(video);
+                }
+                return metadata;
             }
             catch(ExecutionException e)
             {
@@ -166,28 +204,75 @@ public class VideoMetadataReader
     {
         if(video != null && video.exists() && metadata != null)
         {
+            ReentrantLock lock = getMetadataLock(video);
+            lock.lock();
             try
             {
+                events.postEvent(new Event(EventType.DEBUG,
+                                           "saving metadata: " + objectMapper.writeValueAsString(metadata)));
                 objectMapper.writeValue(findCacheFile(video), metadata);
             }
             catch(IOException e)
             {
-                events.postEvent(new Event(EventType.DEBUG, String.format("failed to save metadata %s for file %s: %s", metadata, video.getName(), e.getMessage())));
+                events.postEvent(new Event(EventType.DEBUG,
+                                           String.format("failed to save metadata %s for file %s: %s", metadata,
+                                                         video.getName(), e.getMessage())));
+            }
+            finally
+            {
+                lock.unlock();
             }
             metadataMapping.put(video, metadata);
+            metadataMapping.invalidate(video);
         }
     }
     
-    private VideoMetadata parseVideo(File video)
+    public void saveBookmark(File recording, long timestamp)
+    {
+        ReentrantLock lock = getMetadataLock(recording);
+        lock.lock();
+        try
+        {
+            VideoMetadata metadata = getMetadata(recording);
+            metadata.getBookmarks().add(timestamp);
+            saveMetadata(recording, metadata);
+        }
+        finally
+        {
+            lock.unlock();
+        }
+    }
+    
+    private ReentrantLock getMetadataLock(File video)
+    {
+        return metadataLocks.computeIfAbsent(video, f -> new ReentrantLock());
+    }
+    
+    private synchronized VideoMetadata parseVideo(File video)
     {
         if(video != null && video.exists())
         {
+            events.postEvent(new Event(EventType.DEBUG, "parsing video " + video.getName()));
+            ReentrantLock lock = getMetadataLock(video);
+            lock.lock();
             try
             {
-                VideoMetadata metadata = new VideoMetadata();
+                File currentMetadataFile = findCacheFile(video);
+                VideoMetadata metadata;
+                if(currentMetadataFile.exists())
+                {
+                    metadata = objectMapper.readValue(currentMetadataFile, VideoMetadata.class);
+                    events.postEvent(new Event(EventType.DEBUG,
+                                               "starting with metadata from cache: " + objectMapper.writeValueAsString(
+                                                       metadata)));
+                }
+                else
+                {
+                    metadata = new VideoMetadata();
+                }
                 JsonNode ffmpegJson = getMetadataJson(video);
                 metadata.setCreationDate(new DateTime(video.lastModified()));
-                if(!ffmpegJson.get("format").has("duration"))
+                if(!ffmpegJson.has("format") || !ffmpegJson.get("format").has("duration"))
                 {
                     metadata.setDuration(-1);
                 }
@@ -196,9 +281,23 @@ public class VideoMetadataReader
                     double durationSeconds = ffmpegJson.get("format").get("duration").asDouble();
                     metadata.setDuration((long) (durationSeconds * 1000));
                 }
-                int width = ffmpegJson.get("streams").get(0).get("width").asInt();
-                int height = ffmpegJson.get("streams").get(0).get("height").asInt();
-                metadata.setResolution(String.format("%dx%d", width, height));
+                
+                if(!ffmpegJson.has("streams") || !ffmpegJson.get("streams").has(0)
+                        || !(ffmpegJson.get("streams").get(0).has("width") && ffmpegJson.get("streams")
+                                                                                        .get(0)
+                                                                                        .has("height")))
+                {
+                    metadata.setResolution("N/A");
+                }
+                else
+                {
+                    int width = ffmpegJson.get("streams").get(0).get("width").asInt();
+                    int height = ffmpegJson.get("streams").get(0).get("height").asInt();
+                    metadata.setResolution(String.format("%dx%d", width, height));
+                }
+                
+                events.postEvent(new Event(EventType.DEBUG,
+                                           "saving metadata: " + objectMapper.writeValueAsString(metadata)));
                 objectMapper.writeValue(findCacheFile(video), metadata);
                 return metadata;
             }
@@ -206,6 +305,10 @@ public class VideoMetadataReader
             {
                 events.postEvent(new Event(EventType.WARNING, "Couldn't read metadata for " + video.getName()));
                 events.postEvent(new Event(EventType.DEBUG, e.getMessage()));
+            }
+            finally
+            {
+                lock.unlock();
             }
         }
         
@@ -244,6 +347,6 @@ public class VideoMetadataReader
     private boolean needsReparse(VideoMetadata metadata)
     {
         // if the video was an in-progress recording when parsed, the duration won't have been set yet
-        return metadata.getDuration() == -1;
+        return metadata.getDuration() == -1 || metadata.getResolution().equals("N/A");
     }
 }

@@ -20,6 +20,7 @@ import java.io.File;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -29,7 +30,7 @@ public class VideoListHandler implements EventConsumer
     private static final Set<EventType> EVENT_TYPES = Sets.immutableEnumSet(EventType.RECORDING_START,
                                                                             EventType.SETTINGS_CHANGE);
     private final Settings settings;
-    private final VideoMetadataReader metadataReader;
+    private final VideoMetadataHandler metadataHandler;
     private final EventQueue events;
     private final VideoFilenameValidator filenameValidator;
     private final VideoType type;
@@ -37,11 +38,11 @@ public class VideoListHandler implements EventConsumer
     private File videoDir;
     
     @AssistedInject
-    public VideoListHandler(Settings settings, VideoMetadataReader metadataReader, EventQueue events,
+    public VideoListHandler(Settings settings, VideoMetadataHandler metadataHandler, EventQueue events,
                             VideoFilenameValidator filenameValidator, @Assisted VideoType type)
     {
         this.settings = settings;
-        this.metadataReader = metadataReader;
+        this.metadataHandler = metadataHandler;
         this.events = events;
         this.filenameValidator = filenameValidator;
         this.type = type;
@@ -95,7 +96,7 @@ public class VideoListHandler implements EventConsumer
     
     public DateTime getCreationDate(File video)
     {
-        return metadataReader.getCreationDate(video);
+        return metadataHandler.getCreationDate(video);
     }
     
     public long getDuration(String name)
@@ -106,7 +107,7 @@ public class VideoListHandler implements EventConsumer
     
     public long getDuration(File video)
     {
-        return metadataReader.getDuration(video);
+        return metadataHandler.getDuration(video);
     }
     
     public String getResolution(String name)
@@ -117,7 +118,7 @@ public class VideoListHandler implements EventConsumer
     
     public String getResolution(File video)
     {
-        return metadataReader.getResolution(video);
+        return metadataHandler.getResolution(video);
     }
     
     public Image getThumbnail(String name)
@@ -128,17 +129,25 @@ public class VideoListHandler implements EventConsumer
     
     public Image getThumbnail(File video)
     {
-        return metadataReader.getThumbnail(video);
+        return metadataHandler.getThumbnail(video);
     }
     
     public VideoMetadata getMetadata(File video)
     {
-        return metadataReader.getMetadata(video);
+        return metadataHandler.getMetadata(video);
     }
     
     public void saveMetadata(File video, VideoMetadata metadata)
     {
-        metadataReader.saveMetadata(video, metadata);
+        metadataHandler.saveMetadata(video, metadata);
+    }
+    
+    public synchronized void saveBookmark(long timestamp)
+    {
+        File recording = getVideoList().stream()
+                                       .max(Comparator.comparing(File::lastModified))
+                                       .get();
+        metadataHandler.saveBookmark(recording, timestamp);
     }
     
     public void update()

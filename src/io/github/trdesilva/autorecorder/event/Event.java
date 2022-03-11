@@ -18,6 +18,7 @@ public class Event
     
     private DateTime timestamp;
     private StackTraceElement source;
+    private String sourceThread;
     
     public Event(EventType type, String message)
     {
@@ -35,6 +36,7 @@ public class Event
         timestamp = DateTime.now();
         // 0 is getStackTrace(), 1 is this constructor, 2 is the caller
         source = Thread.currentThread().getStackTrace()[2];
+        sourceThread = Thread.currentThread().getName();
     }
     
     public EventType getType()
@@ -65,7 +67,7 @@ public class Event
     @Override
     public String toString()
     {
-        return String.format("%s %s [%s.%s] %s %s", timestamp.toString(), type.name(), source.getClassName(),
-                             source.getMethodName(), message, properties.toString());
+        return String.format("%s %s [%s:%s.%s] %s %s", timestamp.toString(), type.name(), sourceThread,
+                             source.getClassName(), source.getMethodName(), message, properties.toString());
     }
 }

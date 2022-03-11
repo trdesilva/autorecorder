@@ -21,8 +21,6 @@ import io.github.trdesilva.autorecorder.event.EventQueue;
 import io.github.trdesilva.autorecorder.event.EventType;
 import org.joda.time.DateTime;
 
-import java.io.File;
-import java.util.Comparator;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -94,15 +92,10 @@ public class BookmarkListener implements EventConsumer, NativeKeyListener, AutoC
     {
         if(settings.getBookmarkKey().eventMatches(nativeEvent))
         {
-            File recording = recordingHandler.getVideoList()
-                                             .stream()
-                                             .max(Comparator.comparing(File::lastModified).reversed())
-                                             .get();
-            VideoMetadata metadata = recordingHandler.getMetadata(recording);
             long bookmarkTimestamp = DateTime.now().getMillis() - recordingStart.get();
-            metadata.getBookmarks().add(bookmarkTimestamp);
-            recordingHandler.saveMetadata(recording, metadata);
-            events.postEvent(new Event(EventType.INFO, "Saved bookmark at " + TimestampUtil.formatTime(bookmarkTimestamp)));
+            recordingHandler.saveBookmark(bookmarkTimestamp);
+            events.postEvent(
+                    new Event(EventType.INFO, "Saved bookmark at " + TimestampUtil.formatTime(bookmarkTimestamp)));
         }
     }
     

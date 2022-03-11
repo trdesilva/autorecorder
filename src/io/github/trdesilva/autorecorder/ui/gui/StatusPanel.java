@@ -7,12 +7,12 @@ package io.github.trdesilva.autorecorder.ui.gui;
 
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
-import io.github.trdesilva.autorecorder.ui.gui.wrapper.DefaultPanel;
 import io.github.trdesilva.autorecorder.event.Event;
 import io.github.trdesilva.autorecorder.event.EventConsumer;
 import io.github.trdesilva.autorecorder.event.EventProperty;
 import io.github.trdesilva.autorecorder.event.EventQueue;
 import io.github.trdesilva.autorecorder.event.EventType;
+import io.github.trdesilva.autorecorder.ui.gui.wrapper.DefaultPanel;
 import net.miginfocom.swing.MigLayout;
 
 import javax.inject.Named;
@@ -29,9 +29,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
 
 
 public class StatusPanel extends DefaultPanel implements EventConsumer
@@ -70,7 +68,9 @@ public class StatusPanel extends DefaultPanel implements EventConsumer
         semaphore = new Semaphore(0);
         
         events.addConsumer(this);
-        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(this::consume, 0, 1500, TimeUnit.MILLISECONDS);
+        Thread updateThread = new Thread(this::consume);
+        updateThread.setName("Status panel thread");
+        updateThread.start();
     }
     
     @Override
@@ -88,79 +88,91 @@ public class StatusPanel extends DefaultPanel implements EventConsumer
     
     private void consume()
     {
-        try
+        while(true)
         {
-            semaphore.acquire();
-        }
-        catch(InterruptedException e)
-        {
-            events.postEvent(new Event(EventType.DEBUG, "StatusPanel consumer thread interrupted"));
-            return;
-        }
-    
-        Event event = messageQueue.poll();
-        boolean showMessage = true;
-        if(event.getType() == EventType.DEBUG)
-        {
-            showMessage = isDebugMode;
-        }
-    
-        if(showMessage)
-        {
-            Color background;
-            switch(event.getType())
+            try
             {
-                case FAILURE:
-                    background = Color.RED;
-                    break;
-                case SUCCESS:
-                    background = Color.GREEN;
-                    break;
-                case WARNING:
-                    background = Color.YELLOW;
-                    break;
-                case INFO:
-                    background = Color.CYAN;
-                    break;
-                default:
-                    background = Color.LIGHT_GRAY;
+                semaphore.acquire();
             }
-    
-            SwingUtilities.invokeLater(() -> {
-                setBackground(background);
-                indicatorPanel.setBackground(background);
-                messageLabel.setText(event.getMessage());
-                messageLabel.setToolTipText(event.getTimestamp().toString());
-    
-                String link = (String) (event.getProperties().get(EventProperty.LINK));
-                if(link != null)
+            catch(InterruptedException e)
+            {
+                events.postEvent(new Event(EventType.DEBUG, "StatusPanel consumer thread interrupted"));
+                return;
+            }
+            
+            Event event = messageQueue.poll();
+            boolean showMessage = true;
+            if(event.getType() == EventType.DEBUG)
+            {
+                showMessage = isDebugMode;
+            }
+            
+            if(showMessage)
+            {
+                Color background;
+                switch(event.getType())
                 {
-                    mouseListener = new MouseAdapter()
+                    case FAILURE:
+                        background = Color.RED;
+                        break;
+                    case SUCCESS:
+                        background = Color.GREEN;
+                        break;
+                    case WARNING:
+                        background = Color.YELLOW;
+                        break;
+                    case INFO:
+                        background = Color.CYAN;
+                        break;
+                    default:
+                        background = Color.LIGHT_GRAY;
+                }
+                
+                SwingUtilities.invokeLater(() -> {
+                    setBackground(background);
+                    indicatorPanel.setBackground(background);
+                    messageLabel.setText(event.getMessage());
+                    messageLabel.setToolTipText(event.getTimestamp().toString());
+                    
+                    String link = (String) (event.getProperties().get(EventProperty.LINK));
+                    if(link != null)
                     {
-                        @Override
-                        public void mouseClicked(MouseEvent e)
+                        mouseListener = new MouseAdapter()
                         {
-                            try
+                            @Override
+                            public void mouseClicked(MouseEvent e)
                             {
-                                Desktop.getDesktop().browse(new URI(link));
+                                try
+                                {
+                                    Desktop.getDesktop().browse(new URI(link));
+                                }
+                                catch(URISyntaxException | IOException ex)
+                                {
+                                    events.postEvent(new Event(EventType.DEBUG, "Link navigation failed: " + link));
+                                }
                             }
-                            catch(URISyntaxException | IOException ex)
-                            {
-                                events.postEvent(new Event(EventType.DEBUG, "Link navigation failed: " + link));
-                            }
-                        }
-                    };
-                    messageLabel.addMouseListener(mouseListener);
-                    messageLabel.setText(
-                            String.format("<html>%s (<a href='%s'>%s</a>)</html>", event.getMessage(), link, link));
-                    messageLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-                }
-                else
+                        };
+                        messageLabel.addMouseListener(mouseListener);
+                        messageLabel.setText(
+                                String.format("<html>%s (<a href='%s'>%s</a>)</html>", event.getMessage(), link, link));
+                        messageLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                    }
+                    else
+                    {
+                        messageLabel.removeMouseListener(mouseListener);
+                        messageLabel.setCursor(Cursor.getDefaultCursor());
+                    }
+                });
+    
+                try
                 {
-                    messageLabel.removeMouseListener(mouseListener);
-                    messageLabel.setCursor(Cursor.getDefaultCursor());
+                    Thread.sleep(1500);
                 }
-            });
+                catch(InterruptedException e)
+                {
+                    events.postEvent(new Event(EventType.DEBUG, "status panel thread interrupted"));
+                }
+            }
         }
     }
 }

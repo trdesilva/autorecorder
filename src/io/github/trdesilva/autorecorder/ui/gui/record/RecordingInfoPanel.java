@@ -6,7 +6,7 @@
 package io.github.trdesilva.autorecorder.ui.gui.record;
 
 import com.google.inject.Inject;
-import io.github.trdesilva.autorecorder.video.VideoMetadataReader;
+import io.github.trdesilva.autorecorder.video.VideoMetadataHandler;
 import io.github.trdesilva.autorecorder.ui.gui.Navigator;
 import io.github.trdesilva.autorecorder.ui.gui.VideoListSelectionConsumer;
 import io.github.trdesilva.autorecorder.ui.gui.wrapper.DefaultPanel;
@@ -25,7 +25,7 @@ import static io.github.trdesilva.autorecorder.TimestampUtil.formatTime;
 
 public class RecordingInfoPanel extends DefaultPanel implements VideoListSelectionConsumer
 {
-    private final VideoMetadataReader metadataReader;
+    private final VideoMetadataHandler metadataReader;
     
     private final WrappingLabel title;
     private final WrappingLabel creationDate;
@@ -37,7 +37,7 @@ public class RecordingInfoPanel extends DefaultPanel implements VideoListSelecti
     private File recording;
     
     @Inject
-    public RecordingInfoPanel(VideoMetadataReader metadataReader, Navigator navigator)
+    public RecordingInfoPanel(VideoMetadataHandler metadataReader, Navigator navigator)
     {
         this.metadataReader = metadataReader;
         
