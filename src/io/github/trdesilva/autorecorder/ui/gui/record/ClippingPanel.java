@@ -6,21 +6,27 @@
 package io.github.trdesilva.autorecorder.ui.gui.record;
 
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import io.github.trdesilva.autorecorder.TimestampUtil;
 import io.github.trdesilva.autorecorder.clip.ClipJob;
 import io.github.trdesilva.autorecorder.clip.ClipQueue;
-import io.github.trdesilva.autorecorder.ui.gui.Navigator;
-import io.github.trdesilva.autorecorder.ui.gui.VideoPlaybackPanel;
-import io.github.trdesilva.autorecorder.ui.gui.wrapper.DefaultPanel;
 import io.github.trdesilva.autorecorder.event.Event;
 import io.github.trdesilva.autorecorder.event.EventQueue;
 import io.github.trdesilva.autorecorder.event.EventType;
+import io.github.trdesilva.autorecorder.ui.gui.Navigator;
+import io.github.trdesilva.autorecorder.ui.gui.VideoPlaybackPanel;
+import io.github.trdesilva.autorecorder.ui.gui.wrapper.DefaultPanel;
+import io.github.trdesilva.autorecorder.video.VideoListHandler;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 import java.io.File;
 
 import static io.github.trdesilva.autorecorder.TimestampUtil.parseTime;
@@ -28,16 +34,22 @@ import static io.github.trdesilva.autorecorder.TimestampUtil.parseTime;
 public class ClippingPanel extends DefaultPanel
 {
     private final VideoPlaybackPanel playbackPanel;
+    private final VideoListHandler recordingHandler;
+    
     private File videoFile;
+    private final JList<Long> bookmarkList;
     
     @Inject
-    public ClippingPanel(VideoPlaybackPanel playbackPanel, ClipQueue clipQueue, EventQueue events, Navigator navigator)
+    public ClippingPanel(VideoPlaybackPanel playbackPanel, ClipQueue clipQueue, EventQueue events, Navigator navigator,
+                         @Named("RECORDING") VideoListHandler recordingHandler)
     {
-        setLayout(new MigLayout("fill", "[grow]", "[30!][grow][]"));
+        setLayout(new MigLayout("fill, hidemode 2", "[grow][::200]", "[30!][grow][]"));
         
         JButton backButton = new JButton("Back");
+        JButton expandButton = new JButton("<");
         
         this.playbackPanel = playbackPanel;
+        this.recordingHandler = recordingHandler;
         
         JPanel controlPanel = new JPanel();
         controlPanel.setLayout(new MigLayout("fill", "[][grow][][][80!][][][80!][][]", "[]"));
@@ -68,7 +80,26 @@ public class ClippingPanel extends DefaultPanel
         controlPanel.add(previewButton, "cell 8 0");
         controlPanel.add(saveButton, "cell 9 0");
         
-        add(backButton, "cell 0 0");
+        JPanel advancedPanel = new JPanel();
+        advancedPanel.setLayout(new MigLayout("fill, hidemode 2", "[80::200]", "[][grow]"));
+        advancedPanel.setVisible(false);
+        JLabel bookmarkLabel = new JLabel("Bookmarks");
+        JScrollPane bookmarkPanel = new JScrollPane();
+        bookmarkList = new JList<>();
+        bookmarkList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        bookmarkList.setCellRenderer((list, value, index, isSelected, cellHasFocus) -> {
+            // TODO cursors don't seem to work inside of renderers
+            JButton button = new JButton(TimestampUtil.formatTime(value));
+            return button;
+        });
+        bookmarkPanel.getViewport().add(bookmarkList);
+        
+        advancedPanel.add(bookmarkLabel, "cell 0 0");
+        advancedPanel.add(bookmarkPanel, "cell 0 1, wmin 70, hmin 80");
+        
+        add(backButton, "cell 0 0, split 2, left");
+        add(expandButton, "cell 0 0, gapleft push");
+        add(advancedPanel, "cell 1 0, span 1 3, top, wmin 80");
         add(playbackPanel, "cell 0 1, grow, wmin 400, hmin 300");
         add(controlPanel, "cell 0 2, growx");
         
@@ -80,6 +111,23 @@ public class ClippingPanel extends DefaultPanel
             endTimeField.setText("");
             
             navigator.showMainView();
+        });
+        
+        expandButton.addActionListener(e -> {
+            boolean showAdvancedPanel = !advancedPanel.isVisible();
+            advancedPanel.setVisible(showAdvancedPanel);
+            expandButton.setText(showAdvancedPanel ? ">" : "<");
+            revalidate();
+        });
+        
+        bookmarkList.addListSelectionListener(e -> {
+            // need to check these things for clearing the selection to work right
+            if(0 <= e.getFirstIndex() && e.getLastIndex() < bookmarkList.getModel()
+                                                                        .getSize() && !e.getValueIsAdjusting())
+            {
+                playbackPanel.seekTo(bookmarkList.getModel().getElementAt(e.getFirstIndex()), true);
+                SwingUtilities.invokeLater(bookmarkList::clearSelection);
+            }
         });
         
         startCurrentTimeButton.addActionListener(e -> {
@@ -123,5 +171,7 @@ public class ClippingPanel extends DefaultPanel
     {
         this.videoFile = videoFile;
         playbackPanel.play(videoFile);
+        bookmarkList.setListData(recordingHandler.getMetadata(videoFile)
+                                                 .getBookmarks().toArray(new Long[0]));
     }
 }

@@ -10,6 +10,7 @@ import io.github.trdesilva.autorecorder.event.Event;
 import io.github.trdesilva.autorecorder.event.EventProperty;
 import io.github.trdesilva.autorecorder.event.EventQueue;
 import io.github.trdesilva.autorecorder.event.EventType;
+import io.github.trdesilva.autorecorder.video.Hotkey;
 
 import java.io.File;
 import java.util.Collections;
@@ -72,6 +73,12 @@ public class SettingsValidator
         if(settings.autoDeleteThresholdGB < 0)
         {
             events.postEvent(new Event(EventType.WARNING, "Maximum recording space must be a non-negative integer"));
+            return false;
+        }
+        
+        if(settings.bookmarksEnabled && settings.bookmarkKey.getKeyCode() == Hotkey.UNSET)
+        {
+            events.postEvent(new Event(EventType.WARNING, "Bookmark hotkey must be set if bookmarking is enabled"));
             return false;
         }
         

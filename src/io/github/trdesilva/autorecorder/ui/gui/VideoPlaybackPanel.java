@@ -290,6 +290,22 @@ public class VideoPlaybackPanel extends DefaultPanel implements AutoCloseable
         speedField.setText(String.format("%2.3fx", this.playbackRate));
     }
     
+    public void seekTo(long time, boolean forceStart)
+    {
+        // TODO fix weird behavior with bookmarks after playing has finished
+        if(subsectionControlThread != null && subsectionControlThread.isAlive())
+        {
+            subsectionControlThread.interrupt();
+        }
+        
+        seekBar.changeTime(time);
+    
+        if(forceStart && !isPlaying.get())
+        {
+            setIsPlaying(true);
+        }
+    }
+    
     @Override
     public void close() throws IOException
     {
@@ -407,7 +423,7 @@ public class VideoPlaybackPanel extends DefaultPanel implements AutoCloseable
             }
         }
         
-        void changeTime(long time)
+        synchronized void changeTime(long time)
         {
             if(time != -1)
             {
