@@ -62,4 +62,15 @@ public class UploadJob
     {
         return properties.get(name);
     }
+    
+    @Override
+    public String toString()
+    {
+        return "UploadJob{" +
+                "clipName='" + clipName + '\'' +
+                ", videoTitle='" + videoTitle + '\'' +
+                ", description='" + description + '\'' +
+                ", properties=" + properties +
+                '}';
+    }
 }
