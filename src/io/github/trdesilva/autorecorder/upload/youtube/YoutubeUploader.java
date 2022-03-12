@@ -7,9 +7,9 @@ package io.github.trdesilva.autorecorder.upload.youtube;
 
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.auth.oauth2.TokenResponseException;
-import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
 import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
+import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeTokenRequest;
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
@@ -26,15 +26,16 @@ import com.google.api.services.youtube.model.VideoStatus;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import io.github.trdesilva.autorecorder.Settings;
-import io.github.trdesilva.autorecorder.ui.gui.ReportableException;
 import io.github.trdesilva.autorecorder.event.Event;
 import io.github.trdesilva.autorecorder.event.EventQueue;
 import io.github.trdesilva.autorecorder.event.EventType;
+import io.github.trdesilva.autorecorder.ui.gui.ReportableException;
 import io.github.trdesilva.autorecorder.upload.UploadJob;
 import io.github.trdesilva.autorecorder.upload.UploadJobValidator;
 import io.github.trdesilva.autorecorder.upload.Uploader;
 import io.github.trdesilva.autorecorder.video.VideoListHandler;
 
+import java.awt.Desktop;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -75,8 +76,11 @@ public class YoutubeUploader extends Uploader
     private final YoutubeJsonErrorParser errorParser;
     private final EventQueue events;
     
+    private YouTube youtubeService;
+    
     @Inject
-    public YoutubeUploader(@Named("CLIP") VideoListHandler clipListHandler, YoutubeJobValidator validator, YoutubeJsonErrorParser errorParser,
+    public YoutubeUploader(@Named("CLIP") VideoListHandler clipListHandler, YoutubeJobValidator validator,
+                           YoutubeJsonErrorParser errorParser,
                            EventQueue events) throws IOException
     {
         super(clipListHandler);
@@ -112,9 +116,9 @@ public class YoutubeUploader extends Uploader
         {
             events.postEvent(new Event(EventType.DEBUG,
                                        String.format("uploading clip: %s\ttitle: %s\tdescription: %s\tprivacy: %s",
-                                                               clipName, videoTitle, description,
-                                                               privacyStatus.name())));
-            YouTube youtubeService = getService();
+                                                     clipName, videoTitle, description,
+                                                     privacyStatus.name())));
+            ensureCredential();
             
             // Define the Video object, which will be uploaded as the request body.
             Video video = new Video();
@@ -158,7 +162,9 @@ public class YoutubeUploader extends Uploader
             }
             catch(TokenResponseException e)
             {
-                throw new ReportableException("Google authentication failed: " + e.getDetails().getErrorDescription(), e);
+                
+                throw new ReportableException("Google authentication failed: " + e.getDetails().getErrorDescription(),
+                                              e);
             }
         }
         catch(GeneralSecurityException e)
@@ -167,15 +173,9 @@ public class YoutubeUploader extends Uploader
         }
     }
     
-    /**
-     * Create an authorized Credential object.
-     *
-     * @return an authorized Credential object.
-     * @throws IOException
-     */
-    private static Credential authorize(final NetHttpTransport httpTransport) throws IOException
+    private void ensureCredential() throws GeneralSecurityException, IOException
     {
-        // Load client secrets.
+        NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
         File clientSecretFile = Settings.SETTINGS_DIR.resolve(CLIENT_SECRETS).toFile();
         InputStream in = new FileInputStream(clientSecretFile);
         GoogleClientSecrets clientSecrets =
@@ -187,21 +187,39 @@ public class YoutubeUploader extends Uploader
                 .setAccessType("offline")
                 .setApprovalPrompt("force")
                 .build();
-        Credential credential = new AuthorizationCodeInstalledApp(flow, new LocalServerReceiver()).authorize("user");
-        return credential;
-    }
-    
-    /**
-     * Build and return an authorized API client service.
-     *
-     * @return an authorized API client service
-     * @throws GeneralSecurityException, IOException
-     */
-    private static YouTube getService() throws GeneralSecurityException, IOException
-    {
-        final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-        Credential credential = authorize(httpTransport);
-        return new YouTube.Builder(httpTransport, JSON_FACTORY, credential)
+        Credential credential = flow.loadCredential("user");
+        boolean goodCredential;
+        try
+        {
+            if(credential != null)
+            {
+                credential.refreshToken();
+                goodCredential = true;
+                events.postEvent(new Event(EventType.DEBUG, "successfully refreshed token"));
+            }
+            else
+            {
+                goodCredential = false;
+            }
+        }
+        catch(TokenResponseException e)
+        {
+            goodCredential = false;
+        }
+        
+        if(!goodCredential)
+        {
+            events.postEvent(new Event(EventType.DEBUG, "bad/missing YouTube cred, starting OAuth flow"));
+            LocalServerReceiver codeReceiver = new LocalServerReceiver();
+            String redirectUri = codeReceiver.getRedirectUri();
+            Desktop.getDesktop().browse(flow.newAuthorizationUrl().setRedirectUri(redirectUri).toURI());
+            String code = codeReceiver.waitForCode();
+            GoogleAuthorizationCodeTokenRequest tokenRequest = flow.newTokenRequest(code).setRedirectUri(redirectUri);
+            credential = flow.createAndStoreCredential(tokenRequest.execute(), "user");
+            events.postEvent(new Event(EventType.DEBUG, "OAuth flow done"));
+        }
+        
+        youtubeService = new YouTube.Builder(httpTransport, JSON_FACTORY, credential)
                 .setApplicationName(APPLICATION_NAME)
                 .build();
     }

@@ -59,4 +59,15 @@ public class ClipJob
     {
         this.endArg = endArg;
     }
+    
+    @Override
+    public String toString()
+    {
+        return "ClipJob{" +
+                "source='" + source + '\'' +
+                ", dest='" + dest + '\'' +
+                ", startArg='" + startArg + '\'' +
+                ", endArg='" + endArg + '\'' +
+                '}';
+    }
 }
