@@ -7,6 +7,7 @@ package io.github.trdesilva.autorecorder.video;
 
 import com.github.kwhat.jnativehook.GlobalScreen;
 import com.github.kwhat.jnativehook.NativeHookException;
+import com.github.kwhat.jnativehook.dispatcher.SwingDispatchService;
 import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent;
 import com.github.kwhat.jnativehook.keyboard.NativeKeyListener;
 import com.google.common.collect.Sets;
@@ -47,6 +48,8 @@ public class BookmarkListener implements EventConsumer, NativeKeyListener, AutoC
         recordingStart = new AtomicLong(0);
         
         events.addConsumer(this);
+    
+        GlobalScreen.setEventDispatcher(new SwingDispatchService());
     }
     
     @Override
