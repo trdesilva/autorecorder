@@ -29,6 +29,9 @@ https://github.com/videolan/vlc
 This project depends on FFmpeg; its source code can be found here:
 https://git.ffmpeg.org/gitweb/ffmpeg.git
 
+This project depends on JNativeHook; its source code can be found here:
+https://github.com/kwhat/jnativehook
+
 -----
 
 GNU GENERAL PUBLIC LICENSE
