@@ -68,7 +68,14 @@ public class ClipQueue implements AutoCloseable
                             events.postEvent(new Event(EventType.INFO, "Saving clip: " + job.getDest()));
                             events.postEvent(new Event(EventType.CLIP_START, "Clipping " + job.getDest(), Collections.singletonMap(
                                     EventProperty.CLIP_JOB, job)));
-                            trimmer.makeClip(job.getSource(), job.getDest(), job.getStartArg(), job.getEndArg());
+                            if(!job.isSegmented())
+                            {
+                                trimmer.makeClip(job.getSource(), job.getDest(), job.getStartArgs().get(0), job.getEndArgs().get(0));
+                            }
+                            else
+                            {
+                                trimmer.makeSegmentedClip(job.getSource(), job.getDest(), job.getStartArgs(), job.getEndArgs());
+                            }
                             events.postEvent(new Event(EventType.SUCCESS, "Clip created: " + job.getDest()));
                             events.postEvent(new Event(EventType.CLIP_END, "Created clip " + job.getDest(), Collections.singletonMap(
                                     EventProperty.CLIP_JOB, job)));
@@ -78,6 +85,7 @@ public class ClipQueue implements AutoCloseable
                     {
                         events.postEvent(
                                 new Event(EventType.FAILURE, "Failed to create clip: " + job.getDest()));
+                        events.postEvent(new Event(EventType.DEBUG, e.getMessage()));
                         events.postEvent(new Event(EventType.CLIP_END, "", Collections.singletonMap(
                                 EventProperty.CLIP_JOB, job)));
                     }
