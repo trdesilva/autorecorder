@@ -32,6 +32,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static io.github.trdesilva.autorecorder.TimestampUtil.formatTime;
@@ -256,15 +257,16 @@ public class VideoPlaybackPanel extends DefaultPanel implements AutoCloseable
     
     public void playSubsection(long start, long end)
     {
-        seekBar.changeTime(start);
-        
         if(subsectionControlThread != null && subsectionControlThread.isAlive())
         {
             subsectionControlThread.interrupt();
         }
+        
         subsectionControlThread = new Thread(() -> {
             try
             {
+                seekBar.changeTime(start);
+                setIsPlaying(true);
                 Thread.sleep(end - mediaPlayerComponent.mediaPlayer().status().time() - 1000);
                 while(mediaPlayerComponent.mediaPlayer().status().time() < end)
                 {
@@ -279,7 +281,44 @@ public class VideoPlaybackPanel extends DefaultPanel implements AutoCloseable
         });
         
         subsectionControlThread.start();
-        setIsPlaying(true);
+    }
+    
+    public void playSubsections(List<Long> starts, List<Long> ends)
+    {
+        if(starts.size() != ends.size())
+        {
+            throw new IllegalArgumentException("how did we get an uneven number of starts and ends in here");
+        }
+    
+        if(subsectionControlThread != null && subsectionControlThread.isAlive())
+        {
+            subsectionControlThread.interrupt();
+        }
+        
+        subsectionControlThread = new Thread(() -> {
+            for(int i = 0; i < starts.size(); i++)
+            {
+                long start = starts.get(i);
+                long end = ends.get(i);
+                try
+                {
+                    seekBar.changeTime(start);
+                    setIsPlaying(true);
+                    Thread.sleep(end - mediaPlayerComponent.mediaPlayer().status().time() - 1000);
+                    while(mediaPlayerComponent.mediaPlayer().status().time() < end)
+                    {
+                        Thread.sleep(50);
+                    }
+                    setIsPlaying(false);
+                }
+                catch(InterruptedException e)
+                {
+                    return;
+                }
+            }
+        });
+    
+        subsectionControlThread.start();
     }
     
     public void setPlaybackRate(float playbackRate)

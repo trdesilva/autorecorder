@@ -5,19 +5,36 @@
 
 package io.github.trdesilva.autorecorder.clip;
 
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+
 public class ClipJob
 {
     private String source;
     private String dest;
-    private String startArg;
-    private String endArg;
+    private List<String> startArgs;
+    private List<String> endArgs;
+    private boolean segmented;
     
     public ClipJob(String source, String dest, String startArg, String endArg)
     {
         this.source = source;
         this.dest = dest;
-        this.startArg = startArg;
-        this.endArg = endArg;
+        this.startArgs = Collections.singletonList(startArg);
+        this.endArgs = Collections.singletonList(endArg);
+        
+        this.segmented = false;
+    }
+    
+    public ClipJob(String source, String dest, List<String> startArgs, List<String> endArgs)
+    {
+        this.source = source;
+        this.dest = dest;
+        this.startArgs = new LinkedList<>(startArgs);
+        this.endArgs = new LinkedList<>(endArgs);
+        
+        this.segmented = true;
     }
     
     public String getSource()
@@ -25,39 +42,24 @@ public class ClipJob
         return source;
     }
     
-    public void setSource(String source)
-    {
-        this.source = source;
-    }
-    
     public String getDest()
     {
         return dest;
     }
     
-    public void setDest(String dest)
+    public List<String> getStartArgs()
     {
-        this.dest = dest;
+        return startArgs;
     }
     
-    public String getStartArg()
+    public List<String> getEndArgs()
     {
-        return startArg;
+        return endArgs;
     }
     
-    public void setStartArg(String startArg)
+    public boolean isSegmented()
     {
-        this.startArg = startArg;
-    }
-    
-    public String getEndArg()
-    {
-        return endArg;
-    }
-    
-    public void setEndArg(String endArg)
-    {
-        this.endArg = endArg;
+        return segmented;
     }
     
     @Override
@@ -66,8 +68,9 @@ public class ClipJob
         return "ClipJob{" +
                 "source='" + source + '\'' +
                 ", dest='" + dest + '\'' +
-                ", startArg='" + startArg + '\'' +
-                ", endArg='" + endArg + '\'' +
+                ", startArg='" + startArgs + '\'' +
+                ", endArg='" + endArgs + '\'' +
+                ", segmented='" + segmented + '\'' +
                 '}';
     }
 }
