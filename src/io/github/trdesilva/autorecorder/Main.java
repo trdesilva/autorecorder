@@ -8,13 +8,13 @@ package io.github.trdesilva.autorecorder;
 import com.google.common.collect.Sets;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import io.github.trdesilva.autorecorder.event.Event;
+import io.github.trdesilva.autorecorder.event.EventQueue;
+import io.github.trdesilva.autorecorder.event.EventType;
 import io.github.trdesilva.autorecorder.record.GameListener;
 import io.github.trdesilva.autorecorder.ui.cli.MainCli;
 import io.github.trdesilva.autorecorder.ui.gui.MainWindow;
 import io.github.trdesilva.autorecorder.ui.gui.inject.GuiModule;
-import io.github.trdesilva.autorecorder.event.Event;
-import io.github.trdesilva.autorecorder.event.EventQueue;
-import io.github.trdesilva.autorecorder.event.EventType;
 import io.github.trdesilva.autorecorder.video.inject.VideoModule;
 
 import java.io.File;
@@ -72,6 +72,32 @@ public class Main
             catch(IOException e)
             {
                 events.postEvent(new Event(EventType.DEBUG, "failed to copy ffprobe.exe"));
+            }
+        }
+        if(!Settings.SETTINGS_DIR.resolve("libvlc.dll").toFile().exists())
+        {
+            events.postEvent(new Event(EventType.DEBUG, "copying libvlc.dll from resources"));
+            try
+            {
+                Files.copy(ClassLoader.getSystemClassLoader().getResourceAsStream("libvlc.dll"),
+                           Settings.SETTINGS_DIR.resolve("libvlc.dll"));
+            }
+            catch(IOException e)
+            {
+                events.postEvent(new Event(EventType.DEBUG, "failed to copy libvlc.dll"));
+            }
+        }
+        if(!Settings.SETTINGS_DIR.resolve("libvlccore.dll").toFile().exists())
+        {
+            events.postEvent(new Event(EventType.DEBUG, "copying libvlccore.dll from resources"));
+            try
+            {
+                Files.copy(ClassLoader.getSystemClassLoader().getResourceAsStream("libvlccore.dll"),
+                           Settings.SETTINGS_DIR.resolve("libvlccore.dll"));
+            }
+            catch(IOException e)
+            {
+                events.postEvent(new Event(EventType.DEBUG, "failed to copy libvlccore.dll"));
             }
         }
         
