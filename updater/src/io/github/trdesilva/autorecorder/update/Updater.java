@@ -32,6 +32,7 @@ public class Updater
     public static final Path SETTINGS_DIR = Paths.get(System.getenv("LOCALAPPDATA"))
                                                  .resolve("autorecorder");
     public static final String LAUNCHER_FILENAME = "launcher.cmd";
+    public static final String UPDATER_FILENAME = "updater.jar";
     public static final String GITHUB_RELEASE_LATEST_URL = "https://api.github.com/repos/trdesilva/autorecorder/releases/latest";
     public static final String ASSETS_FIELD = "assets";
     public static final String ASSET_NAME_FIELD = "name";
@@ -50,6 +51,7 @@ public class Updater
             }
             installDir.setReadable(true);
             installDir.setWritable(true);
+            System.out.println("Settings directory created");
         }
         
         File[] currentFiles = installDir.listFiles();
@@ -64,6 +66,26 @@ public class Updater
             launcher.setExecutable(true, true);
             System.out.println("Created launcher script at " + SETTINGS_DIR.resolve(
                     LAUNCHER_FILENAME) + " (make Windows run this on startup if you want Autorecorder to launch on boot)");
+            if(Arrays.stream(currentFiles).noneMatch(file -> file.getName().equals("updater.jar")))
+            {
+                File jarDirectory = new File("").getAbsoluteFile();
+                Files.copy(jarDirectory.toPath().resolve(UPDATER_FILENAME), SETTINGS_DIR.resolve(UPDATER_FILENAME));
+                File updater = SETTINGS_DIR.resolve(UPDATER_FILENAME).toFile();
+                updater.setReadable(true);
+                updater.setWritable(true);
+                updater.setExecutable(true);
+            }
+    
+            if(!installDir.canRead())
+            {
+                installDir.setReadable(true);
+            }
+    
+            if(!installDir.canWrite())
+            {
+                installDir.setWritable(true);
+            }
+            
             System.out.println("Please run the launcher script to continue; you may now close this window");
             new Scanner(System.in).next();
             return;
@@ -136,10 +158,31 @@ public class Updater
                 {
                     System.out.println("Already up-to-date");
                 }
+    
+                if(!installDir.canRead())
+                {
+                    installDir.setReadable(true);
+                }
+    
+                if(!installDir.canWrite())
+                {
+                    installDir.setWritable(true);
+                }
             }
             else
             {
                 System.err.println("Failed to retrieve version metadata from GitHub");
+    
+                if(!installDir.canRead())
+                {
+                    installDir.setReadable(true);
+                }
+    
+                if(!installDir.canWrite())
+                {
+                    installDir.setWritable(true);
+                }
+                
                 throw new IOException("GitHub request failed with status " + latestResponse.getStatusLine());
             }
         }

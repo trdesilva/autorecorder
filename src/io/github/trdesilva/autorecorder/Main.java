@@ -42,6 +42,7 @@ public class Main
         }
         
         Injector injector = Guice.createInjector(new VideoModule(), new GuiModule(isDebugMode));
+        LoadingWindow loadingWindow = new LoadingWindow();
         
         Settings settings = injector.getInstance(Settings.class);
         settings.populate();
@@ -74,32 +75,8 @@ public class Main
                 events.postEvent(new Event(EventType.DEBUG, "failed to copy ffprobe.exe"));
             }
         }
-        if(!Settings.SETTINGS_DIR.resolve("libvlc.dll").toFile().exists())
-        {
-            events.postEvent(new Event(EventType.DEBUG, "copying libvlc.dll from resources"));
-            try
-            {
-                Files.copy(ClassLoader.getSystemClassLoader().getResourceAsStream("libvlc.dll"),
-                           Settings.SETTINGS_DIR.resolve("libvlc.dll"));
-            }
-            catch(IOException e)
-            {
-                events.postEvent(new Event(EventType.DEBUG, "failed to copy libvlc.dll"));
-            }
-        }
-        if(!Settings.SETTINGS_DIR.resolve("libvlccore.dll").toFile().exists())
-        {
-            events.postEvent(new Event(EventType.DEBUG, "copying libvlccore.dll from resources"));
-            try
-            {
-                Files.copy(ClassLoader.getSystemClassLoader().getResourceAsStream("libvlccore.dll"),
-                           Settings.SETTINGS_DIR.resolve("libvlccore.dll"));
-            }
-            catch(IOException e)
-            {
-                events.postEvent(new Event(EventType.DEBUG, "failed to copy libvlccore.dll"));
-            }
-        }
+        
+        
         
         GameListener listener = injector.getInstance(GameListener.class);
         
@@ -109,6 +86,7 @@ public class Main
             listener.startListener();
             
             MainCli cli = injector.getInstance(MainCli.class);
+            loadingWindow.close();
             cli.run();
             
             listener.stopListener();
@@ -117,6 +95,7 @@ public class Main
         {
             MainWindow mainWindow = injector.getInstance(MainWindow.class);
             mainWindow.start();
+            loadingWindow.close();
         }
     }
 }

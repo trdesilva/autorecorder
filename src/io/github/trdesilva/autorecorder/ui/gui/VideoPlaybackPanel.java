@@ -6,12 +6,16 @@
 package io.github.trdesilva.autorecorder.ui.gui;
 
 import com.google.inject.Inject;
+import io.github.trdesilva.autorecorder.ui.gui.inject.LocalAppDataNativeDiscoveryStrategy;
 import io.github.trdesilva.autorecorder.ui.gui.wrapper.DefaultPanel;
 import net.miginfocom.swing.MigLayout;
+import uk.co.caprica.vlcj.factory.MediaPlayerFactory;
+import uk.co.caprica.vlcj.factory.discovery.NativeDiscovery;
 import uk.co.caprica.vlcj.media.VideoTrackInfo;
 import uk.co.caprica.vlcj.player.base.MediaPlayer;
 import uk.co.caprica.vlcj.player.base.MediaPlayerEventAdapter;
 import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent;
+import uk.co.caprica.vlcj.player.component.MediaPlayerSpecs;
 
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
@@ -63,12 +67,12 @@ public class VideoPlaybackPanel extends DefaultPanel implements AutoCloseable
     private Thread subsectionControlThread;
     
     @Inject
-    public VideoPlaybackPanel(WindowCloseHandler windowCloseHandler)
+    public VideoPlaybackPanel(WindowCloseHandler windowCloseHandler, LocalAppDataNativeDiscoveryStrategy discoveryStrategy)
     {
         setLayout(new MigLayout("", "[grow]", "[grow][60:6.25%:100]"));
         setPreferredSize(new Dimension(MainWindow.PREFERRED_WIDTH, 10 * MainWindow.PREFERRED_WIDTH / 16));
         
-        mediaPlayerComponent = new EmbeddedMediaPlayerComponent();
+        mediaPlayerComponent = new EmbeddedMediaPlayerComponent(MediaPlayerSpecs.embeddedMediaPlayerSpec().withFactory(new MediaPlayerFactory(new NativeDiscovery(discoveryStrategy))));
         mediaPlayerComponent.setPreferredSize(
                 new Dimension(MainWindow.PREFERRED_WIDTH, 9 * MainWindow.PREFERRED_WIDTH / 16));
         mediaPlayerComponent.mediaPlayer().events().addMediaPlayerEventListener(new MediaPlayerEventAdapter()

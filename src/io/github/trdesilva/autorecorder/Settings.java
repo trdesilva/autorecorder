@@ -109,6 +109,7 @@ public class Settings
     {
         if(!settingsFile.getParentFile().exists())
         {
+            events.postEvent(new Event(EventType.DEBUG, "settings dir missing; creating"));
             settingsFile.getParentFile().mkdirs();
             settingsFile.getParentFile().setReadable(true);
             settingsFile.getParentFile().setWritable(true);
