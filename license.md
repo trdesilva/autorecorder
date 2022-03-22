@@ -1,4 +1,8 @@
-#Autorecorder Terms of Use
+---
+layout: page
+title: "Autorecorder Terms of Use"
+permalink: /license
+...
 
 By using this software ("Autorecorder"), you agree to the terms and conditions below.
 
@@ -6,16 +10,16 @@ You won't use this software for anything illegal or unethical. If you're using t
 * You won't use it for anything other than video uploads, performed through Autorecorder, which comply with YouTube's policies.
 * You affirm that you're using the API key with explicit permission from the author (Thomas DeSilva).
 
-##Privacy Policy
+## Privacy Policy
 Autorecorder doesn't transmit your data anywhere for any reason, with the exception of video uploads requested by you via the 'Upload' button in the GUI. All other data persisted by Autorecorder is stored in one of the following locations on your machine:
 * The directory specified as the storage location for recordings.
 * The directory specified as the storage location for clips.
 * Autorecorder's installation directory (%LOCALAPPDATA%\\autorecorder).
 
-##YouTube Integration
+## YouTube Integration
 Videos may be uploaded to YouTube via YouTube's API; should you choose to use this functionality, you are subject to YouTube's Terms of Use and Privacy Policy. By clicking 'Upload,' you certify that the content you are uploading complies with the YouTube Terms of Service (including the YouTube Community Guidelines) at https://www.youtube.com/t/terms. Please be sure not to violate others' copyright or privacy rights. You may find YouTube's Privacy Policy here: https://www.google.com/policies/privacy/
 
-##Licensing
+## Licensing
 Autorecorder © 2022 Thomas DeSilva
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
@@ -39,7 +43,7 @@ https://github.com/kwhat/jnativehook
 
 ---
 
-#GNU GENERAL PUBLIC LICENSE
+# GNU GENERAL PUBLIC LICENSE
 
 Version 3, 29 June 2007
 
