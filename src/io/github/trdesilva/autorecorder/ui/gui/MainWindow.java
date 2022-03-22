@@ -78,7 +78,6 @@ public class MainWindow implements Navigator
         tabbedPane.add("Clips", clipListPanel);
         tabbedPane.add("Settings", settingsPanel);
         tabbedPane.setSelectedIndex(0);
-//        tabbedPane.setPreferredSize(new Dimension(PREFERRED_WIDTH, PREFERRED_HEIGHT));
         
         this.clippingPanel = clippingPanel;
         this.uploadPanel = uploadPanel;
