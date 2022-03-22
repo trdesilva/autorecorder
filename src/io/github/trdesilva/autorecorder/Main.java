@@ -40,9 +40,9 @@ public class Main
         {
             isDebugMode = true;
         }
-        
-        Injector injector = Guice.createInjector(new VideoModule(), new GuiModule(isDebugMode));
+    
         LoadingWindow loadingWindow = new LoadingWindow();
+        Injector injector = Guice.createInjector(new VideoModule(), new GuiModule(isDebugMode));
         
         Settings settings = injector.getInstance(Settings.class);
         settings.populate();
