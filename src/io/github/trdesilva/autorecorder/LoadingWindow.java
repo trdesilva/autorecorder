@@ -68,5 +68,6 @@ public class LoadingWindow
     {
         frame.setVisible(false);
         updateThread.interrupt();
+        frame.dispose();
     }
 }
