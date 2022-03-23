@@ -2,7 +2,7 @@
 layout: page
 title: "Autorecorder Terms of Use"
 permalink: /license
-...
+---
 
 By using this software ("Autorecorder"), you agree to the terms and conditions below.
 
@@ -15,6 +15,8 @@ Autorecorder doesn't transmit your data anywhere for any reason, with the except
 * The directory specified as the storage location for recordings.
 * The directory specified as the storage location for clips.
 * Autorecorder's installation directory (%LOCALAPPDATA%\\autorecorder).
+
+Autorecorder's use of information received from Google APIs (i.e. metadata related to your YouTube video uploads) will adhere to the [Google API Services User Data Policy](https://developers.google.com/terms/api-services-user-data-policy#additional_requirements_for_specific_api_scopes), including the Limited Use requirements.
 
 ## YouTube Integration
 Videos may be uploaded to YouTube via YouTube's API; should you choose to use this functionality, you are subject to YouTube's Terms of Use and Privacy Policy. By clicking 'Upload,' you certify that the content you are uploading complies with the YouTube Terms of Service (including the YouTube Community Guidelines) at https://www.youtube.com/t/terms. Please be sure not to violate others' copyright or privacy rights. You may find YouTube's Privacy Policy here: https://www.google.com/policies/privacy/
