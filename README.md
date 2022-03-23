@@ -10,3 +10,14 @@ This is a Java application that automates OBS Studio and FFMpeg on Windows to re
 6. Edit your Autorecorder settings to tell it where to find OBS, and where your recordings and clips will be stored. You can do this through Autorecorder itself or by editing the JSON file it generates in %LOCALAPPDATA%.
 7. Put a Google OAuth client secret JSON file at %LOCALAPPDATA%\autorecorder\client_secret.json. If you're forking the project, you'll need to get your own client secret and make sure it can request tokens for the `youtube.upload` scope in the YouTube Data API.
 8. Leave Autorecorder running whenever you want it to record your game sessions.
+
+# FAQ
+
+## Why should I use Autorecorder?
+Autorecorder makes it easy to record, upload, and share your gameplay highlights by being focused on usability. It's built on existing robust and highly-available software, so it's reliable and takes relatively little effort to maintain. Also, its UI was built to be convenient rather than pretty, so it's simple to use.
+
+## Why should I use Autorecorder over one of those other apps?
+There have been a number of applications for automatically recording gameplay and sharing highlight clips, but they're often unreliable because they try to do too much themselves. They usually try to do their own video hosting without a monetization model that works well enough, which means that users lose all their clips when the app inevitably folds. Autorecorder leverages OBS Studio for recording, FFMpeg for clip editing, and YouTube for video hosting, all of which are mature and well-tested technologies; this greatly reduces the potential for bugs. Also, since all user data is stored locally or on YouTube, there's no way for user data to be lost as a result of Autorecorder's development being stopped. Finally, because Autorecorder is open-source, users can freely view and edit the code that they're running if they don't trust it or want to change something. Autorecorder is much lower risk than the similar commercial apps, and largely as capable.
+
+## What do I have to agree to in order to use it?
+You can find Autorecorder's terms or use (including its privacy policy) [here](https://trdesilva.github.io/autorecorder/license). Autorecorder is published under the GNU Public License.
