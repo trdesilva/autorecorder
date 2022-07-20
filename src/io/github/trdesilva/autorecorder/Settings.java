@@ -58,6 +58,7 @@ public class Settings
         
         public boolean bookmarksEnabled = false;
         public Hotkey bookmarkKey = new Hotkey();
+        public boolean consumeWindowsKeyEnabled = false;
     }
     
     private final EventQueue events;
@@ -124,7 +125,8 @@ public class Settings
         }
         catch(IOException e)
         {
-            e.printStackTrace();
+            events.postEvent(new Event(EventType.FAILURE, "Failed to save settings"));
+            events.postEvent(new Event(EventType.DEBUG, e.getMessage()));
         }
     }
     
@@ -258,6 +260,16 @@ public class Settings
     public void setBookmarkKey(Hotkey bookmarkKey)
     {
         this.container.bookmarkKey = bookmarkKey;
+    }
+    
+    public boolean isConsumeWindowsKeyEnabled()
+    {
+        return container.consumeWindowsKeyEnabled;
+    }
+    
+    public void setConsumeWindowsKeyEnabled(boolean consumeWindowsKeyEnabled)
+    {
+        this.container.consumeWindowsKeyEnabled = consumeWindowsKeyEnabled;
     }
     
     public String getSettingsFilePath()

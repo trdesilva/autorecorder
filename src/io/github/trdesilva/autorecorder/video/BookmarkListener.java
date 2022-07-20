@@ -7,6 +7,7 @@ package io.github.trdesilva.autorecorder.video;
 
 import com.github.kwhat.jnativehook.GlobalScreen;
 import com.github.kwhat.jnativehook.NativeHookException;
+import com.github.kwhat.jnativehook.NativeInputEvent;
 import com.github.kwhat.jnativehook.dispatcher.SwingDispatchService;
 import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent;
 import com.github.kwhat.jnativehook.keyboard.NativeKeyListener;
@@ -22,6 +23,7 @@ import io.github.trdesilva.autorecorder.event.EventQueue;
 import io.github.trdesilva.autorecorder.event.EventType;
 import org.joda.time.DateTime;
 
+import java.lang.reflect.Field;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -69,7 +71,7 @@ public class BookmarkListener implements EventConsumer, NativeKeyListener, AutoC
                 events.postEvent(new Event(EventType.WARNING, "Failed to start listening for bookmark key"));
             }
         }
-        else if(event.getType().equals(EventType.RECORDING_END))
+        else if(event.getType().equals(EventType.RECORDING_END) || (event.getType().equals(EventType.SETTINGS_CHANGE) && !settings.areBookmarksEnabled()))
         {
             try
             {
@@ -99,6 +101,22 @@ public class BookmarkListener implements EventConsumer, NativeKeyListener, AutoC
             recordingHandler.saveBookmark(bookmarkTimestamp);
             events.postEvent(
                     new Event(EventType.INFO, "Saved bookmark at " + TimestampUtil.formatTime(bookmarkTimestamp)));
+        }
+        // VC_META is the Windows key
+        else if(settings.isConsumeWindowsKeyEnabled() && nativeEvent.getKeyCode() == NativeKeyEvent.VC_META)
+        {
+            // taken from jnativehook documentation: https://github.com/kwhat/jnativehook/blob/2.2/doc/ConsumingEvents.md
+            try
+            {
+                Field f = NativeInputEvent.class.getDeclaredField("reserved");
+                f.setAccessible(true);
+                f.setShort(nativeEvent, (short) 0x01);
+                events.postEvent(new Event(EventType.DEBUG, "Consumed Windows key"));
+            }
+            catch(NoSuchFieldException|IllegalAccessException e)
+            {
+                events.postEvent(new Event(EventType.DEBUG, "failed to consume Windows key: " + e.getMessage()));
+            }
         }
     }
     

@@ -82,6 +82,12 @@ public class SettingsValidator
             return false;
         }
         
+        if(settings.consumeWindowsKeyEnabled && !settings.bookmarksEnabled)
+        {
+            events.postEvent(new Event(EventType.WARNING, "Disabling Windows key requires bookmark hotkey to be enabled"));
+            return false;
+        }
+        
         return true;
     }
 }

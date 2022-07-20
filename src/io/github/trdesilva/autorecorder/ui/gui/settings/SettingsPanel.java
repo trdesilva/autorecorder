@@ -109,6 +109,7 @@ public class SettingsPanel extends DefaultPanel
             tempSettings.autoDeleteEnabled = autoDeleteCheckbox.isSelected();
             tempSettings.bookmarksEnabled = bookmarkPanel.areBookmarksEnabled();
             tempSettings.bookmarkKey = bookmarkPanel.getBookmarkKey();
+            tempSettings.consumeWindowsKeyEnabled = bookmarkPanel.isConsumeWindowsKeyEnabled();
             if(autoDeleteThresholdField.isValid())
             {
                 tempSettings.autoDeleteThresholdGB = Integer.parseInt(autoDeleteThresholdField.getText());
@@ -129,6 +130,7 @@ public class SettingsPanel extends DefaultPanel
                 settings.setAutoDeleteThresholdGB(tempSettings.autoDeleteThresholdGB);
                 settings.setBookmarksEnabled(tempSettings.bookmarksEnabled);
                 settings.setBookmarkKey(tempSettings.bookmarkKey);
+                settings.setConsumeWindowsKeyEnabled(tempSettings.consumeWindowsKeyEnabled);
                 
                 settings.save();
                 events.postEvent(new Event(EventType.SUCCESS, "Settings saved"));
