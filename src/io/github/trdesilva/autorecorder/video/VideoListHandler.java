@@ -9,8 +9,10 @@ import com.google.common.collect.Sets;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
 import io.github.trdesilva.autorecorder.Settings;
+import io.github.trdesilva.autorecorder.TimestampUtil;
 import io.github.trdesilva.autorecorder.event.Event;
 import io.github.trdesilva.autorecorder.event.EventConsumer;
+import io.github.trdesilva.autorecorder.event.EventProperty;
 import io.github.trdesilva.autorecorder.event.EventQueue;
 import io.github.trdesilva.autorecorder.event.EventType;
 import org.joda.time.DateTime;
@@ -28,7 +30,8 @@ import java.util.stream.Collectors;
 public class VideoListHandler implements EventConsumer
 {
     private static final Set<EventType> EVENT_TYPES = Sets.immutableEnumSet(EventType.RECORDING_START,
-                                                                            EventType.SETTINGS_CHANGE);
+                                                                            EventType.SETTINGS_CHANGE,
+                                                                            EventType.BOOKMARK);
     private final Settings settings;
     private final VideoMetadataHandler metadataHandler;
     private final EventQueue events;
@@ -148,6 +151,7 @@ public class VideoListHandler implements EventConsumer
                                        .max(Comparator.comparing(File::lastModified))
                                        .get();
         metadataHandler.saveBookmark(recording, timestamp);
+        events.postEvent(new Event(EventType.INFO, "Saved bookmark at " + TimestampUtil.formatTime(timestamp)));
     }
     
     public void update()
@@ -239,6 +243,10 @@ public class VideoListHandler implements EventConsumer
         else if(event.getType().equals(EventType.SETTINGS_CHANGE))
         {
             new Thread(this::update).start();
+        }
+        else if(event.getType().equals(EventType.BOOKMARK))
+        {
+            saveBookmark((Long)(event.getProperties().get(EventProperty.BOOKMARK_TIME)));
         }
     }
     

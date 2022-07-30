@@ -21,13 +21,14 @@ public class BookmarkPanel extends JPanel
 {
     private final JCheckBox bookmarksEnabledCheckbox;
     private Hotkey bookmarkKey;
+    private final JCheckBox consumeWindowsKeyEnabledCheckbox;
     private boolean fieldHasFocus = false;
     
     public BookmarkPanel(Settings settings)
     {
         bookmarkKey = settings.getBookmarkKey();
         
-        setLayout(new MigLayout("fill", "[][120!]"));
+        setLayout(new MigLayout("fill", "[][120!]", "[][]"));
     
         bookmarksEnabledCheckbox = new JCheckBox();
         bookmarksEnabledCheckbox.setSelected(settings.areBookmarksEnabled());
@@ -37,9 +38,28 @@ public class BookmarkPanel extends JPanel
         bookmarkKeyField.setText(settings.getBookmarkKey().toString());
         bookmarkKeyField.setEditable(false);
         bookmarkKeyField.setToolTipText("Click to set bookmark hotkey (CTRL, SHIFT, and ALT modifiers allowed)");
+        
+        consumeWindowsKeyEnabledCheckbox = new JCheckBox();
+        consumeWindowsKeyEnabledCheckbox.setSelected(settings.isConsumeWindowsKeyEnabled());
+        consumeWindowsKeyEnabledCheckbox.setEnabled(bookmarksEnabledCheckbox.isSelected());
+        consumeWindowsKeyEnabledCheckbox.setText("Disable Windows key while recording (requires bookmarks to be enabled)");
     
         add(bookmarksEnabledCheckbox, "cell 0 0");
         add(bookmarkKeyField, "cell 1 0, grow");
+        add(consumeWindowsKeyEnabledCheckbox, "cell 0 1");
+        
+        bookmarksEnabledCheckbox.addActionListener(e ->
+                                                   {
+                                                       if(bookmarksEnabledCheckbox.isSelected())
+                                                       {
+                                                           consumeWindowsKeyEnabledCheckbox.setEnabled(true);
+                                                       }
+                                                       else
+                                                       {
+                                                           consumeWindowsKeyEnabledCheckbox.setEnabled(false);
+                                                           consumeWindowsKeyEnabledCheckbox.setSelected(false);
+                                                       }
+                                                   });
         
         bookmarkKeyField.addKeyListener(new KeyAdapter()
         {
@@ -88,5 +108,10 @@ public class BookmarkPanel extends JPanel
     public Hotkey getBookmarkKey()
     {
         return bookmarkKey;
+    }
+    
+    public boolean isConsumeWindowsKeyEnabled()
+    {
+        return consumeWindowsKeyEnabledCheckbox.isSelected();
     }
 }

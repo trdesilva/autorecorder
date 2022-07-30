@@ -5,6 +5,7 @@
 
 package io.github.trdesilva.autorecorder;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
@@ -37,6 +38,7 @@ public class Settings
                                                  .resolve("autorecorder");
     private final File settingsFile;
     
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class SettingsContainer
     {
         public String obsPath;
@@ -58,6 +60,7 @@ public class Settings
         
         public boolean bookmarksEnabled = false;
         public Hotkey bookmarkKey = new Hotkey();
+        public boolean consumeWindowsKeyEnabled = false;
     }
     
     private final EventQueue events;
@@ -71,6 +74,7 @@ public class Settings
         this.events = events;
         
         objectMapper = new ObjectMapper();
+        
         container = new SettingsContainer();
         settingsFile = new File(SETTINGS_DIR.resolve("settings.json").toString());
     }
@@ -124,7 +128,8 @@ public class Settings
         }
         catch(IOException e)
         {
-            e.printStackTrace();
+            events.postEvent(new Event(EventType.FAILURE, "Failed to save settings"));
+            events.postEvent(new Event(EventType.DEBUG, e.getMessage()));
         }
     }
     
@@ -258,6 +263,16 @@ public class Settings
     public void setBookmarkKey(Hotkey bookmarkKey)
     {
         this.container.bookmarkKey = bookmarkKey;
+    }
+    
+    public boolean isConsumeWindowsKeyEnabled()
+    {
+        return container.consumeWindowsKeyEnabled;
+    }
+    
+    public void setConsumeWindowsKeyEnabled(boolean consumeWindowsKeyEnabled)
+    {
+        this.container.consumeWindowsKeyEnabled = consumeWindowsKeyEnabled;
     }
     
     public String getSettingsFilePath()
