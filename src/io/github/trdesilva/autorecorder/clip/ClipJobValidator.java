@@ -134,31 +134,29 @@ public class ClipJobValidator
     private boolean validateVideo(String video, VideoType source)
     {
         File videoFile;
-        String label;
         boolean shouldExist;
+    
+        String label = source == VideoType.RECORDING ? "Recording" : "Clip";
+        if(!videoFilenameValidator.hasValidName(video))
+        {
+            events.postEvent(new Event(EventType.WARNING, label + " has invalid filename: " + video));
+            return false;
+        }
         
         if(source == VideoType.RECORDING)
         {
             videoFile = recordingListHandler.getVideo(video);
-            label = "Recording";
             shouldExist = true;
         }
         else
         {
             videoFile = clipListHandler.getVideo(video);
-            label = "Clip";
             shouldExist = false;
         }
         
         if(video == null || video.isBlank())
         {
             events.postEvent(new Event(EventType.WARNING, label + " path cannot be blank"));
-            return false;
-        }
-    
-        if(!videoFilenameValidator.hasValidName(video))
-        {
-            events.postEvent(new Event(EventType.WARNING, label + " has invalid filename: " + video));
             return false;
         }
         
