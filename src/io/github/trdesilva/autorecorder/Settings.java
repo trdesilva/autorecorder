@@ -5,6 +5,7 @@
 
 package io.github.trdesilva.autorecorder;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
@@ -37,6 +38,7 @@ public class Settings
                                                  .resolve("autorecorder");
     private final File settingsFile;
     
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class SettingsContainer
     {
         public String obsPath;
@@ -72,6 +74,7 @@ public class Settings
         this.events = events;
         
         objectMapper = new ObjectMapper();
+        
         container = new SettingsContainer();
         settingsFile = new File(SETTINGS_DIR.resolve("settings.json").toString());
     }

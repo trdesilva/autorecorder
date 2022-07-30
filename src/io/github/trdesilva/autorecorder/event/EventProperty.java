@@ -9,5 +9,6 @@ public enum EventProperty
 {
     LINK,
     CLIP_JOB,
-    UPLOAD_JOB
+    UPLOAD_JOB,
+    BOOKMARK_TIME
 }

@@ -20,5 +20,6 @@ public enum EventType
     MANUAL_RECORDING_START,
     MANUAL_RECORDING_END,
     SETTINGS_CHANGE,
+    BOOKMARK,
     DEBUG
 }
