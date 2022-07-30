@@ -81,7 +81,7 @@ public class ClipQueue implements AutoCloseable
                                     EventProperty.CLIP_JOB, job)));
                         }
                     }
-                    catch(IOException | InterruptedException e)
+                    catch(Exception e)
                     {
                         events.postEvent(
                                 new Event(EventType.FAILURE, "Failed to create clip: " + job.getDest()));
