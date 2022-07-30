@@ -227,6 +227,31 @@ public class VideoMetadataHandler
         }
     }
     
+    public void deleteMetadata(File video)
+    {
+        if(video != null && !video.exists())
+        {
+            ReentrantLock lock = getMetadataLock(video);
+            lock.lock();
+            try
+            {
+                events.postEvent(new Event(EventType.DEBUG,
+                                           "deleting metadata for file " + video.getName()));
+                
+                if(!findCacheFile(video).delete())
+                {
+                    events.postEvent(new Event(EventType.DEBUG,
+                                               String.format("failed to delete metadata for file %s", video.getName())));
+                }
+            }
+            finally
+            {
+                lock.unlock();
+            }
+            metadataMapping.invalidate(video);
+        }
+    }
+    
     public void saveBookmark(File recording, long timestamp)
     {
         ReentrantLock lock = getMetadataLock(recording);

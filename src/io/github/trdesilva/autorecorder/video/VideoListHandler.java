@@ -157,14 +157,14 @@ public class VideoListHandler implements EventConsumer
     public void update()
     {
         String updatedSetting = type.getPathSetting(settings);
-        events.postEvent(new Event(EventType.DEBUG,
-                                   String.format("New %s directory: %s", type.name(), updatedSetting)));
         if(updatedSetting != null)
         {
             File updatedDir = new File(updatedSetting);
             if(!updatedDir.equals(videoDir) && updatedDir.exists() && updatedDir.isDirectory())
             {
                 this.videoDir = updatedDir;
+                events.postEvent(new Event(EventType.DEBUG,
+                                           String.format("New %s directory: %s", type.name(), updatedSetting)));
             }
         }
     }
@@ -208,6 +208,7 @@ public class VideoListHandler implements EventConsumer
                 if(video.delete())
                 {
                     deletedVideos++;
+                    metadataHandler.deleteMetadata(video);
                 }
                 else
                 {
