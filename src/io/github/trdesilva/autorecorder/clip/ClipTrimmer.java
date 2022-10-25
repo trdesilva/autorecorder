@@ -175,7 +175,7 @@ public class ClipTrimmer
         {
             String relativeEndArg = TimestampUtil.formatTime(TimestampUtil.parseTime(endArg) - TimestampUtil.parseTime(startArg));
             return new LinkedList<>(
-                    Arrays.asList("-ss", startArg, "-i", sourceFilePath, "-to", relativeEndArg, "-vcodec", "h264_nvenc", "-acodec", "aac", destFilePath));
+                    Arrays.asList("-ss", startArg, "-i", sourceFilePath, "-to", relativeEndArg, "-vcodec", "libx264", "-acodec", "aac", destFilePath));
         }
         else
         {
