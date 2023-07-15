@@ -21,5 +21,6 @@ public enum EventType
     MANUAL_RECORDING_END,
     SETTINGS_CHANGE,
     BOOKMARK,
-    DEBUG
+    DEBUG,
+    THUMBNAIL_GENERATED
 }

@@ -11,12 +11,14 @@ import com.google.inject.Singleton;
 import io.github.trdesilva.autorecorder.Settings;
 import io.github.trdesilva.autorecorder.event.Event;
 import io.github.trdesilva.autorecorder.event.EventConsumer;
+import io.github.trdesilva.autorecorder.event.EventProperty;
 import io.github.trdesilva.autorecorder.event.EventQueue;
 import io.github.trdesilva.autorecorder.event.EventType;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -156,7 +158,8 @@ public class GameListener implements AutoCloseable, EventConsumer
             obs.start();
             currentGame.set(program);
             events.postEvent(new Event(EventType.RECORDING_START,
-                                       "Recording " + program));
+                                       "Recording " + program,
+                                       Map.of(EventProperty.GAME_NAME, program)));
         }
         catch(IOException e)
         {

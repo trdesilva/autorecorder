@@ -16,6 +16,9 @@ public class VideoMetadata
     private long duration = -1;
     private String resolution = "N/A";
     private List<Long> bookmarks = new LinkedList<>();
+    private String gameName = "";
+    private String thumbnailPath = "";
+    private String uploadLink = "";
     
     public DateTime getCreationDate()
     {
@@ -55,5 +58,35 @@ public class VideoMetadata
     public void setBookmarks(List<Long> bookmarks)
     {
         this.bookmarks = bookmarks;
+    }
+    
+    public String getGameName()
+    {
+        return gameName;
+    }
+    
+    public void setGameName(String gameName)
+    {
+        this.gameName = gameName;
+    }
+    
+    public String getThumbnailPath()
+    {
+        return thumbnailPath;
+    }
+    
+    public void setThumbnailPath(String thumbnailPath)
+    {
+        this.thumbnailPath = thumbnailPath;
+    }
+    
+    public String getUploadLink()
+    {
+        return uploadLink;
+    }
+    
+    public void setUploadLink(String uploadLink)
+    {
+        this.uploadLink = uploadLink;
     }
 }
