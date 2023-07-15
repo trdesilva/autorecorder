@@ -15,6 +15,7 @@ import io.github.trdesilva.autorecorder.event.EventType;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
 
@@ -70,7 +71,7 @@ public class UploadQueue implements AutoCloseable
                             events.postEvent(
                                     new Event(EventType.SUCCESS, job.getVideoTitle() + " uploaded",
                                               Collections.singletonMap(EventProperty.LINK, url)));
-                            events.postEvent(new Event(EventType.UPLOAD_END, "", Collections.singletonMap(EventProperty.UPLOAD_JOB, job)));
+                            events.postEvent(new Event(EventType.UPLOAD_END, "", Map.of(EventProperty.UPLOAD_JOB, job, EventProperty.LINK, url)));
                         }
                     }
                     catch(ReportableException e)

@@ -14,22 +14,28 @@ import com.google.common.cache.LoadingCache;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.github.trdesilva.autorecorder.Settings;
+import io.github.trdesilva.autorecorder.clip.FfmpegHelper;
 import io.github.trdesilva.autorecorder.event.Event;
+import io.github.trdesilva.autorecorder.event.EventProperty;
 import io.github.trdesilva.autorecorder.event.EventQueue;
 import io.github.trdesilva.autorecorder.event.EventType;
 import org.joda.time.DateTime;
 
-import java.awt.Image;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Function;
 
 @Singleton
 public class VideoMetadataHandler
@@ -38,6 +44,7 @@ public class VideoMetadataHandler
     
     private final Settings settings;
     private final EventQueue events;
+    private final FfmpegHelper ffmpegHelper;
     
     private final ObjectMapper objectMapper;
     
@@ -46,10 +53,11 @@ public class VideoMetadataHandler
     private final Map<File, ReentrantLock> metadataLocks;
     
     @Inject
-    public VideoMetadataHandler(Settings settings, EventQueue events)
+    public VideoMetadataHandler(Settings settings, EventQueue events, FfmpegHelper ffmpegHelper)
     {
         this.settings = settings;
         this.events = events;
+        this.ffmpegHelper = ffmpegHelper;
         
         objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JodaModule());
@@ -112,92 +120,37 @@ public class VideoMetadataHandler
     
     public DateTime getCreationDate(File video)
     {
-        if(video != null && video.exists())
-        {
-            try
-            {
-                VideoMetadata metadata = metadataMapping.get(video);
-                if(needsReparse(metadata))
-                {
-                    metadataMapping.invalidate(video);
-                }
-                return metadata.getCreationDate();
-            }
-            catch(ExecutionException e)
-            {
-                events.postEvent(new Event(EventType.DEBUG, "cache load failed " + e.getMessage()));
-            }
-        }
-        return new DateTime(0);
+        return fetchMetadataItem(video, metadata -> metadata.getCreationDate(), new DateTime(0));
     }
     
     public long getDuration(File video)
     {
-        if(video != null && video.exists())
-        {
-            try
-            {
-                VideoMetadata metadata = metadataMapping.get(video);
-                if(needsReparse(metadata))
-                {
-                    metadataMapping.invalidate(video);
-                }
-                return metadata.getDuration();
-            }
-            catch(ExecutionException e)
-            {
-                events.postEvent(new Event(EventType.DEBUG, "cache load failed " + e.getMessage()));
-            }
-        }
-        return -1;
+        return fetchMetadataItem(video, metadata -> metadata.getDuration(), Long.valueOf(-1));
     }
     
     public String getResolution(File video)
     {
-        if(video != null && video.exists())
-        {
-            try
-            {
-                VideoMetadata metadata = metadataMapping.get(video);
-                if(needsReparse(metadata))
-                {
-                    metadataMapping.invalidate(video);
-                }
-                return metadata.getResolution();
-            }
-            catch(ExecutionException e)
-            {
-                events.postEvent(new Event(EventType.DEBUG, "cache load failed " + e.getMessage()));
-            }
-        }
-        return "N/A";
+        return fetchMetadataItem(video, metadata -> metadata.getResolution(), "N/A");
     }
     
-    public Image getThumbnail(File video)
+    public List<Long> getBookmarks(File video)
     {
-        return null;
+        return fetchMetadataItem(video, metadata -> metadata.getBookmarks(), Collections.emptyList());
+    }
+    
+    public String getGameName(File video)
+    {
+        return fetchMetadataItem(video, metadata -> metadata.getGameName(), "N/A");
+    }
+    
+    public String getThumbnailPath(File video)
+    {
+        return fetchMetadataItem(video, metadata -> metadata.getThumbnailPath(), "");
     }
     
     public VideoMetadata getMetadata(File video)
     {
-        if(video != null && video.exists())
-        {
-            try
-            {
-                VideoMetadata metadata = metadataMapping.get(video);
-                if(needsReparse(metadata))
-                {
-                    metadataMapping.invalidate(video);
-                }
-                return metadata;
-            }
-            catch(ExecutionException e)
-            {
-                events.postEvent(new Event(EventType.DEBUG, "cache load failed " + e.getMessage()));
-            }
-        }
-        
-        return new VideoMetadata();
+        return fetchMetadataItem(video, metadata -> metadata, new VideoMetadata());
     }
     
     public void saveMetadata(File video, VideoMetadata metadata)
@@ -243,6 +196,12 @@ public class VideoMetadataHandler
                     events.postEvent(new Event(EventType.DEBUG,
                                                String.format("failed to delete metadata for file %s", video.getName())));
                 }
+                
+                if(!findThumbnail(video).delete())
+                {
+                    events.postEvent(new Event(EventType.DEBUG,
+                                               String.format("failed to delete thumbnail for file %s", video.getName())));
+                }
             }
             finally
             {
@@ -266,6 +225,27 @@ public class VideoMetadataHandler
         {
             lock.unlock();
         }
+    }
+    
+    private <T> T fetchMetadataItem(File video, Function<VideoMetadata, T> metadataGetter, T defaultValue)
+    {
+        if(video != null && video.exists())
+        {
+            try
+            {
+                VideoMetadata metadata = metadataMapping.get(video);
+                if(needsReparse(metadata))
+                {
+                    metadataMapping.invalidate(video);
+                }
+                return metadataGetter.apply(metadata);
+            }
+            catch(ExecutionException e)
+            {
+                events.postEvent(new Event(EventType.DEBUG, "cache load failed " + e.getMessage()));
+            }
+        }
+        return defaultValue;
     }
     
     private ReentrantLock getMetadataLock(File video)
@@ -297,33 +277,68 @@ public class VideoMetadataHandler
                 }
                 JsonNode ffmpegJson = getMetadataJson(video);
                 metadata.setCreationDate(new DateTime(video.lastModified()));
+                
+                int width;
+                int height;
+                if(!ffmpegJson.has("streams") || !ffmpegJson.get("streams").has(0)
+                        || !(ffmpegJson.get("streams").get(0).has("width") && ffmpegJson.get("streams")
+                                                                                        .get(0)
+                                                                                        .has("height")))
+                {
+                    width = 0;
+                    height = 0;
+                    metadata.setResolution("N/A");
+                }
+                else
+                {
+                    width = ffmpegJson.get("streams").get(0).get("width").asInt();
+                    height = ffmpegJson.get("streams").get(0).get("height").asInt();
+                    metadata.setResolution(String.format("%dx%d", width, height));
+                }
+    
                 if(!ffmpegJson.has("format") || !ffmpegJson.get("format").has("duration"))
                 {
                     metadata.setDuration(-1);
                 }
                 else
                 {
+                    // this is a proxy for the recording being complete, so we can generate a thumbnail now too
                     double durationSeconds = ffmpegJson.get("format").get("duration").asDouble();
                     metadata.setDuration((long) (durationSeconds * 1000));
-                }
-                
-                if(!ffmpegJson.has("streams") || !ffmpegJson.get("streams").has(0)
-                        || !(ffmpegJson.get("streams").get(0).has("width") && ffmpegJson.get("streams")
-                                                                                        .get(0)
-                                                                                        .has("height")))
-                {
-                    metadata.setResolution("N/A");
-                }
-                else
-                {
-                    int width = ffmpegJson.get("streams").get(0).get("width").asInt();
-                    int height = ffmpegJson.get("streams").get(0).get("height").asInt();
-                    metadata.setResolution(String.format("%dx%d", width, height));
+    
+                    String thumbnailPath = findThumbnail(video).getAbsolutePath();
+                    new Thread(() -> {
+                        try
+                        {
+                            ffmpegHelper.runFfmpeg(
+                                    new LinkedList<>(Arrays.asList("-ss",
+                                                                   String.format("%d", (int) Math.min(600, durationSeconds / 2)),
+                                                                   "-i",
+                                                                   video.getAbsolutePath(),
+                                                                   "-frames:v",
+                                                                   "1",
+                                                                   "-vf",
+                                                                   String.format("thumbnail=n=120,scale=%d:%d",
+                                                                                 width != 0 ? width / 6 : 320,
+                                                                                 height != 0 ? height / 6 : 180),
+                                                                   thumbnailPath
+                                                                  )));
+                            events.postEvent(new Event(EventType.THUMBNAIL_GENERATED,
+                                                       "Thumbnail generated for " + video.getAbsolutePath(),
+                                                       Map.of(EventProperty.THUMBNAIL_SOURCE, video)));
+                        }
+                        catch(IOException|InterruptedException e)
+                        {
+                            events.postEvent(new Event(EventType.WARNING, "Couldn't create thumbnail for " + video.getName()));
+                            events.postEvent(new Event(EventType.DEBUG, e.getMessage()));
+                        }
+                    }).start();
+                    metadata.setThumbnailPath(thumbnailPath);
                 }
                 
                 events.postEvent(new Event(EventType.DEBUG,
                                            "saving metadata: " + objectMapper.writeValueAsString(metadata)));
-                objectMapper.writeValue(findCacheFile(video), metadata);
+                objectMapper.writeValue(currentMetadataFile, metadata);
                 return metadata;
             }
             catch(IOException e)
@@ -369,9 +384,18 @@ public class VideoMetadataHandler
         return CACHE_PATH.resolve(name).toFile();
     }
     
+    private File findThumbnail(File video)
+    {
+        Path original = Paths.get(video.toURI());
+        String name = original.getParent().getFileName() + "_" + original.getFileName()
+                                                                         .toString()
+                                                                         .replace('.', '_') + ".jpg";
+        return CACHE_PATH.resolve(name).toFile();
+    }
+    
     private boolean needsReparse(VideoMetadata metadata)
     {
         // if the video was an in-progress recording when parsed, the duration won't have been set yet
-        return metadata.getDuration() == -1 || metadata.getResolution().equals("N/A");
+        return metadata.getDuration() == -1 || metadata.getResolution().equals("N/A") || metadata.getThumbnailPath().isBlank();
     }
 }

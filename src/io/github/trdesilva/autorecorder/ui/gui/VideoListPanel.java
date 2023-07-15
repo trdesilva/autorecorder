@@ -44,7 +44,7 @@ public class VideoListPanel extends JScrollPane implements EventConsumer
     private SortOrder sortOrder;
     
     @AssistedInject
-    public VideoListPanel(EventQueue events, @Assisted VideoListHandler videoListHandler, @Assisted VideoListSelectionConsumer selectionConsumer)
+    public VideoListPanel(EventQueue events, @Assisted VideoListHandler videoListHandler, @Assisted VideoInfoPanel selectionConsumer)
     {
         this.events = events;
         

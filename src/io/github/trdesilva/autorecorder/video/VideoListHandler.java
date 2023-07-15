@@ -15,6 +15,7 @@ import io.github.trdesilva.autorecorder.event.EventConsumer;
 import io.github.trdesilva.autorecorder.event.EventProperty;
 import io.github.trdesilva.autorecorder.event.EventQueue;
 import io.github.trdesilva.autorecorder.event.EventType;
+import io.github.trdesilva.autorecorder.upload.UploadJob;
 import org.joda.time.DateTime;
 
 import java.awt.Image;
@@ -31,7 +32,8 @@ public class VideoListHandler implements EventConsumer
 {
     private static final Set<EventType> EVENT_TYPES = Sets.immutableEnumSet(EventType.RECORDING_START,
                                                                             EventType.SETTINGS_CHANGE,
-                                                                            EventType.BOOKMARK);
+                                                                            EventType.BOOKMARK,
+                                                                            EventType.UPLOAD_END);
     private final Settings settings;
     private final VideoMetadataHandler metadataHandler;
     private final EventQueue events;
@@ -91,21 +93,9 @@ public class VideoListHandler implements EventConsumer
         }
     }
     
-    public DateTime getCreationDate(String name)
-    {
-        File video = new File(videoDir, name);
-        return getCreationDate(video);
-    }
-    
     public DateTime getCreationDate(File video)
     {
         return metadataHandler.getCreationDate(video);
-    }
-    
-    public long getDuration(String name)
-    {
-        File video = new File(videoDir, name);
-        return getDuration(video);
     }
     
     public long getDuration(File video)
@@ -113,26 +103,9 @@ public class VideoListHandler implements EventConsumer
         return metadataHandler.getDuration(video);
     }
     
-    public String getResolution(String name)
-    {
-        File video = new File(videoDir, name);
-        return getResolution(video);
-    }
-    
     public String getResolution(File video)
     {
         return metadataHandler.getResolution(video);
-    }
-    
-    public Image getThumbnail(String name)
-    {
-        File video = new File(videoDir, name);
-        return getThumbnail(video);
-    }
-    
-    public Image getThumbnail(File video)
-    {
-        return metadataHandler.getThumbnail(video);
     }
     
     public VideoMetadata getMetadata(File video)
@@ -147,9 +120,7 @@ public class VideoListHandler implements EventConsumer
     
     public synchronized void saveBookmark(long timestamp)
     {
-        File recording = getVideoList().stream()
-                                       .max(Comparator.comparing(File::lastModified))
-                                       .get();
+        File recording = getMostRecentRecording();
         metadataHandler.saveBookmark(recording, timestamp);
         events.postEvent(new Event(EventType.INFO, "Saved bookmark at " + TimestampUtil.formatTime(timestamp)));
     }
@@ -239,6 +210,36 @@ public class VideoListHandler implements EventConsumer
             new Thread(() -> {
                 runAutoDelete();
                 update();
+                if(type.equals(VideoType.RECORDING))
+                {
+                    File mostRecent = getMostRecentRecording();
+                    VideoMetadata metadata = getMetadata(mostRecent);
+                    int tries = 0;
+                    while(!(metadata.getGameName().isBlank() && new DateTime(mostRecent.lastModified()).isAfter(
+                            DateTime.now().minusSeconds(5))))
+                    {
+                        try
+                        {
+                            mostRecent = getMostRecentRecording();
+                            metadata = getMetadata(mostRecent);
+                            events.postEvent(new Event(EventType.DEBUG, "most recent: " + mostRecent.getName()));
+                            if(++tries > 10)
+                            {
+                                events.postEvent(new Event(EventType.WARNING, "Could not find new recording; did OBS start?"));
+                                return;
+                            }
+                            Thread.sleep(1000);
+                        }
+                        catch(InterruptedException e)
+                        {
+                            events.postEvent(new Event(EventType.DEBUG, "Metadata polling sleep interrupted"));
+                        }
+                    }
+                    String gameName = (String) event.getProperties().get(EventProperty.GAME_NAME);
+                    metadata.setGameName(gameName);
+                    metadataHandler.saveMetadata(mostRecent, metadata);
+                    events.postEvent(new Event(EventType.DEBUG, String.format("Game name %s set on metadata for %s", gameName, mostRecent.getName())));
+                }
             }).start();
         }
         else if(event.getType().equals(EventType.SETTINGS_CHANGE))
@@ -249,6 +250,17 @@ public class VideoListHandler implements EventConsumer
         {
             saveBookmark((Long)(event.getProperties().get(EventProperty.BOOKMARK_TIME)));
         }
+        else if(event.getType().equals(EventType.UPLOAD_END))
+        {
+            if(type.equals(VideoType.CLIP) && event.getProperties().containsKey(EventProperty.LINK))
+            {
+                UploadJob uploadJob = (UploadJob) event.getProperties().get(EventProperty.UPLOAD_JOB);
+                File video = getVideo(uploadJob.getClipName());
+                VideoMetadata metadataToUpdate = metadataHandler.getMetadata(video);
+                metadataToUpdate.setUploadLink((String) event.getProperties().get(EventProperty.LINK));
+                saveMetadata(video, metadataToUpdate);
+            }
+        }
     }
     
     @Override
@@ -256,4 +268,13 @@ public class VideoListHandler implements EventConsumer
     {
         return EVENT_TYPES;
     }
+    
+    private File getMostRecentRecording()
+    {
+        File recording = getVideoList().stream()
+                                       .max(Comparator.comparing(File::lastModified))
+                                       .get();
+        return recording;
+    }
+    
 }

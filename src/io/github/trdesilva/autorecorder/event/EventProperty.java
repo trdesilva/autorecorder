@@ -10,5 +10,7 @@ public enum EventProperty
     LINK,
     CLIP_JOB,
     UPLOAD_JOB,
-    BOOKMARK_TIME
+    BOOKMARK_TIME,
+    GAME_NAME,
+    THUMBNAIL_SOURCE
 }

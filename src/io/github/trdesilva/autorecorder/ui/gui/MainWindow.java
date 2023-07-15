@@ -28,8 +28,16 @@ import javax.swing.JTabbedPane;
 import javax.swing.UIManager;
 import java.awt.CardLayout;
 import java.awt.Dimension;
+import java.awt.Frame;
+import java.awt.Rectangle;
 import java.awt.Toolkit;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowStateListener;
 import java.io.File;
+import java.nio.file.Path;
 
 @Singleton
 public class MainWindow implements Navigator
@@ -40,6 +48,7 @@ public class MainWindow implements Navigator
     private final JPanel mainPanel;
     private final CardLayout mainLayout;
     private final JFrame mainFrame;
+    private final JPanel metaPanel;
     
     private final ClippingPanel clippingPanel;
     private final UploadPanel uploadPanel;
@@ -64,8 +73,8 @@ public class MainWindow implements Navigator
         mainFrame = new JFrame("Autorecorder");
         // TODO figure out minimizing to tray
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        
-        JPanel metaPanel = new JPanel();
+    
+        metaPanel = new JPanel();
         metaPanel.setLayout(new MigLayout("fill, insets 0 0 0 0", "[grow]", "[grow][30!]"));
         
         mainPanel = new JPanel();
@@ -143,6 +152,15 @@ public class MainWindow implements Navigator
         windowCloseHandler.addCloseable(bookmarkListener);
         
         mainFrame.addWindowListener(windowCloseHandler);
+    
+        mainFrame.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e)
+            {
+                System.out.println(mainPanel.getSize());
+                mainPanel.setSize(mainFrame.getSize());
+            }
+        });
         
         mainFrame.pack();
         mainFrame.setLocationRelativeTo(null);

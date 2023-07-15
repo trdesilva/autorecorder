@@ -29,16 +29,16 @@ import java.util.concurrent.TimeUnit;
 
 public class ClipTrimmer
 {
-    private final Settings settings;
+    private final FfmpegHelper ffmpegHelper;
     private final VideoListHandler clipListHandler;
     private final VideoListHandler recordingListHandler;
     private final EventQueue events;
     
     @Inject
-    public ClipTrimmer(Settings settings, @Named("CLIP") VideoListHandler clipListHandler,
+    public ClipTrimmer(FfmpegHelper ffmpegHelper, @Named("CLIP") VideoListHandler clipListHandler,
                        @Named("RECORDING") VideoListHandler recordingListHandler, EventQueue events)
     {
-        this.settings = settings;
+        this.ffmpegHelper = ffmpegHelper;
         this.clipListHandler = clipListHandler;
         this.recordingListHandler = recordingListHandler;
         this.events = events;
@@ -74,7 +74,7 @@ public class ClipTrimmer
         }
         
         List<String> ffmpegArgs = getSingleClipArgs(sourceFile.getAbsolutePath(), destFile.getAbsolutePath(), startArg, endArg, true);
-        runFfmpeg(ffmpegArgs);
+        ffmpegHelper.runFfmpeg(ffmpegArgs);
     }
     
     public void makeSegmentedClip(String source, String dest, List<String> startArgs, List<String> endArgs) throws IOException, InterruptedException
@@ -100,7 +100,7 @@ public class ClipTrimmer
             // validator should have already verified that startArgs and endArgs are the same size
             String tempClipName = getTempClipName(destFile.getAbsolutePath(), i);
             List<String> ffmpegArgs = getSingleClipArgs(sourceFile.getAbsolutePath(), tempClipName, startArgs.get(i), endArgs.get(i), true);
-            runFfmpeg(ffmpegArgs);
+            ffmpegHelper.runFfmpeg(ffmpegArgs);
             segmentedClipArgs.add("-i");
             segmentedClipArgs.add(tempClipName);
             
@@ -109,7 +109,7 @@ public class ClipTrimmer
     
         filterBuilder.append(String.format("concat=n=%d:v=1:a=1 [v] [a]", startArgs.size()));
         segmentedClipArgs.addAll(Arrays.asList("-filter_complex", filterBuilder.toString(), "-map", "[v]", "-map", "[a]", destFile.getAbsolutePath()));
-        runFfmpeg(segmentedClipArgs);
+        ffmpegHelper.runFfmpeg(segmentedClipArgs);
         
         for(int i = 0; i < startArgs.size(); i++)
         {
@@ -117,44 +117,6 @@ public class ClipTrimmer
             {
                 events.postEvent(new Event(EventType.WARNING, "Failed to delete temporary clip segment file " + getTempClipName(destFile.getAbsolutePath(), i)));
             }
-        }
-    }
-    
-    private void runFfmpeg(List<String> ffmpegArgs) throws IOException, InterruptedException
-    {
-        ffmpegArgs.add(0, settings.getFfmpegPath());
-        Process ffmpegProc = Runtime.getRuntime()
-                                    .exec(ffmpegArgs.toArray(new String[0]), null,
-                                          new File(Paths.get(settings.getFfmpegPath()).getParent().toString()));
-        InputStream stdout = ffmpegProc.getInputStream();
-        InputStream stderr = ffmpegProc.getErrorStream();
-        String ffmpegOutput = "";
-        String ffmpegError = "";
-        int ffmpegResult;
-        // ffmpeg hangs if you don't read its stdout
-        while(!ffmpegProc.waitFor(1000, TimeUnit.MILLISECONDS))
-        {
-            if(stdout.available() > 0)
-            {
-                ffmpegOutput += IOUtils.toString(stdout, Charset.defaultCharset());
-            }
-            if(stderr.available() > 0)
-            {
-                ffmpegError += IOUtils.toString(stderr, Charset.defaultCharset());
-            }
-        }
-        ffmpegResult = ffmpegProc.waitFor();
-        if(stdout.available() > 0)
-        {
-            ffmpegOutput += IOUtils.toString(stdout, Charset.defaultCharset());
-        }
-        if(stderr.available() > 0)
-        {
-            ffmpegError += IOUtils.toString(stderr, Charset.defaultCharset());
-        }
-        if(ffmpegResult != 0)
-        {
-            throw new IOException(ffmpegError);
         }
     }
     
