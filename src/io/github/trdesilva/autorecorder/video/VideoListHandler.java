@@ -93,21 +93,6 @@ public class VideoListHandler implements EventConsumer
         }
     }
     
-    public DateTime getCreationDate(File video)
-    {
-        return metadataHandler.getCreationDate(video);
-    }
-    
-    public long getDuration(File video)
-    {
-        return metadataHandler.getDuration(video);
-    }
-    
-    public String getResolution(File video)
-    {
-        return metadataHandler.getResolution(video);
-    }
-    
     public VideoMetadata getMetadata(File video)
     {
         return metadataHandler.getMetadata(video);
