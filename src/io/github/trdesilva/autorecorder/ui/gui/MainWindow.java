@@ -172,15 +172,6 @@ public class MainWindow implements Navigator
         windowCloseHandler.addCloseable(bookmarkListener);
         
         mainFrame.addWindowListener(windowCloseHandler);
-    
-        mainFrame.addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e)
-            {
-                System.out.println(mainPanel.getSize());
-                mainPanel.setSize(mainFrame.getSize());
-            }
-        });
         
         mainFrame.pack();
         mainFrame.setLocationRelativeTo(null);
