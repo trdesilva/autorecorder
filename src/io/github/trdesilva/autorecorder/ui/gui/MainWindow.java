@@ -27,17 +27,11 @@ import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.UIManager;
 import java.awt.CardLayout;
-import java.awt.Dimension;
-import java.awt.Frame;
-import java.awt.Rectangle;
+import java.awt.Color;
 import java.awt.Toolkit;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowStateListener;
 import java.io.File;
-import java.nio.file.Path;
 
 @Singleton
 public class MainWindow implements Navigator
@@ -117,7 +111,7 @@ public class MainWindow implements Navigator
         this.windowCloseHandler = windowCloseHandler;
         
         metaPanel.add(mainPanel, "cell 0 0, grow");
-        metaPanel.add(statusPanel, "cell 0 1, growx");
+        metaPanel.add(statusPanel, "cell 0 1, growx, growy");
         
         mainFrame.setIconImage(
                 Toolkit.getDefaultToolkit().createImage(ClassLoader.getSystemResource("autorecordericon.png")));
@@ -133,6 +127,32 @@ public class MainWindow implements Navigator
             else if(tabIndex == tabbedPane.indexOfTab("Clips"))
             {
                 clipListPanel.update(true);
+            }
+        });
+        
+        mainPanel.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e)
+            {
+                int width = mainPanel.getWidth();
+                int height = mainPanel.getHeight();
+                boolean shouldAdjust = false;
+                if(mainPanel.getWidth() > metaPanel.getWidth())
+                {
+                    width = metaPanel.getWidth();
+                    shouldAdjust = true;
+                }
+                if(mainPanel.getHeight() > metaPanel.getHeight())
+                {
+                    height = metaPanel.getHeight() - 30;
+                    shouldAdjust = true;
+                }
+                
+                if(shouldAdjust)
+                {
+                    mainPanel.setSize(width, height);
+                    tabbedPane.setSize(width, height);
+                }
             }
         });
     }
@@ -164,6 +184,7 @@ public class MainWindow implements Navigator
         
         mainFrame.pack();
         mainFrame.setLocationRelativeTo(null);
+        mainFrame.setMinimumSize(mainFrame.getSize());
         mainFrame.setVisible(true);
     }
     
