@@ -20,6 +20,8 @@ import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import java.awt.Image;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.io.File;
 import java.util.Collections;
 import java.util.Set;
@@ -54,7 +56,7 @@ public abstract class VideoInfoPanel extends DefaultPanel implements EventConsum
                     File thumbnailFile = new File(key);
                     if(thumbnailFile.exists())
                     {
-                        Image image = ImageIO.read(thumbnailFile).getScaledInstance((int) (getWidth()*0.9), (int)(getWidth()*0.9*9./16), Image.SCALE_SMOOTH);
+                        Image image = ImageIO.read(thumbnailFile);
                     
                         // image width is -1 while image is loading
                         int loadingWaitCounter = 0;
@@ -67,6 +69,17 @@ public abstract class VideoInfoPanel extends DefaultPanel implements EventConsum
                     }
                 }
                 return null;
+            }
+        });
+        
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e)
+            {
+                if(thumbnailLabel.getIcon() != null)
+                {
+                    setScaledThumbnail(currentVideo);
+                }
             }
         });
         
@@ -83,7 +96,17 @@ public abstract class VideoInfoPanel extends DefaultPanel implements EventConsum
     
     protected void loadThumbnail(File video)
     {
-        boolean thumbnailSet = false;
+        boolean thumbnailSet = setScaledThumbnail(video);
+    
+        if(!thumbnailSet)
+        {
+            thumbnailLabel.setIcon(null);
+            thumbnailLabel.setText("Loading thumbnail...");
+        }
+    }
+    
+    private boolean setScaledThumbnail(File video)
+    {
         String thumbnailPath = metadataHandler.getMetadata(video).getThumbnailPath();
         if(!thumbnailPath.isBlank() && new File(thumbnailPath).exists())
         {
@@ -92,10 +115,12 @@ public abstract class VideoInfoPanel extends DefaultPanel implements EventConsum
                 Image image = thumbnailCache.get(thumbnailPath);
                 if(image != null)
                 {
-                    thumbnailImage.setImage(image);
+                    Image scaledImage = image.getScaledInstance((int) (getWidth()*0.9), (int)(getWidth()*0.9*9./16), Image.SCALE_SMOOTH);
+                    thumbnailImage.setImage(scaledImage);
                     thumbnailLabel.setIcon(thumbnailImage);
+                    thumbnailLabel.setText("");
                     repaint();
-                    thumbnailSet = true;
+                    return true;
                 }
                 else
                 {
@@ -107,12 +132,8 @@ public abstract class VideoInfoPanel extends DefaultPanel implements EventConsum
                 eventQueue.postEvent(new Event(EventType.WARNING, "Could not load thumbnail for " + video.getName()));
             }
         }
-    
-        if(!thumbnailSet)
-        {
-            thumbnailLabel.setIcon(null);
-            thumbnailLabel.setText("Loading thumbnail...");
-        }
+        
+        return false;
     }
     
     @Override
