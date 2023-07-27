@@ -89,6 +89,9 @@ public class ClipInfoPanel extends VideoInfoPanel
             if(!uploadUrl.isBlank())
             {
                 uploadLink.setText(String.format("Upload Link: %s", uploadUrl));
+                
+                uploadLink.removeMouseListener(mouseListener);
+                thumbnailLabel.removeMouseListener(mouseListener);
                 mouseListener = new MouseAdapter()
                 {
                     @Override
@@ -105,13 +108,17 @@ public class ClipInfoPanel extends VideoInfoPanel
                     }
                 };
                 uploadLink.addMouseListener(mouseListener);
+                thumbnailLabel.addMouseListener(mouseListener);
                 uploadLink.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                thumbnailLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             }
             else
             {
                 uploadLink.setText("");
                 uploadLink.removeMouseListener(mouseListener);
+                thumbnailLabel.removeMouseListener(mouseListener);
                 uploadLink.setCursor(Cursor.getDefaultCursor());
+                thumbnailLabel.setCursor(Cursor.getDefaultCursor());
             }
             loadThumbnail(video);
             uploadButton.setEnabled(true);
@@ -126,6 +133,8 @@ public class ClipInfoPanel extends VideoInfoPanel
             uploadLink.setCursor(Cursor.getDefaultCursor());
             thumbnailLabel.setIcon(null);
             thumbnailLabel.setText("");
+            thumbnailLabel.removeMouseListener(mouseListener);
+            thumbnailLabel.setCursor(Cursor.getDefaultCursor());
             uploadButton.setEnabled(false);
         }
     }
