@@ -15,6 +15,7 @@ import io.github.trdesilva.autorecorder.record.GameListener;
 import io.github.trdesilva.autorecorder.ui.cli.MainCli;
 import io.github.trdesilva.autorecorder.ui.gui.MainWindow;
 import io.github.trdesilva.autorecorder.ui.gui.inject.GuiModule;
+import io.github.trdesilva.autorecorder.video.YoutubeMetadataRefresher;
 import io.github.trdesilva.autorecorder.video.inject.VideoModule;
 
 import java.io.File;
@@ -75,8 +76,6 @@ public class Main
                 events.postEvent(new Event(EventType.DEBUG, "failed to copy ffprobe.exe"));
             }
         }
-        
-        
         
         GameListener listener = injector.getInstance(GameListener.class);
         

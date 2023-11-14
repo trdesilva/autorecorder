@@ -20,6 +20,7 @@ import io.github.trdesilva.autorecorder.ui.gui.record.RecordingListPanel;
 import io.github.trdesilva.autorecorder.ui.gui.settings.SettingsPanel;
 import io.github.trdesilva.autorecorder.upload.UploadQueue;
 import io.github.trdesilva.autorecorder.video.BookmarkListener;
+import io.github.trdesilva.autorecorder.video.YoutubeMetadataRefresher;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.JFrame;
@@ -27,11 +28,12 @@ import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.UIManager;
 import java.awt.CardLayout;
-import java.awt.Color;
 import java.awt.Toolkit;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.io.File;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 
 @Singleton
 public class MainWindow implements Navigator
@@ -55,13 +57,14 @@ public class MainWindow implements Navigator
     private final GameListener gameListener;
     private final BookmarkListener bookmarkListener;
     private final WindowCloseHandler windowCloseHandler;
+    private final YoutubeMetadataRefresher youtubeMetadataRefresher;
     
     @Inject
     public MainWindow(Settings settings, RecordingListPanel recordingListPanel, ClipListPanel clipListPanel,
                       SettingsPanel settingsPanel, ClippingPanel clippingPanel, UploadPanel uploadPanel,
                       LicensePanel licensePanel, StatusPanel statusPanel, EventQueue eventQueue, ClipQueue clipQueue,
                       UploadQueue uploadQueue, GameListener gameListener, BookmarkListener bookmarkListener,
-                      WindowCloseHandler windowCloseHandler)
+                      WindowCloseHandler windowCloseHandler, YoutubeMetadataRefresher youtubeMetadataRefresher)
     {
         // components
         mainFrame = new JFrame("Autorecorder");
@@ -109,6 +112,8 @@ public class MainWindow implements Navigator
         this.bookmarkListener = bookmarkListener;
         
         this.windowCloseHandler = windowCloseHandler;
+    
+        this.youtubeMetadataRefresher = youtubeMetadataRefresher;
         
         metaPanel.add(mainPanel, "cell 0 0, grow");
         metaPanel.add(statusPanel, "cell 0 1, growx, growy");
@@ -165,6 +170,21 @@ public class MainWindow implements Navigator
         uploadQueue.startProcessing();
         
         gameListener.startListener();
+        
+        new Thread(() -> {
+            try
+            {
+                youtubeMetadataRefresher.refreshMetadata();
+            }
+            catch(ReportableException e)
+            {
+                eventQueue.postEvent(new Event(EventType.FAILURE, "Refreshing upload URLs failed: " + e.getMessage()));
+            }
+            catch(GeneralSecurityException|IOException e)
+            {
+                eventQueue.postEvent(new Event(EventType.DEBUG, "Refreshing upload URLs failed: " + e.getMessage()));
+            }
+        }, "Youtube metadata refresh thread").start();
         
         windowCloseHandler.addCloseable(clipQueue);
         windowCloseHandler.addCloseable(uploadQueue);

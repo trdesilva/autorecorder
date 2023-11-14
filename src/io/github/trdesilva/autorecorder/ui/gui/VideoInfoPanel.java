@@ -115,7 +115,8 @@ public abstract class VideoInfoPanel extends DefaultPanel implements EventConsum
                 Image image = thumbnailCache.get(thumbnailPath);
                 if(image != null)
                 {
-                    Image scaledImage = image.getScaledInstance((int) (getWidth()*0.9), (int)(getWidth()*0.9*9./16), Image.SCALE_SMOOTH);
+                    int imageWidth = (int)(Math.min(getWidth() * 0.9, 270));
+                    Image scaledImage = image.getScaledInstance(imageWidth, (int)(imageWidth*9./16), Image.SCALE_SMOOTH);
                     thumbnailImage.setImage(scaledImage);
                     thumbnailLabel.setIcon(thumbnailImage);
                     thumbnailLabel.setText("");
