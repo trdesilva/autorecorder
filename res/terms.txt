@@ -8,14 +8,15 @@ Privacy Policy
 Autorecorder doesn't transmit your data anywhere for any reason, with the exception of video uploads requested by you via the 'Upload' button in the GUI. All other data persisted by Autorecorder is stored in one of the following locations on your machine:
   -The directory specified as the storage location for recordings.
   -The directory specified as the storage location for clips.
-  -Autorecorder's installation directory (%LOCALAPPDATA%\\autorecorder).
-
+  -Autorecorder's installation directory (%LOCALAPPDATA%\autorecorder).
+If you have privacy concerns, contact @trdesilva on GitHub.
 
 YouTube Integration
-Videos may be uploaded to YouTube via YouTube's API; should you choose to use this functionality, you are subject to YouTube's Terms of Use and Privacy Policy. By clicking 'Upload,' you certify that the content you are uploading complies with the YouTube Terms of Service (including the YouTube Community Guidelines) at https://www.youtube.com/t/terms. Please be sure not to violate others' copyright or privacy rights. You may find YouTube's Privacy Policy here: https://www.google.com/policies/privacy/
+Videos may be uploaded to YouTube via YouTube's API; should you choose to use this functionality, you are subject to YouTube's Terms of Use and Privacy Policy. By clicking 'Upload,' you certify that the content you are uploading complies with the YouTube Terms of Service (including the YouTube Community Guidelines) at https://www.youtube.com/t/terms. Please be sure not to violate others' copyright or privacy rights. You may find Google's Privacy Policy here: https://www.google.com/policies/privacy/
+You may delete videos that Autorecorder uploads to YouTube by navigating to your YouTube channel at https://studio.youtube.com. You may also revoke Autorecorder's access to your YouTube channel by navigating to https://security.google.com/settings.
 
 Licensing
-Autorecorder © 2022 Thomas DeSilva
+Autorecorder © 2023 Thomas DeSilva
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 

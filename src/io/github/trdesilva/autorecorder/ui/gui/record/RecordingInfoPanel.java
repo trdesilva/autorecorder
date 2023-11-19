@@ -49,7 +49,7 @@ public class RecordingInfoPanel extends VideoInfoPanel
     public RecordingInfoPanel(VideoMetadataHandler metadataHandler, EventQueue eventQueue, Navigator navigator)
     {
         super(metadataHandler, eventQueue);
-        setLayout(new MigLayout("fill", "[100:null:null]", "[][][][][][][]push[]"));
+        setLayout(new MigLayout("fill", "[100:null:300]", "[][][][][][][]push[]"));
         
         title = new WrappingLabel("");
         title.setFont(new Font(null, Font.BOLD, 14));
@@ -80,7 +80,7 @@ public class RecordingInfoPanel extends VideoInfoPanel
         add(duration, "cell 0 3, growx, wmin 100");
         add(resolution, "cell 0 4, growx, wmin 100");
         add(bookmarks, "cell 0 5, growx, wmin 100");
-        add(thumbnailLabel, "cell 0 6, growx, wmin 100");
+        add(thumbnailLabel, "cell 0 6, grow, wmin 100");
         add(clipButton, "cell 0 7, growx, wmin 100");
     }
     
