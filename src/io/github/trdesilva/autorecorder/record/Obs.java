@@ -36,7 +36,7 @@ public class Obs
             if(settings.getObsPath() != null && !settings.getObsPath().isBlank())
             {
                 String obsDir = Paths.get(settings.getObsPath()).getParent().toString();
-                String[] obsArgs = {settings.getObsPath(), "--startrecording", "--minimize-to-tray", "--disable-updater"};
+                String[] obsArgs = {settings.getObsPath(), "--startrecording", "--minimize-to-tray", "--disable-updater", "--disable-shutdown-check"};
                 process = Runtime.getRuntime().exec(obsArgs, null, new File(obsDir));
                 recording.set(true);
             }
