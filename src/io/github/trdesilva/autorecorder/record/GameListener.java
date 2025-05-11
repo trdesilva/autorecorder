@@ -14,8 +14,12 @@ import io.github.trdesilva.autorecorder.event.EventConsumer;
 import io.github.trdesilva.autorecorder.event.EventProperty;
 import io.github.trdesilva.autorecorder.event.EventQueue;
 import io.github.trdesilva.autorecorder.event.EventType;
+import org.apache.commons.io.FileSystem;
+import org.apache.commons.io.FileUtils;
 
 import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
@@ -155,6 +159,13 @@ public class GameListener implements AutoCloseable, EventConsumer
                 return;
             }
             recording.set(true);
+            if(settings.isOverrideObsNameFormatEnabled())
+            {
+                String configText = Files.readString(obs.getActiveProfileConfigFile().toPath());
+                configText = configText.replaceFirst("FilenameFormatting=[^\\r\\n]+",
+                                                     "FilenameFormatting=" + getRecordingNameFormat(program));
+                Files.writeString(obs.getActiveProfileConfigFile().toPath(), configText);
+            }
             obs.start();
             currentGame.set(program);
             events.postEvent(new Event(EventType.RECORDING_START,
@@ -183,6 +194,27 @@ public class GameListener implements AutoCloseable, EventConsumer
                                    "Stopped recording " + currentGame.get()));
         obs.stop();
         recording.set(false);
+    }
+    
+    private String getRecordingNameFormat(String program)
+    {
+        String safeName;
+        if(program == null || program.isBlank())
+        {
+            safeName = "Manual";
+        }
+        else
+        {
+            int substringLength = Math.max(program.indexOf(FileSystems.getDefault().getSeparator()), program.indexOf('.'));
+            if(substringLength == -1)
+            {
+                substringLength = program.length();
+            }
+            safeName = program.substring(0, substringLength);
+        }
+        
+        safeName = safeName.replaceAll("[^\\w]", "");
+        return safeName + " %CCYY-%MM-%DD %hh-%mm-%ss";
     }
     
     @Override

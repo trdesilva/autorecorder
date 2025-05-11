@@ -61,6 +61,10 @@ public class Settings
         public boolean bookmarksEnabled = false;
         public Hotkey bookmarkKey = new Hotkey();
         public boolean consumeWindowsKeyEnabled = false;
+        
+        public String obsProfileName = "Untitled";
+        public boolean overrideObsNameFormat = false;
+        
     }
     
     private final EventQueue events;
@@ -273,6 +277,26 @@ public class Settings
     public void setConsumeWindowsKeyEnabled(boolean consumeWindowsKeyEnabled)
     {
         this.container.consumeWindowsKeyEnabled = consumeWindowsKeyEnabled;
+    }
+    
+    public String getObsProfileName()
+    {
+        return this.container.obsProfileName;
+    }
+    
+    public void setObsProfileName(String name)
+    {
+        this.container.obsProfileName = name;
+    }
+    
+    public boolean isOverrideObsNameFormatEnabled()
+    {
+        return this.container.overrideObsNameFormat;
+    }
+    
+    public void setOverrideObsNameFormatEnabled(boolean enable)
+    {
+        this.container.overrideObsNameFormat = enable;
     }
     
     public String getSettingsFilePath()

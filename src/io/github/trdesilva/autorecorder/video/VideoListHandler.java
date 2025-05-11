@@ -132,7 +132,7 @@ public class VideoListHandler implements EventConsumer
             events.postEvent(new Event(EventType.DEBUG, "Starting autodelete check"));
             // sort videos oldest to newest (in deletion order)
             List<File> videoList = getVideoList().stream()
-                                                 .sorted((f1, f2) -> (int) (f1.lastModified() - f2.lastModified()))
+                    .sorted(Comparator.comparing(File::lastModified))
                                                  .collect(Collectors.toList());
             // don't automatically delete if there's only one video because that might be the active recording
             if(videoList.size() < 2)

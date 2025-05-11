@@ -11,14 +11,17 @@ import io.github.trdesilva.autorecorder.SettingsValidator;
 import io.github.trdesilva.autorecorder.event.Event;
 import io.github.trdesilva.autorecorder.event.EventQueue;
 import io.github.trdesilva.autorecorder.event.EventType;
+import io.github.trdesilva.autorecorder.record.Obs;
 import io.github.trdesilva.autorecorder.ui.gui.Navigator;
 import io.github.trdesilva.autorecorder.ui.gui.wrapper.DefaultPanel;
 import io.github.trdesilva.autorecorder.ui.gui.wrapper.ValidatingTextField;
 import io.github.trdesilva.autorecorder.video.Hotkey;
 import net.miginfocom.swing.MigLayout;
 
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
@@ -28,16 +31,22 @@ import java.awt.event.KeyEvent;
 public class SettingsPanel extends DefaultPanel
 {
     @Inject
-    public SettingsPanel(Settings settings, EventQueue events, SettingsValidator validator, Navigator navigator)
+    public SettingsPanel(Settings settings, EventQueue events, SettingsValidator validator, Navigator navigator, Obs obs)
     {
         setLayout(new MigLayout("fill", "[50%][50%]", "[][][grow][]push[]"));
         
         JLabel obsPathLabel = new JLabel("OBS Path");
         JTextField obsPathField = new JTextField(settings.getObsPath());
+        JLabel obsProfileLabel = new JLabel("OBS Profile");
+        JComboBox<String> obsProfileDropdown = new JComboBox<>();
+        obsProfileDropdown.setEditable(false);
+        obsProfileDropdown.setModel(new DefaultComboBoxModel<>(obs.readProfileNames().toArray(new String[0])));
+        
         JLabel recordingPathLabel = new JLabel("Recording Path");
         JTextField recordingPathField = new JTextField(settings.getRecordingPath());
         JLabel clipPathLabel = new JLabel("Clip Path");
         JTextField clipPathField = new JTextField(settings.getClipPath());
+        
         GameListPanel additionalGamesPanel = new GameListPanel(settings.getAdditionalGames(), "Additional Games",
                                                                "These executables will be added to the auto-detection list");
         GameListPanel excludedGamesPanel = new GameListPanel(settings.getExcludedGames(), "Excluded Games",
@@ -75,11 +84,19 @@ public class SettingsPanel extends DefaultPanel
         
         BookmarkPanel bookmarkPanel = new BookmarkPanel(settings);
         
+        JCheckBox overrideNameCheckbox = new JCheckBox();
+        overrideNameCheckbox.setSelected(settings.isOverrideObsNameFormatEnabled());
+        overrideNameCheckbox.setText("Override OBS recording name format");
+        overrideNameCheckbox.setToolTipText("When enabled, the selected OBS profile will have FilenameFormatting changed before each recording starts to include the name of the game being recorded. This overwrites your OBS profile's existing filename format, so if you use OBS separately from Autorecorder, it will still use the format that Autorecorder sets.");
+        autoDeletePanel.add(overrideNameCheckbox, "cell 0 1, spanx"); // TODO this is a hack to make things line up, no need to keep otherwise
+        
         JButton licenseButton = new JButton("View License/Terms of Use");
         JButton saveButton = new JButton("Save");
         
         add(obsPathLabel, "cell 0 0");
         add(obsPathField, "cell 0 0, growx");
+        add(obsProfileLabel, "cell 1 0");
+        add(obsProfileDropdown, "cell 1 0, growx");
         add(recordingPathLabel, "cell 0 1");
         add(recordingPathField, "cell 0 1, growx");
         add(clipPathLabel, "cell 1 1");
@@ -102,6 +119,7 @@ public class SettingsPanel extends DefaultPanel
         saveButton.addActionListener(e -> {
             Settings.SettingsContainer tempSettings = new Settings.SettingsContainer();
             tempSettings.obsPath = obsPathField.getText();
+            tempSettings.obsProfileName = (String)obsProfileDropdown.getSelectedItem();
             tempSettings.recordingPath = recordingPathField.getText();
             tempSettings.clipPath = clipPathField.getText();
             tempSettings.additionalGames = additionalGamesPanel.getGames();
@@ -110,6 +128,7 @@ public class SettingsPanel extends DefaultPanel
             tempSettings.bookmarksEnabled = bookmarkPanel.areBookmarksEnabled();
             tempSettings.bookmarkKey = bookmarkPanel.getBookmarkKey();
             tempSettings.consumeWindowsKeyEnabled = bookmarkPanel.isConsumeWindowsKeyEnabled();
+            tempSettings.overrideObsNameFormat = overrideNameCheckbox.isSelected();
             if(autoDeleteThresholdField.isValid())
             {
                 tempSettings.autoDeleteThresholdGB = Integer.parseInt(autoDeleteThresholdField.getText());
@@ -122,6 +141,7 @@ public class SettingsPanel extends DefaultPanel
             if(validator.validate(tempSettings))
             {
                 settings.setObsPath(obsPathField.getText());
+                settings.setObsProfileName((String)obsProfileDropdown.getSelectedItem());
                 settings.setRecordingPath(recordingPathField.getText());
                 settings.setClipPath(clipPathField.getText());
                 settings.setAdditionalGames(additionalGamesPanel.getGames());
@@ -130,6 +150,7 @@ public class SettingsPanel extends DefaultPanel
                 settings.setAutoDeleteThresholdGB(tempSettings.autoDeleteThresholdGB);
                 settings.setBookmarksEnabled(tempSettings.bookmarksEnabled);
                 settings.setBookmarkKey(tempSettings.bookmarkKey);
+                settings.setOverrideObsNameFormatEnabled(tempSettings.overrideObsNameFormat);
                 settings.setConsumeWindowsKeyEnabled(tempSettings.consumeWindowsKeyEnabled);
                 
                 settings.save();
