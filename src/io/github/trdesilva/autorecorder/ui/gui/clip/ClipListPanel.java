@@ -24,12 +24,15 @@ public class ClipListPanel extends DefaultPanel
     private final VideoListPanel videoListPanel;
     private final JRadioButton dateSortButton;
     private final JRadioButton nameSortButton;
+    private final JRadioButton tileDisplayButton;
+    private final JRadioButton nameDisplayButton;
     
     @Inject
     public ClipListPanel(ClipInfoPanel clipInfoPanel, VideoListPanelFactory videoListPanelFactory,
                          @Named("CLIP") VideoListHandler clipListHandler)
     {
-        setLayout(new MigLayout("fill, insets 2", "[75%:75%:90%]2[10%:25%:300]", "[][grow]"));
+        MigLayout layout = new MigLayout("fill, insets 2", "[75%:75%:90%]2[10%::300]", "[30][300:100%]");
+        setLayout(layout);
         
         this.clipInfoPanel = clipInfoPanel;
         videoListPanel = videoListPanelFactory.create(clipListHandler, clipInfoPanel);
@@ -47,12 +50,29 @@ public class ClipListPanel extends DefaultPanel
         sortPanel.add(dateSortButton);
         sortPanel.add(nameSortButton);
         
-        add(sortPanel, "cell 0 0, left");
+        JPanel displayTypePanel = new JPanel();
+        displayTypePanel.setLayout(new MigLayout());
+        JLabel displayTypeLabel = new JLabel("Display as:");
+        ButtonGroup displayTypeButtons = new ButtonGroup();
+        tileDisplayButton = new JRadioButton("Tiles", true);
+        nameDisplayButton = new JRadioButton("Filenames");
+        displayTypeButtons.add(tileDisplayButton);
+        displayTypeButtons.add(nameDisplayButton);
+    
+        displayTypePanel.add(displayTypeLabel);
+        displayTypePanel.add(tileDisplayButton);
+        displayTypePanel.add(nameDisplayButton);
+    
+        add(sortPanel, "cell 0 0, left, growx, split 2");
+        add(displayTypePanel, "cell 0 0, growx, right");
         add(videoListPanel, "cell 0 1, grow");
         add(clipInfoPanel, "cell 1 0, grow, span 1 2");
     
         dateSortButton.addActionListener(e -> update(false));
         nameSortButton.addActionListener(e -> update(false));
+    
+        tileDisplayButton.addActionListener(e -> videoListPanel.changeDisplayType(VideoListPanel.DisplayType.TILES));
+        nameDisplayButton.addActionListener(e -> videoListPanel.changeDisplayType(VideoListPanel.DisplayType.NAMES));
         
         update(false);
     }

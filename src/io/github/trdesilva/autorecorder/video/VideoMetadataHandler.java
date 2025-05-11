@@ -19,8 +19,10 @@ import io.github.trdesilva.autorecorder.event.Event;
 import io.github.trdesilva.autorecorder.event.EventProperty;
 import io.github.trdesilva.autorecorder.event.EventQueue;
 import io.github.trdesilva.autorecorder.event.EventType;
+import io.github.trdesilva.autorecorder.ui.gui.wrapper.ThumbnailCache;
 import org.joda.time.DateTime;
 
+import java.awt.Image;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -45,6 +47,7 @@ public class VideoMetadataHandler
     private final Settings settings;
     private final EventQueue events;
     private final FfmpegHelper ffmpegHelper;
+    private final ThumbnailCache thumbnailCache;
     
     private final ObjectMapper objectMapper;
     
@@ -53,11 +56,12 @@ public class VideoMetadataHandler
     private final Map<File, ReentrantLock> metadataLocks;
     
     @Inject
-    public VideoMetadataHandler(Settings settings, EventQueue events, FfmpegHelper ffmpegHelper)
+    public VideoMetadataHandler(Settings settings, EventQueue events, FfmpegHelper ffmpegHelper, ThumbnailCache thumbnailCache)
     {
         this.settings = settings;
         this.events = events;
         this.ffmpegHelper = ffmpegHelper;
+        this.thumbnailCache = thumbnailCache;
         
         objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JodaModule());
@@ -74,8 +78,6 @@ public class VideoMetadataHandler
                                           public VideoMetadata load(File key) throws Exception
                                           {
                                               // check if directory exists on load because SETTINGS_DIR doesn't exist during construction on first launch
-                                              events.postEvent(new Event(EventType.DEBUG,
-                                                                         "metadata cache load for " + key.getName()));
                                               if(!cacheDir.exists())
                                               {
                                                   if(cacheDir.mkdir())
@@ -94,8 +96,6 @@ public class VideoMetadataHandler
                                               File cacheFile = findCacheFile(key);
                                               if(cacheFile.exists())
                                               {
-                                                  events.postEvent(new Event(EventType.DEBUG,
-                                                                             "found cache file " + cacheFile.getName()));
                                                   ReentrantLock lock = getMetadataLock(key);
                                                   lock.lock();
                                                   try
@@ -148,6 +148,49 @@ public class VideoMetadataHandler
         return fetchMetadataItem(video, metadata -> metadata.getThumbnailPath(), "");
     }
     
+    public Image getThumbnail(File video)
+    {
+        String thumbnailPath = getMetadata(video).getThumbnailPath();
+        if(!thumbnailPath.isBlank() && new File(thumbnailPath).exists())
+        {
+            try
+            {
+                return thumbnailCache.get(thumbnailPath);
+            }
+            catch(ExecutionException e)
+            {
+                events.postEvent(new Event(EventType.WARNING, "Could not load thumbnail for " + video.getName()));
+            }
+        }
+        
+        return null;
+    }
+    
+    public Image getThumbnail(File video, boolean block)
+    {
+        String thumbnailPath = getMetadata(video).getThumbnailPath();
+        if(!thumbnailPath.isBlank() && new File(thumbnailPath).exists())
+        {
+            try
+            {
+                if(block)
+                {
+                    return thumbnailCache.get(thumbnailPath);
+                }
+                else
+                {
+                    return thumbnailCache.getIfPresent(thumbnailPath);
+                }
+            }
+            catch(ExecutionException e)
+            {
+                events.postEvent(new Event(EventType.WARNING, "Could not load thumbnail for " + video.getName()));
+            }
+        }
+        
+        return null;
+    }
+    
     public VideoMetadata getMetadata(File video)
     {
         return fetchMetadataItem(video, metadata -> metadata, new VideoMetadata());
@@ -161,8 +204,6 @@ public class VideoMetadataHandler
             lock.lock();
             try
             {
-                events.postEvent(new Event(EventType.DEBUG,
-                                           "saving metadata: " + objectMapper.writeValueAsString(metadata)));
                 objectMapper.writeValue(findCacheFile(video), metadata);
             }
             catch(IOException e)
@@ -257,7 +298,6 @@ public class VideoMetadataHandler
     {
         if(video != null && video.exists())
         {
-            events.postEvent(new Event(EventType.DEBUG, "parsing video " + video.getName()));
             ReentrantLock lock = getMetadataLock(video);
             lock.lock();
             try
@@ -267,9 +307,6 @@ public class VideoMetadataHandler
                 if(currentMetadataFile.exists())
                 {
                     metadata = objectMapper.readValue(currentMetadataFile, VideoMetadata.class);
-                    events.postEvent(new Event(EventType.DEBUG,
-                                               "starting with metadata from cache: " + objectMapper.writeValueAsString(
-                                                       metadata)));
                 }
                 else
                 {
@@ -336,8 +373,6 @@ public class VideoMetadataHandler
                     metadata.setThumbnailPath(thumbnailPath);
                 }
                 
-                events.postEvent(new Event(EventType.DEBUG,
-                                           "saving metadata: " + objectMapper.writeValueAsString(metadata)));
                 objectMapper.writeValue(currentMetadataFile, metadata);
                 return metadata;
             }
@@ -357,7 +392,6 @@ public class VideoMetadataHandler
     
     private JsonNode getMetadataJson(File video) throws IOException
     {
-        events.postEvent(new Event(EventType.DEBUG, "reading metadata for " + video.getAbsolutePath()));
         String[] ffprobeArgs = {settings.getFfprobePath(), "-v", "quiet", "-print_format", "json", "-show_format", "-show_streams", "-select_streams", "v:0", video.getAbsolutePath()};
         Process ffprobeProc = Runtime.getRuntime()
                                      .exec(ffprobeArgs, null,

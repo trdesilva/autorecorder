@@ -10,6 +10,7 @@ import io.github.trdesilva.autorecorder.event.Event;
 import io.github.trdesilva.autorecorder.event.EventProperty;
 import io.github.trdesilva.autorecorder.event.EventQueue;
 import io.github.trdesilva.autorecorder.event.EventType;
+import io.github.trdesilva.autorecorder.record.Obs;
 import io.github.trdesilva.autorecorder.video.Hotkey;
 
 import java.io.File;
@@ -18,11 +19,13 @@ import java.util.Collections;
 public class SettingsValidator
 {
     private final EventQueue events;
+    private final Obs obs;
     
     @Inject
-    public SettingsValidator(EventQueue events)
+    public SettingsValidator(EventQueue events, Obs obs)
     {
         this.events = events;
+        this.obs = obs;
     }
     
     public boolean validate(Settings.SettingsContainer settings)
@@ -43,6 +46,22 @@ public class SettingsValidator
         if(!settings.obsPath.endsWith(".exe") || !obsFile.canExecute())
         {
             events.postEvent(new Event(EventType.WARNING, "OBS path doesn't point to an executable"));
+            return false;
+        }
+        
+        if(settings.obsProfileName.isBlank())
+        {
+            events.postEvent(new Event(EventType.WARNING,
+                                       "OBS profile name is unset in settings. Is OBS Studio installed?",
+                                       Collections.singletonMap(EventProperty.LINK, "https://obsproject.com/kb/profiles")));
+            return false;
+        }
+        
+        if(!obs.readProfileNames().contains(settings.obsProfileName))
+        {
+            events.postEvent(new Event(EventType.WARNING,
+                                       "Selected OBS profile does not exist in OBS profile directory",
+                                       Collections.singletonMap(EventProperty.LINK, "https://obsproject.com/forum/threads/where-are-profiles-saved.462/")));
             return false;
         }
         
