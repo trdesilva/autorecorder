@@ -31,6 +31,8 @@ import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import java.awt.Color;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -56,7 +58,7 @@ public class ClippingPanel extends DefaultPanel
         setLayout(new MigLayout("fill, hidemode 2", "[grow][::200]", "[30!][grow][]"));
         
         JButton backButton = new JButton("Back");
-        JButton expandButton = new JButton("<");
+        JButton expandButton = new JButton("⭰");
         
         this.playbackPanel = playbackPanel;
         this.recordingHandler = recordingHandler;
@@ -131,7 +133,7 @@ public class ClippingPanel extends DefaultPanel
         expandButton.addActionListener(e -> {
             boolean showAdvancedPanel = !advancedPanel.isVisible();
             advancedPanel.setVisible(showAdvancedPanel);
-            expandButton.setText(showAdvancedPanel ? ">" : "<");
+            expandButton.setText(showAdvancedPanel ? "⭲" : "⭰");
             revalidate();
         });
         
@@ -145,12 +147,28 @@ public class ClippingPanel extends DefaultPanel
             }
         });
         
+        startTimeField.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyTyped(KeyEvent e)
+            {
+                handleTimeInput(e, startTimeField);
+            }
+        });
+        
         startCurrentTimeButton.addActionListener(e -> {
-            startTimeField.setText(TimestampUtil.formatTime(playbackPanel.getPlaybackTime()));
+            startTimeField.setText(TimestampUtil.formatTime(playbackPanel.getPlaybackTime(), true));
+        });
+    
+        endTimeField.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyTyped(KeyEvent e)
+            {
+                handleTimeInput(e, endTimeField);
+            }
         });
         
         endCurrentTimeButton.addActionListener(e -> {
-            endTimeField.setText(TimestampUtil.formatTime(playbackPanel.getPlaybackTime()));
+            endTimeField.setText(TimestampUtil.formatTime(playbackPanel.getPlaybackTime(), true));
         });
     
         this.events = events;
@@ -187,6 +205,92 @@ public class ClippingPanel extends DefaultPanel
             }
             clipQueue.enqueue(clipJob);
         });
+    }
+    
+    private static void handleTimeInput(KeyEvent e, JTextField timeField)
+    {
+        char nextChar = e.getKeyChar();
+        if(!(('0' <= nextChar && nextChar <= '9') || nextChar == ':' || nextChar == '.' || nextChar == '\b'))
+        {
+            e.consume();
+            return;
+        }
+        
+        String newValue = timeField.getText();
+        if(nextChar != '\b')
+        {
+            // if the caret is at the end and nothing is selected, append to end
+            timeField.replaceSelection(Character.toString(nextChar));
+            newValue = timeField.getText();
+            int colonCount = 0;
+            int firstColonIndex = newValue.indexOf(':');; // allows for non-2-digit hours
+            if(firstColonIndex != -1)
+            {
+                colonCount = 1;
+                firstColonIndex = newValue.indexOf(':');
+                if(newValue.lastIndexOf(':') != firstColonIndex)
+                {
+                    colonCount = 2;
+                }
+            }
+            else
+            {
+                // if there isn't a colon yet, assume 2-digit hour
+                firstColonIndex = 2;
+            }
+            
+            if(colonCount == 0)
+            {
+                if(newValue.length() >= firstColonIndex)
+                {
+                    // inserting at the index makes replacing a multiple-character selection work
+                    // (e.g. "01|.3|" + '2' -> "01.2" instead of "012")
+                    newValue = insertAt(newValue, firstColonIndex, ':');
+                    timeField.setText(newValue);
+                }
+            }
+            else if(colonCount == 1)
+            {
+                if(newValue.length() >= firstColonIndex + 3)
+                {
+                    newValue = insertAt(newValue, firstColonIndex + 3, ':');
+                    timeField.setText(newValue);
+                }
+            }
+            else if(newValue.indexOf('.') == -1)
+            {
+                if(newValue.length() >= firstColonIndex + 6)
+                {
+                    newValue = insertAt(newValue, firstColonIndex + 6, '.');
+                    timeField.setText(newValue);
+                }
+            }
+            e.consume();
+        }
+        else if(newValue.length() > 0)
+        {
+            // for some reason, backspace is applied before keyTyped() while normal characters aren't, so no need
+            // to add it to newValue here like above
+            if(newValue.charAt(newValue.length() - 1) == ':' || newValue.charAt(newValue.length() - 1) == '.')
+            {
+                newValue = newValue.substring(0, newValue.length() - 1);
+                timeField.setText(newValue);
+                e.consume();
+            }
+        }
+    }
+    
+    private static String insertAt(String str, int index, char c)
+    {
+        if(str.length() == index)
+        {
+            str = str.substring(0, index) + c;
+        }
+        else
+        {
+            str = str.substring(0, index) + c + str.substring(index);
+        }
+        return str;
     }
     
     private void playPreview(String startTimeText, String endTimeText)
@@ -282,6 +386,8 @@ public class ClippingPanel extends DefaultPanel
                 if(segment != null)
                 {
                     playPreview(segment.getStart(), segment.getEnd());
+                    startTimeField.setText(segment.getStart());
+                    endTimeField.setText(segment.getEnd());
                 }
             });
             

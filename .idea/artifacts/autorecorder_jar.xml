@@ -63,6 +63,7 @@
       <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-core/2.13.2/jackson-core-2.13.2.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.13.2/jackson-databind-2.13.2.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$MAVEN_REPOSITORY$/joda-time/joda-time/2.10.8/joda-time-2.10.8.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/formdev/flatlaf/3.6/flatlaf-3.6.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>

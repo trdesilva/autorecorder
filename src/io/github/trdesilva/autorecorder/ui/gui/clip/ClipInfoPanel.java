@@ -19,6 +19,7 @@ import net.miginfocom.swing.MigLayout;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.UIManager;
 import java.awt.Cursor;
 import java.awt.Desktop;
 import java.awt.Font;
@@ -54,7 +55,7 @@ public class ClipInfoPanel extends VideoInfoPanel
         setLayout(new MigLayout("fill", "[100:null:null]", "[][][][][]push[]"));
         
         title = new WrappingLabel("");
-        title.setFont(new Font(null, Font.BOLD, 14));
+        title.setFont(UIManager.getFont("defaultFont").deriveFont(Font.BOLD, 16));
         duration = new JLabel("");
         resolution = new JLabel("");
         uploadLink = new WrappingLabel("");

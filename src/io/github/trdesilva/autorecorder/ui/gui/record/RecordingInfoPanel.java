@@ -26,6 +26,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
+import javax.swing.UIManager;
 import java.awt.Font;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
@@ -52,7 +53,7 @@ public class RecordingInfoPanel extends VideoInfoPanel
         setLayout(new MigLayout("fill", "[100:null:300]", "[][][][][][][]push[]"));
         
         title = new WrappingLabel("");
-        title.setFont(new Font(null, Font.BOLD, 14));
+        title.setFont(UIManager.getFont("defaultFont").deriveFont(Font.BOLD, 16));
         gameName = new WrappingLabel("");
         creationDate = new WrappingLabel("");
         duration = new JLabel();

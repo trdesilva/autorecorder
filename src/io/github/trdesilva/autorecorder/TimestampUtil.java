@@ -11,12 +11,25 @@ public class TimestampUtil
 {
     public static String formatTime(long millis)
     {
+        return formatTime(millis, false);
+    }
+    
+    public static String formatTime(long millis, boolean includeMillis)
+    {
         if(millis > 0)
         {
             long hours = TimeUnit.MILLISECONDS.toHours(millis);
             long minutes = TimeUnit.MILLISECONDS.toMinutes(millis % TimeUnit.HOURS.toMillis(1));
             long seconds = TimeUnit.MILLISECONDS.toSeconds(millis % TimeUnit.MINUTES.toMillis(1));
-            return String.format("%d:%02d:%02d", hours, minutes, seconds);
+            if(includeMillis)
+            {
+                long millisRemainder = millis % TimeUnit.SECONDS.toMillis(1);
+                return String.format("%d:%02d:%02d.%03d", hours, minutes, seconds, millisRemainder);
+            }
+            else
+            {
+                return String.format("%d:%02d:%02d", hours, minutes, seconds);
+            }
         }
         else
         {
@@ -32,7 +45,7 @@ public class TimestampUtil
         {
             try
             {
-                long millis = TimeUnit.SECONDS.toMillis(Long.parseLong(numbers[2]));
+                long millis = (long)(1000 * Double.parseDouble(numbers[2]));
                 millis += TimeUnit.MINUTES.toMillis(Long.parseLong(numbers[1]));
                 millis += TimeUnit.HOURS.toMillis(Long.parseLong(numbers[0]));
     

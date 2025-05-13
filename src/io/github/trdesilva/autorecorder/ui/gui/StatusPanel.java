@@ -18,6 +18,7 @@ import net.miginfocom.swing.MigLayout;
 import javax.inject.Named;
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Desktop;
@@ -113,19 +114,19 @@ public class StatusPanel extends DefaultPanel implements EventConsumer
                 switch(event.getType())
                 {
                     case FAILURE:
-                        background = Color.RED;
+                        background = UIManager.getLookAndFeel().getDefaults().getColor("StatusPanel.failureBackground");
                         break;
                     case SUCCESS:
-                        background = Color.GREEN;
+                        background = UIManager.getLookAndFeel().getDefaults().getColor("StatusPanel.successBackground");
                         break;
                     case WARNING:
-                        background = Color.YELLOW;
+                        background = UIManager.getLookAndFeel().getDefaults().getColor("StatusPanel.warningBackground");
                         break;
                     case INFO:
-                        background = Color.CYAN;
+                        background = UIManager.getLookAndFeel().getDefaults().getColor("StatusPanel.infoBackground");
                         break;
                     default:
-                        background = Color.LIGHT_GRAY;
+                        background = UIManager.getLookAndFeel().getDefaults().getColor("StatusPanel.defaultBackground");
                 }
                 
                 SwingUtilities.invokeLater(() -> {

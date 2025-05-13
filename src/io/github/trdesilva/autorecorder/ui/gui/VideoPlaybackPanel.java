@@ -29,6 +29,7 @@ import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
@@ -105,20 +106,20 @@ public class VideoPlaybackPanel extends DefaultPanel implements AutoCloseable
         fasterButton = new JButton("+");
         fasterButton.setToolTipText("Double current playback speed");
         
-        playPauseButton = new JButton("Pause");
+        playPauseButton = new JButton("⏸"); // UTF-8 pause symbol
         
-        longRewindButton = new JButton("<<<");
+        longRewindButton = new JButton("⮜⮜⮜");
         longRewindButton.setToolTipText("Rewind 10 seconds");
-        mediumRewindButton = new JButton("<<");
+        mediumRewindButton = new JButton("⮜⮜");
         mediumRewindButton.setToolTipText("Rewind 1 second");
-        shortRewindButton = new JButton("<");
+        shortRewindButton = new JButton("⮜");
         shortRewindButton.setToolTipText("Rewind ~1 frame");
         
-        longFastForwardButton = new JButton(">>>");
+        longFastForwardButton = new JButton("⮞⮞⮞");
         longFastForwardButton.setToolTipText("Fast-forward 10 seconds");
-        mediumFastForwardButton = new JButton(">>");
+        mediumFastForwardButton = new JButton("⮞⮞");
         mediumFastForwardButton.setToolTipText("Fast-forward 1 second");
-        shortFastForwardButton = new JButton(">");
+        shortFastForwardButton = new JButton("⮞");
         shortFastForwardButton.setToolTipText("Fast-forward ~1 frame");
         
         volumeBar = new JSlider(0, 150, 100);
@@ -134,11 +135,11 @@ public class VideoPlaybackPanel extends DefaultPanel implements AutoCloseable
         controlPanel.add(speedField, "cell 0 1, pos slower.x2 slower.y, w 60:60:80, id speed");
         controlPanel.add(fasterButton, "cell 0 1, pos speed.x2 slower.y, id faster");
         
-        controlPanel.add(playPauseButton, "cell 0 1, align center, id play");
-        controlPanel.add(shortRewindButton, "cell 0 1, pos null play.y play.x null, id shortRewind");
+        controlPanel.add(playPauseButton, "cell 0 1, align center, wmin 60, id play");
+        controlPanel.add(shortRewindButton, "cell 0 1, pos null play.y play.x-5 null, id shortRewind");
         controlPanel.add(mediumRewindButton, "cell 0 1, pos null play.y shortRewind.x null, id mediumRewind");
         controlPanel.add(longRewindButton, "cell 0 1, pos null play.y mediumRewind.x null, id longRewind");
-        controlPanel.add(shortFastForwardButton, "cell 0 1, pos play.x2 play.y, id shortFastForward");
+        controlPanel.add(shortFastForwardButton, "cell 0 1, pos play.x2+5 play.y, id shortFastForward");
         controlPanel.add(mediumFastForwardButton, "cell 0 1, pos shortFastForward.x2 play.y, id mediumFastForward");
         controlPanel.add(longFastForwardButton, "cell 0 1, pos mediumFastForward.x2 play.y, id longFastForward");
         
@@ -214,12 +215,12 @@ public class VideoPlaybackPanel extends DefaultPanel implements AutoCloseable
     {
         if(!isPlaying)
         {
-            playPauseButton.setText("Play");
+            playPauseButton.setText("⯈");
             mediaPlayerComponent.mediaPlayer().controls().pause();
         }
         else
         {
-            playPauseButton.setText("Pause");
+            playPauseButton.setText("⏸"); // UTF-8 pause symbol
             mediaPlayerComponent.mediaPlayer().controls().play();
         }
         

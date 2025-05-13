@@ -5,6 +5,7 @@
 
 package io.github.trdesilva.autorecorder.ui.gui;
 
+import com.formdev.flatlaf.FlatLaf;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AtomicLongMap;
 import com.google.inject.Inject;
@@ -17,8 +18,11 @@ import io.github.trdesilva.autorecorder.event.EventType;
 import io.github.trdesilva.autorecorder.ui.gui.wrapper.WrappingLabel;
 import io.github.trdesilva.autorecorder.video.VideoListHandler;
 import io.github.trdesilva.autorecorder.video.VideoMetadataHandler;
+import io.github.trdesilva.autorecorder.video.VideoType;
 import net.miginfocom.swing.MigLayout;
+import org.apache.commons.io.IOUtils;
 
+import javax.swing.BorderFactory;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
@@ -34,6 +38,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
@@ -43,6 +48,7 @@ import java.awt.Insets;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -83,7 +89,7 @@ public class VideoListPanel extends JScrollPane implements EventConsumer
         this.videoListHandler = videoListHandler;
         videos = new JList<>(videoListHandler.getVideoList().toArray(new File[0]));
         videos.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        this.renderer.setParent(this);
+        this.renderer.setShowBookmarks(videoListHandler.getType() == VideoType.RECORDING);
         videos.setCellRenderer(renderer);
         videos.setLayoutOrientation(JList.HORIZONTAL_WRAP);
         videos.setVisibleRowCount(-1);
@@ -175,7 +181,7 @@ public class VideoListPanel extends JScrollPane implements EventConsumer
         if(oldCellWidth != newCellWidth)
         {
             videos.setFixedCellWidth(newCellWidth);
-            videos.setFixedCellHeight(30 + videos.getFixedCellWidth() * 9 / 16);
+            videos.setFixedCellHeight(48 + videos.getFixedCellWidth() * 9 / 16);
             videos.setVisibleRowCount(videos.getModel().getSize() / (getWidth() / newCellWidth) + 1);
             renderer.clearCaches();
         }
@@ -202,7 +208,10 @@ public class VideoListPanel extends JScrollPane implements EventConsumer
         private final AtomicLongMap<File> renderStatusMap;
         private final AtomicLongMap<File> loadAttempts;
         private final Map<File, JComponent> resultCache;
-        private JComponent parent;
+        private ImageIcon baseBookmarkImage;
+        private ImageIcon scaledBookmarkImage;
+        
+        private boolean showBookmarks;
         
         @Inject
         public VideoListCellRenderer(VideoMetadataHandler metadataHandler)
@@ -211,6 +220,15 @@ public class VideoListPanel extends JScrollPane implements EventConsumer
             renderStatusMap = AtomicLongMap.create();
             loadAttempts = AtomicLongMap.create();
             resultCache = new HashMap<>();
+            try
+            {
+                baseBookmarkImage = new ImageIcon(
+                        IOUtils.resourceToByteArray("bookmarkicon.png", getClass().getClassLoader()));
+            }
+            catch(IOException e)
+            {
+                baseBookmarkImage = null;
+            }
         }
         
         @Override
@@ -240,6 +258,7 @@ public class VideoListPanel extends JScrollPane implements EventConsumer
     
                     int imageWidth = list.getFixedCellWidth() - 10;
                     Image image = null;
+                    boolean drawBookmarkIcon = false;
                     if(renderStatusMap.get(value) == 0)
                     {
                         image = metadataHandler.getThumbnail(value, false);
@@ -252,6 +271,16 @@ public class VideoListPanel extends JScrollPane implements EventConsumer
                         thumbnailLabel.setIcon(new ImageIcon(scaledImage));
                         thumbnailLabel.setText("");
                         renderStatusMap.put(value, 2);
+                        
+                        if(showBookmarks && !metadataHandler.getMetadata(value).getBookmarks().isEmpty() && baseBookmarkImage != null )
+                        {
+                            if(scaledBookmarkImage == null)
+                            {
+                                scaledBookmarkImage = new ImageIcon(baseBookmarkImage.getImage()
+                                                                                     .getScaledInstance(16, 16, Image.SCALE_SMOOTH));
+                            }
+                            drawBookmarkIcon = true;
+                        }
                     }
                     else
                     {
@@ -277,19 +306,39 @@ public class VideoListPanel extends JScrollPane implements EventConsumer
                     thumbnailConstraints.fill = GridBagConstraints.NONE;
                     thumbnailConstraints.anchor = GridBagConstraints.CENTER;
                     thumbnailConstraints.gridy = 1;
+                    thumbnailConstraints.gridwidth = GridBagConstraints.REMAINDER;
+                    thumbnailConstraints.weighty = 3;
                     layout.setConstraints(thumbnailLabel, thumbnailConstraints);
     
                     GridBagConstraints titleConstraints = new GridBagConstraints();
                     titleConstraints.fill = GridBagConstraints.BOTH;
                     titleConstraints.anchor = GridBagConstraints.CENTER;
                     titleConstraints.gridy = 2;
+                    titleConstraints.gridwidth = GridBagConstraints.RELATIVE;
+                    titleConstraints.weightx = 1;
+                    titleConstraints.weighty = 1;
                     layout.setConstraints(titleLabel, titleConstraints);
+                    
+                    if(drawBookmarkIcon)
+                    {
+                        JLabel bookmarkLabel = new JLabel(scaledBookmarkImage);
+                        result.add(bookmarkLabel);
+                        GridBagConstraints bookmarkConstraints = new GridBagConstraints();
+                        bookmarkConstraints.fill = GridBagConstraints.NONE;
+                        bookmarkConstraints.anchor = GridBagConstraints.NORTHEAST;
+                        bookmarkConstraints.gridx = 2;
+                        bookmarkConstraints.gridy = 2;
+                        bookmarkConstraints.gridwidth = GridBagConstraints.RELATIVE;
+                        layout.setConstraints(bookmarkLabel, bookmarkConstraints);
+                    }
                     
                     GridBagConstraints panelConstraints = new GridBagConstraints();
                     panelConstraints.fill = GridBagConstraints.BOTH;
                     panelConstraints.insets = new Insets(5, 5, 5, 5);
                     layout.setConstraints(result, panelConstraints);
     
+                    result.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY));
+                    
                     resultCache.put(value, result);
                 }
             }
@@ -305,17 +354,18 @@ public class VideoListPanel extends JScrollPane implements EventConsumer
             
             return result;
         }
-        
-        public void setParent(JComponent parent)
+    
+        public void setShowBookmarks(boolean showBookmarks)
         {
-            this.parent = parent;
+            this.showBookmarks = showBookmarks;
         }
-        
+    
         public void clearCaches()
         {
             renderStatusMap.clear();
             loadAttempts.clear();
             resultCache.clear();
+            scaledBookmarkImage = null;
         }
     }
 }
