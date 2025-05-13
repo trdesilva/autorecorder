@@ -5,6 +5,8 @@
 
 package io.github.trdesilva.autorecorder;
 
+import com.formdev.flatlaf.FlatDarkLaf;
+import com.formdev.flatlaf.FlatLightLaf;
 import com.google.common.collect.Sets;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -18,6 +20,7 @@ import io.github.trdesilva.autorecorder.ui.gui.inject.GuiModule;
 import io.github.trdesilva.autorecorder.video.YoutubeMetadataRefresher;
 import io.github.trdesilva.autorecorder.video.inject.VideoModule;
 
+import javax.swing.UIManager;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -42,6 +45,15 @@ public class Main
             isDebugMode = true;
         }
     
+        try
+        {
+            UIManager.setLookAndFeel(new FlatDarkLaf());
+        }
+        catch( Exception ex )
+        {
+            System.err.println( "Failed to initialize LaF" );
+        }
+        
         LoadingWindow loadingWindow = new LoadingWindow();
         Injector injector = Guice.createInjector(new VideoModule(), new GuiModule(isDebugMode));
         

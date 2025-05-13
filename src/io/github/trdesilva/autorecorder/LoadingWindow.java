@@ -17,11 +17,8 @@ public class LoadingWindow
     private final JFrame frame;
     private final Thread updateThread;
     
-    public LoadingWindow() throws UnsupportedLookAndFeelException, ClassNotFoundException, InstantiationException,
-                                  IllegalAccessException
+    public LoadingWindow()
     {
-        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        
         frame = new JFrame("Autorecorder Startup");
         
         frame.setIconImage(

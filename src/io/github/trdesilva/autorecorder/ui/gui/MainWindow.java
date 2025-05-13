@@ -164,8 +164,6 @@ public class MainWindow implements Navigator
     
     public void start() throws Exception
     {
-        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        
         clipQueue.startProcessing();
         uploadQueue.startProcessing();
         

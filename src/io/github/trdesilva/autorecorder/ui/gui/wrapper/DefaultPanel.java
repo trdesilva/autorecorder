@@ -12,13 +12,6 @@ public class DefaultPanel extends JPanel
 {
     public DefaultPanel()
     {
-        try
-        {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        }
-        catch(Exception e)
-        {
-            // don't really care
-        }
+        // there used to be look and feel things here, but now there aren't and I don't feel like cleaning it up
     }
 }

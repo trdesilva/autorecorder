@@ -56,6 +56,11 @@ public class VideoListHandler implements EventConsumer
         events.addConsumer(this);
     }
     
+    public VideoType getType()
+    {
+        return type;
+    }
+    
     public File getVideo(String name)
     {
         File video;
@@ -233,7 +238,10 @@ public class VideoListHandler implements EventConsumer
         }
         else if(event.getType().equals(EventType.BOOKMARK))
         {
-            saveBookmark((Long)(event.getProperties().get(EventProperty.BOOKMARK_TIME)));
+            if(type == VideoType.RECORDING)
+            {
+                saveBookmark((Long) (event.getProperties().get(EventProperty.BOOKMARK_TIME)));
+            }
         }
         else if(event.getType().equals(EventType.UPLOAD_END))
         {
